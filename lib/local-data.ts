@@ -34,9 +34,9 @@ const defaultContactInfo: ContactInfo = {
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "255718752434",
   phone: "+254 718 752 434",
   email: "hello@zurie.co.tz",
-  address: "Nairobi, Kenya",
+  address: "Dar es Salaam, Tanzania",
   mapEmbedUrl:
-    "https://maps.google.com/maps?q=Nairobi&t=&z=13&ie=UTF8&iwloc=&output=embed",
+    "https://maps.google.com/maps?q=Dar+es+Salaam&t=&z=13&ie=UTF8&iwloc=&output=embed",
   instagram: "https://instagram.com",
   facebook: "https://facebook.com",
   tiktok: "https://tiktok.com",
