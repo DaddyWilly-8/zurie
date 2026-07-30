@@ -134,7 +134,7 @@ export const SiteFooter = () => {
             </Typography>
             <Stack spacing={0.9}>
               <Typography color="rgba(242,239,233,0.72)">
-                +255 712 345 678
+                +255 718 752 434
               </Typography>
               <Typography color="rgba(242,239,233,0.72)">
                 hello@zurie.co.tz
