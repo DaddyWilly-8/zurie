@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Alert, Button, Stack, TextField } from "@mui/material";
-import { apiFetch } from "@/lib/api-client";
+import { newsletterService } from "@/services/notifications/newsletter.service";
 
 type NewsletterFormProps = {
   compact?: boolean;
@@ -16,16 +16,11 @@ export const NewsletterForm = ({ compact = false }: NewsletterFormProps) => {
     event.preventDefault();
     setStatus("idle");
 
-    const response = await apiFetch("/newsletter", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    if (response.ok) {
+    try {
+      await newsletterService.subscribe(email);
       setEmail("");
       setStatus("success");
-    } else {
+    } catch {
       setStatus("error");
     }
   };

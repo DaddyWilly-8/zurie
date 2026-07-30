@@ -1,20 +1,18 @@
-import {
-  findProductBySlugState,
-  listProductsByCategoryState,
-  listProductsState,
-} from "@/lib/local-data";
+import { productService } from "@/services/products/product.service";
 import type { Product } from "@/types/product";
 
-export const getProducts = async (): Promise<Product[]> => listProductsState();
+export const getProducts = async (): Promise<Product[]> => {
+  return (await productService.listStorefrontProducts()) as Product[];
+};
 
 export const getProductBySlug = async (
   slug: string,
 ): Promise<Product | null> => {
-  return findProductBySlugState(slug);
+  return (await productService.getProductBySlug(slug)) as Product | null;
 };
 
 export const getProductsByCategory = async (
   category: string,
 ): Promise<Product[]> => {
-  return listProductsByCategoryState(category);
+  return (await productService.listProductsByCategory(category)) as Product[];
 };

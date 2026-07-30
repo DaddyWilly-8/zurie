@@ -7,7 +7,7 @@ import { SectionHeading } from "@/components/section-heading";
 import { ProductCard } from "@/components/product-card";
 import { InstagramGallery } from "@/components/instagram-gallery";
 import { TestimonialCards } from "@/components/testimonial-cards";
-import { getBrandContent } from "@/services/content";
+import { getBrandContent, getHomepageContent } from "@/services/content";
 import { getProducts } from "@/services/products";
 import { buildMetadata } from "@/lib/metadata";
 import { CATEGORY_OPTIONS } from "@/constants/categories";
@@ -20,10 +20,32 @@ export const metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [products, brand] = await Promise.all([
+  const [products, brand, homepage] = await Promise.all([
     getProducts(),
     getBrandContent(),
+    getHomepageContent(),
   ]);
+
+  const homepageData = (homepage as Record<string, unknown> | null) ?? null;
+  const heroTitle = String(homepageData?.heroTitle ?? "Zuriè");
+  const heroSubtitle = String(homepageData?.heroSubtitle ?? "The Atelier Collection");
+  const heroDescription = String(
+    homepageData?.heroDescription ??
+      "The architecture of elegance, handcrafted for the modern woman.",
+  );
+  const heroButtonText = String(homepageData?.heroButtonText ?? "Discover The Collection");
+  const heroButtonLink = String(homepageData?.heroButtonLink ?? "/shop");
+  const heroImageFromCms =
+    typeof homepageData?.heroImage === "string" ? homepageData.heroImage : undefined;
+  const heroActive = Boolean(homepageData?.heroActive ?? true);
+
+  const bannerActive = Boolean(homepageData?.bannerActive ?? false);
+  const bannerTitle = String(homepageData?.bannerTitle ?? "");
+  const bannerDescription = String(homepageData?.bannerDescription ?? "");
+  const bannerImage =
+    typeof homepageData?.bannerImage === "string" ? homepageData.bannerImage : "";
+  const bannerCtaText = String(homepageData?.bannerCtaText ?? "Learn More");
+  const bannerCtaLink = String(homepageData?.bannerCtaLink ?? "/shop");
   const pickImage = (...sources: Array<string | undefined>) =>
     sources.find((source) => typeof source === "string" && source.trim().length > 0) ??
     "/images/products/fallback.png";
@@ -50,6 +72,7 @@ export default async function HomePage() {
 
   const heroImage = pickImage(
     "/images/hero/zurie-hero.png",
+    heroImageFromCms,
     featured[0]?.images[0]?.url,
     brand.heroImage,
   );
@@ -61,6 +84,7 @@ export default async function HomePage() {
 
   return (
     <Stack spacing={{ xs: 6.5, md: 10 }}>
+      {heroActive ? (
       <Box
         sx={{
           position: "relative",
@@ -108,7 +132,7 @@ export default async function HomePage() {
                 color: "#f8efe1",
               }}
             >
-              The Atelier Collection
+              {heroSubtitle}
             </Typography>
             <Typography
               sx={{
@@ -119,7 +143,7 @@ export default async function HomePage() {
                 color: "#fff",
               }}
             >
-              Zuriè
+              {heroTitle}
             </Typography>
             <Typography
               sx={{
@@ -131,11 +155,11 @@ export default async function HomePage() {
                 fontSize: { xs: "1.05rem", sm: "1.3rem", md: "2rem" },
               }}
             >
-              The architecture of elegance, handcrafted for the modern woman.
+              {heroDescription}
             </Typography>
             <Button
               component={Link}
-              href="/shop"
+              href={heroButtonLink}
               variant="outlined"
               size="large"
               sx={{
@@ -153,7 +177,7 @@ export default async function HomePage() {
                 },
               }}
             >
-              Discover The Collection
+              {heroButtonText}
               <Box component="span" sx={{ ml: 1.2 }}>
                 <FontAwesomeIcon icon={faArrowRight} fontSize={12} />
               </Box>
@@ -161,6 +185,7 @@ export default async function HomePage() {
           </Box>
         </Container>
       </Box>
+      ) : null}
 
       <Box
         sx={{
@@ -403,6 +428,52 @@ export default async function HomePage() {
         </section>
 
         <section style={{ marginTop: "4.4rem" }}>
+          {bannerActive ? (
+            <Box
+              sx={{
+                position: "relative",
+                minHeight: { xs: 240, md: 300 },
+                overflow: "hidden",
+                border: "1px solid #e6dccb",
+                mb: 4,
+              }}
+            >
+              {bannerImage ? (
+                <Image
+                  src={bannerImage}
+                  alt={bannerTitle || "Promotional banner"}
+                  fill
+                  sizes="100vw"
+                  style={{ objectFit: "cover" }}
+                />
+              ) : null}
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.62))",
+                  color: "#fff",
+                  display: "grid",
+                  placeItems: "center",
+                  textAlign: "center",
+                  p: 3,
+                }}
+              >
+                <Box>
+                  <Typography variant="h4" sx={{ fontFamily: "var(--font-playfair), serif" }}>
+                    {bannerTitle}
+                  </Typography>
+                  <Typography sx={{ mt: 1.2, mb: 2.2, color: "rgba(255,255,255,0.88)" }}>
+                    {bannerDescription}
+                  </Typography>
+                  <Button component={Link} href={bannerCtaLink} variant="outlined" color="inherit">
+                    {bannerCtaText}
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          ) : null}
+
           <SectionHeading
             eyebrow="Words from Our Women"
             title="The Zuriè Circle"

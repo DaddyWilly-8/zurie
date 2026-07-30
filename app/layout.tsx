@@ -30,11 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${manrope.variable} ${playfair.variable} h-full antialiased`}
-    >
-      <body className="flex min-h-full flex-col bg-[#f8f5f0] text-[#181818]">
+    <html lang="en" className={`${manrope.variable} ${playfair.variable}`}>
+      <body>
         <AppProviders>{children}</AppProviders>
         <Analytics />
       </body>

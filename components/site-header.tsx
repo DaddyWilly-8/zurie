@@ -167,7 +167,7 @@ export const SiteHeader = () => {
               >
                 {CURRENCY_OPTIONS.map((option) => (
                   <MenuItem key={option.code} value={option.code}>
-                    {option.code} - {option.label}
+                    {option.label} ({option.code} )
                   </MenuItem>
                 ))}
               </Select>

@@ -1,4 +1,4 @@
-import { getBrandContentState, getContactInfoState } from "@/lib/local-data";
+import { contentService } from "@/services/content/content.service";
 import type { BrandContent, ContactInfo, Testimonial } from "@/types/content";
 
 const defaultBrandContent: BrandContent = {
@@ -52,9 +52,25 @@ export const defaultTestimonials: Testimonial[] = [
 ];
 
 export const getBrandContent = async (): Promise<BrandContent> => {
-  return getBrandContentState() ?? defaultBrandContent;
+  try {
+    return await contentService.getBrandContent();
+  } catch {
+    return defaultBrandContent;
+  }
 };
 
 export const getContactInfo = async (): Promise<ContactInfo> => {
-  return getContactInfoState() ?? defaultContactInfo;
+  try {
+    return await contentService.getContactInfo();
+  } catch {
+    return defaultContactInfo;
+  }
+};
+
+export const getHomepageContent = async (): Promise<Record<string, unknown> | null> => {
+  try {
+    return (await contentService.getHomepageSettings()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 };

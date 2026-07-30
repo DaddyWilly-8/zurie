@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -13,6 +14,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { authService } from "@/services/auth/auth.service";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -24,19 +26,15 @@ export default function AdminLoginPage() {
     event.preventDefault();
     setError("");
 
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null);
-      setError(payload?.error ?? "Login failed.");
+    try {
+      await authService.login(email, password);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Login failed.");
       return;
     }
 
-    router.push("/admin");
+    const target = new URLSearchParams(window.location.search).get("next") ?? "/admin";
+    router.push(target);
     router.refresh();
   };
 
@@ -65,6 +63,9 @@ export default function AdminLoginPage() {
               />
               <Button type="submit" variant="contained">
                 Sign In
+              </Button>
+              <Button component={Link} href="/admin/forgot-password" variant="text">
+                Forgot password?
               </Button>
               {error ? <Alert severity="error">{error}</Alert> : null}
             </Stack>

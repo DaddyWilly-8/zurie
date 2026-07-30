@@ -1,99 +1,142 @@
-# Zuriè Luxury Handbags E-Commerce
+# Zuriè Frontend (Next.js 15)
 
-Production-ready Next.js App Router storefront and admin dashboard for a luxury women’s handbag brand.
+Production-oriented frontend for Zuriè women's handbags, built with Next.js App Router, TypeScript, Material UI, and Font Awesome.
+
+This project is intentionally frontend-only and designed to integrate with a separate Laravel REST API.
 
 ## Stack
-
-- Next.js App Router + TypeScript
-- Material UI + Tailwind + Framer Motion
-- Local in-memory data store (no external database)
+- Next.js 15 App Router
+- TypeScript (strict)
+- React
+- Material UI
 - Font Awesome
-- ESLint + Prettier + Husky + lint-staged
+- Zustand (client state)
 
-## Core Features
+## Architecture Summary
+- API-first service layer under `services/api/`
+- Domain services under `services/*/`
+- Isolated mock backend under `services/mock/`
+- Feature modules under `features/`
+- Thin route pages under `app/`
 
-- Premium responsive storefront (home, about, shop, categories, product details, cart, contact)
-- Search, filtering, sorting, quick view, related products
-- Wishlist and recently viewed products (client state)
-- WhatsApp checkout flow with formatted order payload
-- Newsletter and contact enquiry submissions
-- Admin dashboard with secure login and protected routes
-- Product, category, content, and settings management APIs
-- SEO: dynamic metadata, Open Graph, sitemap, robots, canonical
-- Performance: lazy image loading, server components, cached product fetch
+See documentation:
+- `docs/architecture.md`
+- `docs/api-integration.md`
+- `docs/admin-dashboard.md`
+- `docs/development-guide.md`
 
 ## Project Structure
-
 ```text
 app/
+  (public)/
+  (auth)/admin/
+  (admin)/admin/
 components/
 features/
-lib/
 hooks/
 services/
-actions/
+  api/
+  auth/
+  products/
+  categories/
+  orders/
+  enquiries/
+  content/
+  media/
+  users/
+  dashboard/
+  activity/
+  notifications/
+  mock/
 types/
 utils/
 constants/
 providers/
-public/
+docs/
 ```
 
 ## Environment Variables
+Create `.env.local` from `.env.example`.
 
-Copy `.env.example` to `.env.local` and set values:
-
-```bash
-cp .env.example .env.local
-```
-
-Required for full functionality:
-
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
+Required:
+- `NEXT_PUBLIC_API_MODE=mock` or `laravel`
+- `NEXT_PUBLIC_API_URL` for Laravel mode
 
 Optional:
-
 - `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_WHATSAPP_NUMBER`
+- `NEXT_PUBLIC_DEMO_ADMIN_EMAIL`
+- `NEXT_PUBLIC_DEMO_ADMIN_PASSWORD`
 - `NEXT_PUBLIC_GA_ID`
 
-## Local Development
+## Running Locally
+1. `npm install`
+2. `cp .env.example .env.local`
+3. `npm run dev`
+4. Open `http://localhost:3000`
 
-```bash
-npm install
-npm run dev
-```
+## Mock API Mode
+Set:
+- `NEXT_PUBLIC_API_MODE=mock`
 
-Quality checks:
+In this mode, UI talks to in-memory mock adapter in `services/mock/mock-backend.ts`.
 
-```bash
-npm run lint
-npm run typecheck
-npm run format
-```
+## Laravel API Mode
+Set:
+- `NEXT_PUBLIC_API_MODE=laravel`
+- `NEXT_PUBLIC_API_URL=https://your-laravel-domain/api`
+
+In this mode, services call Laravel endpoints through `services/api/client.ts`.
+
+## Authentication Architecture
+Authentication is abstracted in `services/auth/auth.service.ts`.
+
+- Mock mode: local demo session for development
+- Laravel mode: cookie-based API calls with `credentials: include`
+
+This supports future Laravel Sanctum/HTTP-only cookie flow.
+
+## Admin Dashboard Modules
+- `/admin`
+- `/admin/products`
+- `/admin/categories`
+- `/admin/orders`
+- `/admin/enquiries`
+- `/admin/homepage`
+- `/admin/content`
+- `/admin/media`
+- `/admin/settings`
+- `/admin/users`
+- `/admin/activity`
+
+## Adding a New API Service
+1. Add endpoint in `services/api/endpoints.ts`
+2. Add module service in `services/<module>/`
+3. Add mock implementation in `services/mock/mock-backend.ts`
+4. Use service in feature component/hook
+
+## Adding a New Feature
+1. Build feature UI in `features/<module>/`
+2. Keep page route in `app/` minimal
+3. Add or extend domain service
+4. Reuse shared types in `types/`
+
+## Adding a New Admin Module
+1. Create page route under `app/(admin)/admin/`
+2. Create feature client under `features/admin/`
+3. Add service functions
+4. Add nav link in `components/admin/admin-shell.tsx`
+
+## Build and Quality Checks
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+
+## Deployment
+Deploy frontend (for example on Vercel) and point `NEXT_PUBLIC_API_URL` to Laravel API host.
 
 ## Security Notes
-
-- Admin UI routes are server-protected via local session cookie.
-- Admin API routes verify local admin session before writes.
-- User input validation with Zod.
-- Basic request throttling for public form endpoints.
-- No secrets are exposed to the frontend.
-
-## Deployment (Vercel)
-
-1. Push repository to Git provider.
-2. Import project into Vercel.
-3. Add environment variables from `.env.local`.
-4. Deploy.
-
-## Future Extensibility
-
-Architecture supports future modules without major refactor:
-
-- Payments (M-Pesa, Airtel Money, cards)
-- Customer accounts and order tracking
-- Coupons and inventory workflows
-- Multi-language and multi-currency
-- Analytics dashboards
+- Do not place secrets in `NEXT_PUBLIC_*`
+- Frontend authorization is UX-only
+- Laravel backend must enforce auth, permissions, and data validation

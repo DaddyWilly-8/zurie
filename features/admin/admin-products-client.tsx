@@ -10,19 +10,29 @@ import {
   Checkbox,
   Grid,
   IconButton,
+  MenuItem,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faClone, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { productService } from "@/services/products/product.service";
 
 type AdminProduct = {
   id: string;
   name: string;
   slug: string;
   description: string;
+  short_description?: string;
   price: number;
+  sale_price?: number | null;
+  sku?: string;
+  status?: "draft" | "published" | "out_of_stock" | "archived";
+  material?: string;
+  seo_title?: string;
+  seo_description?: string;
+  featured_image_url?: string;
   category: string;
   featured: boolean;
   best_seller: boolean;
@@ -44,7 +54,15 @@ type ProductFormState = {
   name: string;
   slug: string;
   description: string;
+  shortDescription: string;
   price: number;
+  salePrice: number;
+  sku: string;
+  status: "draft" | "published" | "out_of_stock" | "archived";
+  material: string;
+  seoTitle: string;
+  seoDescription: string;
+  featuredImageUrl: string;
   category: string;
   featured: boolean;
   bestSeller: boolean;
@@ -61,7 +79,15 @@ const emptyFormState: ProductFormState = {
   name: "",
   slug: "",
   description: "",
+  shortDescription: "",
   price: 0,
+  salePrice: 0,
+  sku: "",
+  status: "draft",
+  material: "",
+  seoTitle: "",
+  seoDescription: "",
+  featuredImageUrl: "",
   category: "handbags",
   featured: false,
   bestSeller: false,
@@ -102,7 +128,15 @@ const toFormState = (product: AdminProduct): ProductFormState => ({
   name: product.name,
   slug: product.slug,
   description: product.description,
+  shortDescription: product.short_description ?? "",
   price: product.price,
+  salePrice: product.sale_price ?? 0,
+  sku: product.sku ?? "",
+  status: product.status ?? "published",
+  material: product.material ?? "",
+  seoTitle: product.seo_title ?? "",
+  seoDescription: product.seo_description ?? "",
+  featuredImageUrl: product.featured_image_url ?? "",
   category: product.category,
   featured: product.featured,
   bestSeller: product.best_seller,
@@ -119,7 +153,15 @@ const toPayload = (state: ProductFormState) => ({
   name: state.name.trim(),
   slug: state.slug.trim(),
   description: state.description.trim(),
+  shortDescription: state.shortDescription.trim(),
   price: Number(state.price),
+  salePrice: Number(state.salePrice) > 0 ? Number(state.salePrice) : null,
+  sku: state.sku.trim(),
+  status: state.status,
+  material: state.material.trim(),
+  seoTitle: state.seoTitle.trim(),
+  seoDescription: state.seoDescription.trim(),
+  featuredImageUrl: state.featuredImageUrl.trim() || undefined,
   category: state.category.trim(),
   featured: state.featured,
   bestSeller: state.bestSeller,
@@ -141,9 +183,7 @@ export const AdminProductsClient = () => {
   const [form, setForm] = useState<ProductFormState>(emptyFormState);
 
   const loadProducts = async () => {
-    const response = await fetch("/api/admin/products", { cache: "no-store" });
-    const payload = await response.json();
-    const productList = (payload.products ?? []) as AdminProduct[];
+    const productList = (await productService.listAdminProducts()) as AdminProduct[];
     setProducts(productList);
     setEdits(
       Object.fromEntries(productList.map((item) => [item.id, toFormState(item)])),
@@ -158,27 +198,27 @@ export const AdminProductsClient = () => {
   const createProduct = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const response = await fetch("/api/admin/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(toPayload(form)),
-    });
-
-    if (response.ok) {
+    try {
+      await productService.createProduct(toPayload(form));
       setForm(emptyFormState);
       setMessageType("success");
       setMessage("Product created.");
       await loadProducts();
-    } else {
+    } catch {
       setMessageType("error");
       setMessage("Failed to create product.");
     }
   };
 
   const deleteProduct = async (id: string) => {
-    const response = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
-    setMessageType(response.ok ? "success" : "error");
-    setMessage(response.ok ? "Product removed." : "Failed to remove product.");
+    try {
+      await productService.deleteProduct(id);
+      setMessageType("success");
+      setMessage("Product removed.");
+    } catch {
+      setMessageType("error");
+      setMessage("Failed to remove product.");
+    }
     await loadProducts();
   };
 
@@ -186,14 +226,26 @@ export const AdminProductsClient = () => {
     const edit = edits[id];
     if (!edit) return;
 
-    const response = await fetch(`/api/admin/products/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(toPayload(edit)),
-    });
+    try {
+      await productService.updateProduct(id, toPayload(edit));
+      setMessageType("success");
+      setMessage("Product updated.");
+    } catch {
+      setMessageType("error");
+      setMessage("Failed to update product.");
+    }
+    await loadProducts();
+  };
 
-    setMessageType(response.ok ? "success" : "error");
-    setMessage(response.ok ? "Product updated." : "Failed to update product.");
+  const duplicateProduct = async (id: string) => {
+    try {
+      await productService.duplicateProduct(id);
+      setMessageType("success");
+      setMessage("Product duplicated.");
+    } catch {
+      setMessageType("error");
+      setMessage("Failed to duplicate product.");
+    }
     await loadProducts();
   };
 
@@ -257,6 +309,16 @@ export const AdminProductsClient = () => {
                   required
                 />
               </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  label="Short Description"
+                  value={form.shortDescription}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, shortDescription: e.target.value }))
+                  }
+                  fullWidth
+                />
+              </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label="Price"
@@ -271,6 +333,25 @@ export const AdminProductsClient = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
+                  label="Sale Price"
+                  type="number"
+                  value={form.salePrice}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, salePrice: Number(e.target.value) }))
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  label="SKU"
+                  value={form.sku}
+                  onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
                   label="Category"
                   value={form.category}
                   onChange={(e) =>
@@ -278,6 +359,32 @@ export const AdminProductsClient = () => {
                   }
                   fullWidth
                   required
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  label="Status"
+                  select
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, status: e.target.value as ProductFormState["status"] }))
+                  }
+                  fullWidth
+                >
+                  <MenuItem value="draft">Draft</MenuItem>
+                  <MenuItem value="published">Published</MenuItem>
+                  <MenuItem value="out_of_stock">Out of Stock</MenuItem>
+                  <MenuItem value="archived">Archived</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  label="Material"
+                  value={form.material}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, material: e.target.value }))
+                  }
+                  fullWidth
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -297,6 +404,16 @@ export const AdminProductsClient = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
+                  label="Featured Image URL"
+                  value={form.featuredImageUrl}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, featuredImageUrl: e.target.value }))
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
                   label="Image URLs (new line separated)"
                   value={form.imageUrlsText}
                   onChange={(e) =>
@@ -305,6 +422,24 @@ export const AdminProductsClient = () => {
                   fullWidth
                   multiline
                   minRows={3}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="SEO Title"
+                  value={form.seoTitle}
+                  onChange={(e) => setForm((p) => ({ ...p, seoTitle: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="SEO Description"
+                  value={form.seoDescription}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, seoDescription: e.target.value }))
+                  }
+                  fullWidth
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -423,6 +558,13 @@ export const AdminProductsClient = () => {
                       </Typography>
                     </Box>
                     <Stack direction="row" spacing={1}>
+                      <IconButton
+                        color="primary"
+                        onClick={() => duplicateProduct(item.id)}
+                        aria-label="Duplicate product"
+                      >
+                        <FontAwesomeIcon icon={faClone} />
+                      </IconButton>
                       <Button
                         size="small"
                         variant="outlined"
@@ -473,6 +615,16 @@ export const AdminProductsClient = () => {
                         minRows={2}
                       />
                     </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField
+                        label="Short Description"
+                        value={edit.shortDescription}
+                        onChange={(event) =>
+                          updateEditField(item.id, "shortDescription", event.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         label="Price"
@@ -480,6 +632,27 @@ export const AdminProductsClient = () => {
                         value={edit.price}
                         onChange={(event) =>
                           updateEditField(item.id, "price", Number(event.target.value))
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <TextField
+                        label="Sale Price"
+                        type="number"
+                        value={edit.salePrice}
+                        onChange={(event) =>
+                          updateEditField(item.id, "salePrice", Number(event.target.value))
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <TextField
+                        label="SKU"
+                        value={edit.sku}
+                        onChange={(event) =>
+                          updateEditField(item.id, "sku", event.target.value)
                         }
                         fullWidth
                       />
@@ -497,10 +670,46 @@ export const AdminProductsClient = () => {
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
+                        label="Status"
+                        select
+                        value={edit.status}
+                        onChange={(event) =>
+                          updateEditField(item.id, "status", event.target.value as ProductFormState["status"])
+                        }
+                        fullWidth
+                      >
+                        <MenuItem value="draft">Draft</MenuItem>
+                        <MenuItem value="published">Published</MenuItem>
+                        <MenuItem value="out_of_stock">Out of Stock</MenuItem>
+                        <MenuItem value="archived">Archived</MenuItem>
+                      </TextField>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
+                        label="Material"
+                        value={edit.material}
+                        onChange={(event) =>
+                          updateEditField(item.id, "material", event.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
                         label="Category"
                         value={edit.category}
                         onChange={(event) =>
                           updateEditField(item.id, "category", event.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
+                        label="Featured Image URL"
+                        value={edit.featuredImageUrl}
+                        onChange={(event) =>
+                          updateEditField(item.id, "featuredImageUrl", event.target.value)
                         }
                         fullWidth
                       />
@@ -515,6 +724,26 @@ export const AdminProductsClient = () => {
                         fullWidth
                         multiline
                         minRows={3}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
+                        label="SEO Title"
+                        value={edit.seoTitle}
+                        onChange={(event) =>
+                          updateEditField(item.id, "seoTitle", event.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
+                        label="SEO Description"
+                        value={edit.seoDescription}
+                        onChange={(event) =>
+                          updateEditField(item.id, "seoDescription", event.target.value)
+                        }
+                        fullWidth
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>

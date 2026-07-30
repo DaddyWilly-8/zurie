@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   IconButton,
   Stack,
   TextField,
@@ -14,27 +15,55 @@ import {
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { categoryService } from "@/services/categories/category.service";
 
-type Category = { id: string; name: string; slug: string };
-type CategoryEdits = Record<string, { name: string; slug: string }>;
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image_url?: string | null;
+  is_visible?: boolean;
+  sort_order?: number;
+};
+type CategoryEdits = Record<
+  string,
+  {
+    name: string;
+    slug: string;
+    description: string;
+    imageUrl: string;
+    visible: boolean;
+    sortOrder: number;
+  }
+>;
 
 export const AdminCategoriesClient = () => {
   const [items, setItems] = useState<Category[]>([]);
   const [edits, setEdits] = useState<CategoryEdits>({});
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [visible, setVisible] = useState(true);
+  const [sortOrder, setSortOrder] = useState(100);
   const [message, setMessage] = useState("");
 
   const load = async () => {
-    const response = await fetch("/api/admin/categories");
-    const data = await response.json();
-    const categories = data.categories ?? [];
+    const categories = (await categoryService.listAdminCategories()) as Category[];
     setItems(categories);
     setEdits(
       Object.fromEntries(
         categories.map((item: Category) => [
           item.id,
-          { name: item.name, slug: item.slug },
+            {
+              name: item.name,
+              slug: item.slug,
+              description: item.description ?? "",
+              imageUrl: item.image_url ?? "",
+              visible: item.is_visible ?? true,
+              sortOrder: item.sort_order ?? 100,
+            },
         ]),
       ),
     );
@@ -44,16 +73,22 @@ export const AdminCategoriesClient = () => {
     let active = true;
 
     const run = async () => {
-      const response = await fetch("/api/admin/categories");
-      const data = await response.json();
+      const data = await categoryService.listAdminCategories();
       if (active) {
-        const categories = data.categories ?? [];
+        const categories = data as Category[];
         setItems(categories);
         setEdits(
           Object.fromEntries(
             categories.map((item: Category) => [
               item.id,
-              { name: item.name, slug: item.slug },
+              {
+                name: item.name,
+                slug: item.slug,
+                description: item.description ?? "",
+                imageUrl: item.image_url ?? "",
+                visible: item.is_visible ?? true,
+                sortOrder: item.sort_order ?? 100,
+              },
             ]),
           ),
         );
@@ -69,39 +104,48 @@ export const AdminCategoriesClient = () => {
 
   const createCategory = async (event: React.FormEvent) => {
     event.preventDefault();
-    const response = await fetch("/api/admin/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, slug }),
-    });
-
-    if (response.ok) {
+    try {
+      await categoryService.createCategory({
+        name,
+        slug,
+        description,
+        imageUrl,
+        visible,
+        sortOrder,
+      });
       setName("");
       setSlug("");
+      setDescription("");
+      setImageUrl("");
+      setVisible(true);
+      setSortOrder(100);
       setMessage("Category created");
       load();
-    } else {
+    } catch {
       setMessage("Category creation failed");
     }
   };
 
   const removeCategory = async (id: string) => {
-    await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
-    load();
+    try {
+      await categoryService.deleteCategory(id);
+      load();
+    } catch {
+      setMessage("Category deletion failed");
+    }
   };
 
   const saveCategory = async (id: string) => {
     const payload = edits[id];
     if (!payload) return;
 
-    const response = await fetch(`/api/admin/categories/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    setMessage(response.ok ? "Category updated" : "Category update failed");
-    load();
+    try {
+      await categoryService.updateCategory(id, payload);
+      setMessage("Category updated");
+      load();
+    } catch {
+      setMessage("Category update failed");
+    }
   };
 
   return (
@@ -129,6 +173,28 @@ export const AdminCategoriesClient = () => {
               onChange={(e) => setSlug(e.target.value)}
               required
             />
+            <TextField
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              multiline
+              minRows={2}
+            />
+            <TextField
+              label="Category Image URL"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+            <TextField
+              label="Sort Order"
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(Number(e.target.value))}
+            />
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Checkbox checked={visible} onChange={(e) => setVisible(e.target.checked)} />
+              <Typography>Visible</Typography>
+            </Stack>
             <Button type="submit" variant="contained">
               Create
             </Button>
@@ -165,6 +231,10 @@ export const AdminCategoriesClient = () => {
                           ...(prev[item.id] ?? {
                             name: item.name,
                             slug: item.slug,
+                            description: item.description ?? "",
+                            imageUrl: item.image_url ?? "",
+                            visible: item.is_visible ?? true,
+                            sortOrder: item.sort_order ?? 100,
                           }),
                           name: event.target.value,
                         },
@@ -182,12 +252,102 @@ export const AdminCategoriesClient = () => {
                           ...(prev[item.id] ?? {
                             name: item.name,
                             slug: item.slug,
+                            description: item.description ?? "",
+                            imageUrl: item.image_url ?? "",
+                            visible: item.is_visible ?? true,
+                            sortOrder: item.sort_order ?? 100,
                           }),
                           slug: event.target.value,
                         },
                       }))
                     }
                   />
+                  <TextField
+                    size="small"
+                    label="Description"
+                    value={edits[item.id]?.description ?? item.description ?? ""}
+                    onChange={(event) =>
+                      setEdits((prev) => ({
+                        ...prev,
+                        [item.id]: {
+                          ...(prev[item.id] ?? {
+                            name: item.name,
+                            slug: item.slug,
+                            description: item.description ?? "",
+                            imageUrl: item.image_url ?? "",
+                            visible: item.is_visible ?? true,
+                            sortOrder: item.sort_order ?? 100,
+                          }),
+                          description: event.target.value,
+                        },
+                      }))
+                    }
+                  />
+                  <TextField
+                    size="small"
+                    label="Image URL"
+                    value={edits[item.id]?.imageUrl ?? item.image_url ?? ""}
+                    onChange={(event) =>
+                      setEdits((prev) => ({
+                        ...prev,
+                        [item.id]: {
+                          ...(prev[item.id] ?? {
+                            name: item.name,
+                            slug: item.slug,
+                            description: item.description ?? "",
+                            imageUrl: item.image_url ?? "",
+                            visible: item.is_visible ?? true,
+                            sortOrder: item.sort_order ?? 100,
+                          }),
+                          imageUrl: event.target.value,
+                        },
+                      }))
+                    }
+                  />
+                  <TextField
+                    size="small"
+                    label="Sort"
+                    type="number"
+                    value={edits[item.id]?.sortOrder ?? item.sort_order ?? 100}
+                    onChange={(event) =>
+                      setEdits((prev) => ({
+                        ...prev,
+                        [item.id]: {
+                          ...(prev[item.id] ?? {
+                            name: item.name,
+                            slug: item.slug,
+                            description: item.description ?? "",
+                            imageUrl: item.image_url ?? "",
+                            visible: item.is_visible ?? true,
+                            sortOrder: item.sort_order ?? 100,
+                          }),
+                          sortOrder: Number(event.target.value),
+                        },
+                      }))
+                    }
+                  />
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                    <Checkbox
+                      checked={edits[item.id]?.visible ?? item.is_visible ?? true}
+                      onChange={(event) =>
+                        setEdits((prev) => ({
+                          ...prev,
+                          [item.id]: {
+                            ...(prev[item.id] ?? {
+                              name: item.name,
+                              slug: item.slug,
+                              description: item.description ?? "",
+                              imageUrl: item.image_url ?? "",
+                              visible: item.is_visible ?? true,
+                              sortOrder: item.sort_order ?? 100,
+                            }),
+                            visible: event.target.checked,
+                          },
+                        }))
+                      }
+                    />
+                    <Typography variant="caption">Visible</Typography>
+                  </Stack>
                 </Stack>
                 <Button
                   size="small"

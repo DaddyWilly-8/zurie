@@ -17,6 +17,8 @@ type CurrencyState = {
   refreshRates: () => Promise<void>;
 };
 
+const CURRENCY_RATE_SOURCE_URL = "https://open.er-api.com/v6/latest/USD";
+
 export const useCurrencyStore = create<CurrencyState>()(
   persist(
     (set) => ({
@@ -26,7 +28,7 @@ export const useCurrencyStore = create<CurrencyState>()(
       setCurrency: (currency) => set({ currency }),
       refreshRates: async () => {
         try {
-          const response = await fetch("/api/currency-rates", {
+          const response = await fetch(CURRENCY_RATE_SOURCE_URL, {
             method: "GET",
             cache: "no-store",
           });
@@ -36,13 +38,13 @@ export const useCurrencyStore = create<CurrencyState>()(
           }
 
           const payload = (await response.json()) as {
+            result?: string;
             rates?: Partial<CurrencyRateMap>;
-            source?: "fallback" | "live";
           };
 
           set({
             rates: normalizeExchangeRates(payload.rates),
-            ratesSource: payload.source === "live" ? "live" : "fallback",
+            ratesSource: payload.result === "success" ? "live" : "fallback",
           });
         } catch {
           // Keep persisted/fallback rates on request failures.

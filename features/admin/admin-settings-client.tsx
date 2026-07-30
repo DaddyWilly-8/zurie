@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -10,40 +10,71 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import type { ContactInfo } from "@/types/content";
+import { contentService } from "@/services/content/content.service";
 
-export const AdminSettingsClient = () => {
-  const [whatsappNumber, setWhatsappNumber] = useState("254718752434");
-  const [phone, setPhone] = useState("+254 718 752 434");
-  const [email, setEmail] = useState("hello@zurie.co.tz");
-  const [address, setAddress] = useState("Nairobi, Kenya");
-  const [instagram, setInstagram] = useState("https://instagram.com");
-  const [facebook, setFacebook] = useState("https://facebook.com");
-  const [tiktok, setTiktok] = useState("https://tiktok.com");
-  const [mapEmbedUrl, setMapEmbedUrl] = useState(
-    "https://maps.google.com/maps?q=Nairobi&t=&z=13&ie=UTF8&iwloc=&output=embed",
-  );
+export const AdminSettingsClient = ({
+  initial,
+}: {
+  initial?: ContactInfo;
+}) => {
+  const [whatsappNumber, setWhatsappNumber] = useState(initial?.whatsappNumber ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
+  const [email, setEmail] = useState(initial?.email ?? "");
+  const [address, setAddress] = useState(initial?.address ?? "");
+  const [instagram, setInstagram] = useState(initial?.instagram ?? "");
+  const [facebook, setFacebook] = useState(initial?.facebook ?? "");
+  const [tiktok, setTiktok] = useState(initial?.tiktok ?? "");
+  const [mapEmbedUrl, setMapEmbedUrl] = useState(initial?.mapEmbedUrl ?? "");
   const [message, setMessage] = useState("");
 
-  const saveSettings = async () => {
-    const response = await fetch("/api/admin/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        key: "contact",
-        value: {
-          whatsappNumber,
-          phone,
-          email,
-          address,
-          instagram,
-          facebook,
-          tiktok,
-          mapEmbedUrl,
-        },
-      }),
-    });
+  useEffect(() => {
+    let active = true;
 
-    setMessage(response.ok ? "Settings updated" : "Failed to update settings");
+    const load = async () => {
+      try {
+        const payload = await contentService.getContactInfo();
+        if (!active) return;
+        setWhatsappNumber(payload.whatsappNumber);
+        setPhone(payload.phone);
+        setEmail(payload.email);
+        setAddress(payload.address);
+        setInstagram(payload.instagram);
+        setFacebook(payload.facebook);
+        setTiktok(payload.tiktok);
+        setMapEmbedUrl(payload.mapEmbedUrl);
+      } catch {
+        if (active) {
+          setMessage("Failed to load settings");
+        }
+      }
+    };
+
+    if (!initial) {
+      void load();
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [initial]);
+
+  const saveSettings = async () => {
+    try {
+      await contentService.updateContactInfo({
+        whatsappNumber,
+        phone,
+        email,
+        address,
+        instagram,
+        facebook,
+        tiktok,
+        mapEmbedUrl,
+      });
+      setMessage("Settings updated");
+    } catch {
+      setMessage("Failed to update settings");
+    }
   };
 
   return (

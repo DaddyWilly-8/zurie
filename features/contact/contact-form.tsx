@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Alert, Button, Grid, Stack, TextField, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperPlane } from "@fortawesome/free-solid-svg-icons";
-import { apiFetch } from "@/lib/api-client";
+import { enquiryService } from "@/services/enquiries/enquiry.service";
 
 export const ContactForm = () => {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -28,15 +28,16 @@ export const ContactForm = () => {
         .join("\n\n"),
     };
 
-    const response = await apiFetch("/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    setStatus(response.ok ? "success" : "error");
-    if (response.ok) {
+    try {
+      await enquiryService.createEnquiry({
+        name: String(payload.name),
+        email: String(payload.email),
+        message: String(payload.message),
+      });
+      setStatus("success");
       event.currentTarget.reset();
+    } catch {
+      setStatus("error");
     }
   };
 

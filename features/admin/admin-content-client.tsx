@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -10,13 +10,50 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import type { BrandContent } from "@/types/content";
+import { contentService } from "@/services/content/content.service";
 
-export const AdminContentClient = () => {
-  const [story, setStory] = useState("");
-  const [mission, setMission] = useState("");
-  const [vision, setVision] = useState("");
-  const [qualityCommitment, setQualityCommitment] = useState("");
+export const AdminContentClient = ({
+  initial,
+}: {
+  initial?: BrandContent;
+}) => {
+  const [story, setStory] = useState(initial?.story ?? "");
+  const [mission, setMission] = useState(initial?.mission ?? "");
+  const [vision, setVision] = useState(initial?.vision ?? "");
+  const [qualityCommitment, setQualityCommitment] = useState(
+    initial?.qualityCommitment ?? "",
+  );
+  const [heroImage, setHeroImage] = useState(initial?.heroImage ?? "/images/hero/zurie-hero.png");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      try {
+        const payload = await contentService.getBrandContent();
+        if (!active) return;
+        setStory(payload.story);
+        setMission(payload.mission);
+        setVision(payload.vision);
+        setQualityCommitment(payload.qualityCommitment);
+        setHeroImage(payload.heroImage);
+      } catch {
+        if (active) {
+          setMessage("Failed to load content");
+        }
+      }
+    };
+
+    if (!initial) {
+      void load();
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [initial]);
 
   const saveContent = async () => {
     const payload = {
@@ -25,7 +62,7 @@ export const AdminContentClient = () => {
         heroTitle: "Carry Confidence. Wear Elegance.",
         heroSubtitle:
           "Discover elevated handbags designed for modern women who move with style and purpose.",
-        heroImage: "/images/hero/zurie-hero.png",
+        heroImage,
         story,
         mission,
         vision,
@@ -33,13 +70,12 @@ export const AdminContentClient = () => {
       },
     };
 
-    const response = await fetch("/api/admin/content", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    setMessage(response.ok ? "Content updated" : "Failed to update content");
+    try {
+      await contentService.updateBrandContent(payload.payload);
+      setMessage("Content updated");
+    } catch {
+      setMessage("Failed to update content");
+    }
   };
 
   return (
