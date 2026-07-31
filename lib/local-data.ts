@@ -23,11 +23,11 @@ const defaultBrandContent: BrandContent = {
     "Discover elevated handbags designed for modern women who move with style and purpose.",
   heroImage: "/images/hero/zurie-hero.png",
   story:
-    "Zurie was founded to create handbags that blend timeless design, premium materials, and everyday functionality.",
+    "Zuriè was founded to create handbags that blend timeless design, premium materials, and everyday functionality.",
   mission: "To empower women with elegant accessories that elevate every moment.",
   vision: "To become Africa's leading modern luxury handbag house loved globally.",
   qualityCommitment:
-    "Every Zurie piece is crafted with meticulous detail, durable materials, and premium finishing standards.",
+    "Every Zuriè piece is crafted with meticulous detail, durable materials, and premium finishing standards.",
 };
 
 const defaultContactInfo: ContactInfo = {

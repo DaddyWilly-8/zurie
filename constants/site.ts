@@ -1,7 +1,7 @@
 export const SITE = {
-  name: "Zurie",
-  displayName: "Zurie",
-  legalName: "Zurie Luxury Handbags",
+  name: "Zuriè",
+  displayName: "Zuriè",
+  legalName: "Zuriè Luxury Handbags",
   description:
     "Modern luxury handbags crafted for women who value elegance, quality, and timeless design.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
