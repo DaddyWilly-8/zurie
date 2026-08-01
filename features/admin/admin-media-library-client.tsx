@@ -1,38 +1,25 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
-  Box,
-  Button,
   Card,
   CardContent,
-  Grid,
   Pagination,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import { mediaService } from "@/services/media/media.service";
-
-export type AdminMediaItem = {
-  id: string;
-  file_name: string;
-  file_url: string;
-  mime_type: string;
-  size_bytes: number;
-  folder: string | null;
-  used_in: string[] | null;
-  created_at: string;
-};
+import {
+  mediaActions,
+  MediaGrid,
+  MediaToolbar,
+  type AdminMediaItem,
+} from "@/features/admin/media";
 
 type Props = {
   initialData: AdminMediaItem[];
   initialCount: number;
 };
-
-const PAGE_SIZE = 20;
 
 export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) => {
   const [rows, setRows] = useState(initialData);
@@ -41,20 +28,21 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
   const [search, setSearch] = useState("");
   const [folder, setFolder] = useState("general");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
   const [loading, setLoading] = useState(false);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / PAGE_SIZE)), [count]);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / mediaActions.pageSize)), [count]);
 
   const load = useCallback(async (nextPage: number, nextSearch = search) => {
-    const payload = await mediaService.listMedia({
-      page: nextPage,
-      pageSize: PAGE_SIZE,
-      search: nextSearch.trim() || undefined,
-    });
-
-    setRows((payload.data ?? []) as AdminMediaItem[]);
-    setCount(payload.count ?? 0);
-    setPage(nextPage);
+    try {
+      const payload = await mediaActions.list(nextPage, nextSearch);
+      setRows(payload.data);
+      setCount(payload.count);
+      setPage(nextPage);
+    } catch {
+      setMessage("Failed to load media");
+      setMessageType("error");
+    }
   }, [search]);
 
   const upload = async (file: File) => {
@@ -62,10 +50,12 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
     setMessage("");
 
     try {
-      await mediaService.upload(file, folder);
+      await mediaActions.upload(file, folder);
       setMessage("Upload successful");
+      setMessageType("success");
     } catch {
       setMessage("Upload failed");
+      setMessageType("error");
     } finally {
       setLoading(false);
     }
@@ -74,10 +64,12 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
 
   const remove = async (id: string) => {
     try {
-      await mediaService.remove(id);
-      setMessage("Media deleted");
+      await mediaActions.remove(id);
+      setMessage("Media deleted successfully");
+      setMessageType("success");
     } catch {
       setMessage("Delete failed");
+      setMessageType("error");
     }
     await load(page);
   };
@@ -89,91 +81,45 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
   }, [initialData.length, load]);
 
   return (
-    <Stack spacing={2}>
-      {message ? <Alert severity="info">{message}</Alert> : null}
+    <Stack spacing={3}>
+      {message ? <Alert severity={messageType} onClose={() => setMessage("")} sx={{ borderRadius: 1.5 }}>{message}</Alert> : null}
 
-      <Card>
-        <CardContent>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-            <TextField
-              label="Search Media"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Folder"
-              value={folder}
-              onChange={(event) => setFolder(event.target.value)}
-              sx={{ minWidth: 200 }}
-            />
-            <Button variant="outlined" onClick={() => load(1, search)}>
-              Search
-            </Button>
-            <Button variant="contained" component="label" disabled={loading}>
-              Upload
-              <input
-                hidden
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) {
-                    void upload(file);
-                  }
-                }}
-              />
-            </Button>
+      <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+        <CardContent sx={{ p: 3 }}>
+          <Stack spacing={0.5} sx={{ mb: 3 }}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+              Media
+            </Typography>
+            <Typography variant="h6" sx={{ color: "#171512" }}>
+              Media Library
+            </Typography>
           </Stack>
+
+          <MediaToolbar
+            search={search}
+            folder={folder}
+            loading={loading}
+            onSearchChange={setSearch}
+            onFolderChange={setFolder}
+            onSearch={() => {
+              void load(1, search);
+            }}
+            onUpload={(file) => {
+              void upload(file);
+            }}
+          />
         </CardContent>
       </Card>
 
-      <Grid container spacing={2}>
-        {rows.map((item) => (
-          <Grid key={item.id} size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ height: "100%" }}>
-              <CardContent>
-                <Box
-                  sx={{
-                    border: "1px solid #eee6db",
-                    borderRadius: 1,
-                    overflow: "hidden",
-                    mb: 1,
-                    position: "relative",
-                    height: 160,
-                  }}
-                >
-                  <Image
-                    src={item.file_url}
-                    alt={item.file_name}
-                    fill
-                    sizes="(max-width: 900px) 50vw, 25vw"
-                    style={{ objectFit: "cover" }}
-                  />
-                </Box>
-                <Typography fontWeight={700} noWrap>
-                  {item.file_name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {Math.round(item.size_bytes / 1024)} KB
-                </Typography>
-                <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => navigator.clipboard.writeText(item.file_url)}
-                  >
-                    Copy URL
-                  </Button>
-                  <Button size="small" color="error" onClick={() => remove(item.id)}>
-                    Delete
-                  </Button>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <MediaGrid
+        rows={rows}
+        onCopyUrl={(url) => {
+          void navigator.clipboard.writeText(url);
+        }}
+        onDelete={(id) => {
+          void remove(id);
+        }}
+      />
 
       {rows.length === 0 ? (
         <Typography color="text.secondary">No media uploaded yet.</Typography>

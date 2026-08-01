@@ -24,6 +24,10 @@ export const API_ENDPOINTS = {
     list: "/enquiries",
     byId: (id: string) => `/enquiries/${id}`,
   },
+  faq: {
+    list: "/faq",
+    byId: (id: string) => `/faq/${id}`,
+  },
   settings: {
     brand: "/settings/brand-content",
     contact: "/settings/contact-info",

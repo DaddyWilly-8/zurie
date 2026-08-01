@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -48,15 +49,23 @@ export const AdminActivityClient = () => {
   }, []);
 
   return (
-    <Card>
-      <CardContent>
-        <Table size="small">
+    <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <CardContent sx={{ p: 3 }}>
+        <Stack spacing={0.5} sx={{ mb: 2 }}>
+          <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+            Activity
+          </Typography>
+          <Typography variant="h6" sx={{ color: "#171512" }}>
+            Admin Activity Logs
+          </Typography>
+        </Stack>
+        <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>User</TableCell>
-              <TableCell>Action</TableCell>
-              <TableCell>Resource</TableCell>
-              <TableCell>When</TableCell>
+            <TableRow sx={{ bgcolor: "#f8f6f2" }}>
+              <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Resource</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>When</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -71,7 +80,7 @@ export const AdminActivityClient = () => {
             {entries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4}>
-                  <Typography color="text.secondary">No activity yet.</Typography>
+                  <Typography color="text.secondary" sx={{ py: 2 }}>No activity yet.</Typography>
                 </TableCell>
               </TableRow>
             ) : null}

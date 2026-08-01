@@ -3,25 +3,17 @@
 import { useEffect, useState } from "react";
 import {
   Alert,
-  MenuItem,
-  Paper,
+  Card,
+  CardContent,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
   Typography,
 } from "@mui/material";
-import { userService } from "@/services/users/user.service";
-
-export type AdminUserRow = {
-  id: string;
-  full_name: string | null;
-  role: "super_admin" | "admin" | "staff";
-  created_at: string;
-};
+import {
+  userActions,
+  UsersTable,
+  type AdminUserRow,
+  type UserRole,
+} from "@/features/admin/users";
 
 export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] }) => {
   const [rows, setRows] = useState(initialData);
@@ -32,9 +24,9 @@ export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] 
 
     const load = async () => {
       try {
-        const payload = await userService.listUsers();
+        const payload = await userActions.list();
         if (active) {
-          setRows(payload as AdminUserRow[]);
+          setRows(payload);
         }
       } catch {
         if (active) {
@@ -52,9 +44,9 @@ export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] 
     };
   }, [initialData]);
 
-  const updateRole = async (id: string, role: AdminUserRow["role"]) => {
+  const updateRole = async (id: string, role: UserRole) => {
     try {
-      await userService.updateRole(id, role);
+      await userActions.updateRole(id, role);
     } catch {
       setMessage("Failed to update role");
       return;
@@ -65,52 +57,21 @@ export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] 
   };
 
   return (
-    <Stack spacing={2}>
-      {message ? <Alert severity="info">{message}</Alert> : null}
-      <Paper sx={{ overflowX: "auto" }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>User</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Created</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>
-                  <Typography fontWeight={600}>{row.full_name ?? row.id}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {row.id}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <TextField
-                    size="small"
-                    select
-                    value={row.role}
-                    onChange={(event) =>
-                      updateRole(row.id, event.target.value as AdminUserRow["role"])
-                    }
-                    sx={{ minWidth: 180 }}
-                  >
-                    <MenuItem value="super_admin">Super Admin</MenuItem>
-                    <MenuItem value="admin">Admin</MenuItem>
-                    <MenuItem value="staff">Staff</MenuItem>
-                  </TextField>
-                </TableCell>
-                <TableCell>{new Date(row.created_at).toLocaleString()}</TableCell>
-              </TableRow>
-            ))}
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3}>No admin users found.</TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </Paper>
+    <Stack spacing={3}>
+      {message ? <Alert severity="info" onClose={() => setMessage("")} sx={{ borderRadius: 1.5 }}>{message}</Alert> : null}
+      <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+        <CardContent sx={{ p: 3 }}>
+          <Stack spacing={0.5} sx={{ mb: 3 }}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+              Users
+            </Typography>
+            <Typography variant="h6" sx={{ color: "#171512" }}>
+              Admin Users & Roles
+            </Typography>
+          </Stack>
+          <UsersTable rows={rows} onRoleChange={updateRole} />
+      </CardContent>
+      </Card>
     </Stack>
   );
 };

@@ -14,6 +14,7 @@ const PUBLIC_ADMIN_PATHS = new Set([
 export const useAdminAuth = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const currentPath = pathname ?? "";
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,9 +28,9 @@ export const useAdminAuth = () => {
       setUser(currentUser);
       setLoading(false);
 
-      const isPublic = PUBLIC_ADMIN_PATHS.has(pathname);
-      if (!currentUser && pathname.startsWith("/admin") && !isPublic) {
-        const next = encodeURIComponent(pathname);
+      const isPublic = PUBLIC_ADMIN_PATHS.has(currentPath);
+      if (!currentUser && currentPath.startsWith("/admin") && !isPublic) {
+        const next = encodeURIComponent(currentPath);
         router.replace(`/admin/login?next=${next}`);
       }
     };
@@ -39,7 +40,7 @@ export const useAdminAuth = () => {
     return () => {
       active = false;
     };
-  }, [pathname, router]);
+  }, [currentPath, router]);
 
   return { user, loading };
 };

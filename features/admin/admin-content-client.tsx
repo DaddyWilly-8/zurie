@@ -7,9 +7,9 @@ import {
   Card,
   CardContent,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
+import { AdminField, AdminImageUploader } from "@/components/admin";
 import type { BrandContent } from "@/types/content";
 import { contentService } from "@/services/content/content.service";
 
@@ -79,39 +79,46 @@ export const AdminContentClient = ({
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography variant="h6">About / Brand Content</Typography>
-          <TextField
-            label="Story"
-            multiline
-            minRows={3}
-            value={story}
-            onChange={(e) => setStory(e.target.value)}
-          />
-          <TextField
-            label="Mission"
-            multiline
-            minRows={3}
-            value={mission}
-            onChange={(e) => setMission(e.target.value)}
-          />
-          <TextField
-            label="Vision"
-            multiline
-            minRows={3}
-            value={vision}
-            onChange={(e) => setVision(e.target.value)}
-          />
-          <TextField
+    <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <CardContent sx={{ p: 3 }}>
+        <Stack spacing={2.2}>
+          <Stack spacing={0.5}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+              Content
+            </Typography>
+            <Typography variant="h6" sx={{ color: "#171512" }}>
+              About / Brand Content
+            </Typography>
+          </Stack>
+          <AdminField label="Story" value={story} onChange={setStory} multiline minRows={3} />
+          <AdminField label="Mission" value={mission} onChange={setMission} multiline minRows={3} />
+          <AdminField label="Vision" value={vision} onChange={setVision} multiline minRows={3} />
+          <AdminField
             label="Quality Commitment"
+            value={qualityCommitment}
+            onChange={setQualityCommitment}
             multiline
             minRows={3}
-            value={qualityCommitment}
-            onChange={(e) => setQualityCommitment(e.target.value)}
           />
-          <Button variant="contained" onClick={saveContent}>
+          <AdminField label="Hero Image URL" value={heroImage} onChange={setHeroImage} />
+          <AdminImageUploader
+            label="Hero Image"
+            images={heroImage ? [heroImage] : []}
+            onChange={(images) => setHeroImage(images[0] ?? "")}
+          />
+          <Button
+            variant="contained"
+            onClick={saveContent}
+            sx={{
+              alignSelf: "flex-start",
+              borderRadius: 1,
+              textTransform: "uppercase",
+              letterSpacing: "0.18em",
+              fontSize: "0.72rem",
+              bgcolor: "#171512",
+              "&:hover": { bgcolor: "#2d2a26" },
+            }}
+          >
             Save Content
           </Button>
           {message ? <Alert severity="info">{message}</Alert> : null}

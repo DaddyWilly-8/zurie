@@ -72,6 +72,16 @@ type MockActivity = {
   created_at: string;
 };
 
+type MockFaq = {
+  id: string;
+  question: string;
+  answer: string;
+  display_order: number;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 const orders: MockOrder[] = [];
 const media: MockMedia[] = [];
 const users: MockUser[] = [
@@ -83,6 +93,7 @@ const users: MockUser[] = [
   },
 ];
 const activities: MockActivity[] = [];
+const faqs: MockFaq[] = [];
 const homepage = {
   heroTitle: "Carry Confidence. Wear Elegance.",
   heroSubtitle: "The Atelier Collection",
@@ -339,6 +350,62 @@ export const mockBackend = {
     async create(payload: { name: string; email: string; message: string }) {
       addEnquiryState(payload);
       log("enquiry.created", "enquiries", null);
+      return { success: true };
+    },
+  },
+
+  faq: {
+    async list() {
+      return faqs
+        .slice()
+        .sort((a, b) => a.display_order - b.display_order)
+        .map((item) => ({ ...item }));
+    },
+
+    async create(payload: {
+      question: string;
+      answer: string;
+      display_order: number;
+      is_visible: boolean;
+    }) {
+      const now = nowIso();
+      const item: MockFaq = {
+        id: createId("faq"),
+        question: payload.question,
+        answer: payload.answer,
+        display_order: payload.display_order,
+        is_visible: payload.is_visible,
+        created_at: now,
+        updated_at: now,
+      };
+      faqs.push(item);
+      log("faq.created", "faq");
+      return { success: true, id: item.id };
+    },
+
+    async update(id: string, payload: {
+      question?: string;
+      answer?: string;
+      display_order?: number;
+      is_visible?: boolean;
+    }) {
+      const index = faqs.findIndex((item) => item.id === id);
+      if (index < 0) throw new Error("FAQ not found");
+
+      faqs[index] = {
+        ...faqs[index],
+        ...payload,
+        updated_at: nowIso(),
+      };
+      log("faq.updated", "faq");
+      return { success: true };
+    },
+
+    async delete(id: string) {
+      const index = faqs.findIndex((item) => item.id === id);
+      if (index < 0) throw new Error("FAQ not found");
+      faqs.splice(index, 1);
+      log("faq.deleted", "faq");
       return { success: true };
     },
   },

@@ -7,9 +7,9 @@ import {
   Card,
   CardContent,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
+import { AdminField } from "@/components/admin";
 import type { ContactInfo } from "@/types/content";
 import { contentService } from "@/services/content/content.service";
 
@@ -78,51 +78,38 @@ export const AdminSettingsClient = ({
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography variant="h6">Website Settings</Typography>
-          <TextField
-            label="WhatsApp Number"
-            value={whatsappNumber}
-            onChange={(e) => setWhatsappNumber(e.target.value)}
-          />
-          <TextField
-            label="Phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          <TextField
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            label="Address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-          <TextField
-            label="Map Embed URL"
-            value={mapEmbedUrl}
-            onChange={(e) => setMapEmbedUrl(e.target.value)}
-          />
-          <TextField
-            label="Instagram"
-            value={instagram}
-            onChange={(e) => setInstagram(e.target.value)}
-          />
-          <TextField
-            label="Facebook"
-            value={facebook}
-            onChange={(e) => setFacebook(e.target.value)}
-          />
-          <TextField
-            label="TikTok"
-            value={tiktok}
-            onChange={(e) => setTiktok(e.target.value)}
-          />
-          <Button variant="contained" onClick={saveSettings}>
+    <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <CardContent sx={{ p: 3 }}>
+        <Stack spacing={2.2}>
+          <Stack spacing={0.5}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+              Settings
+            </Typography>
+            <Typography variant="h6" sx={{ color: "#171512" }}>
+              Website Settings
+            </Typography>
+          </Stack>
+          <AdminField label="WhatsApp Number" value={whatsappNumber} onChange={setWhatsappNumber} />
+          <AdminField label="Phone" value={phone} onChange={setPhone} />
+          <AdminField label="Email" value={email} onChange={setEmail} />
+          <AdminField label="Address" value={address} onChange={setAddress} />
+          <AdminField label="Map Embed URL" value={mapEmbedUrl} onChange={setMapEmbedUrl} />
+          <AdminField label="Instagram" value={instagram} onChange={setInstagram} />
+          <AdminField label="Facebook" value={facebook} onChange={setFacebook} />
+          <AdminField label="TikTok" value={tiktok} onChange={setTiktok} />
+          <Button
+            variant="contained"
+            onClick={saveSettings}
+            sx={{
+              alignSelf: "flex-start",
+              borderRadius: 1,
+              textTransform: "uppercase",
+              letterSpacing: "0.18em",
+              fontSize: "0.72rem",
+              bgcolor: "#171512",
+              "&:hover": { bgcolor: "#2d2a26" },
+            }}
+          >
             Save Settings
           </Button>
           {message ? <Alert severity="info">{message}</Alert> : null}

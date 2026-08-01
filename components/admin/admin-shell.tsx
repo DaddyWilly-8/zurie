@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   AppBar,
@@ -15,6 +15,8 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  MenuItem,
+  Select,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -28,12 +30,15 @@ import {
   faEnvelope,
   faGear,
   faHouse,
+  faArrowUpRightFromSquare,
   faImage,
   faLayerGroup,
   faUserShield,
   faRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
 import { authService } from "@/services/auth/auth.service";
+import { useCurrencyStore } from "@/hooks/use-currency-store";
+import { CURRENCY_OPTIONS, type CurrencyCode } from "@/utils/currency";
 
 type AdminNavLink = {
   href: string;
@@ -59,11 +64,19 @@ const links: AdminNavLink[] = [
 
 export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const currentPath = pathname ?? "";
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const currency = useCurrencyStore((state) => state.currency);
+  const setCurrency = useCurrencyStore((state) => state.setCurrency);
+  const refreshRates = useCurrencyStore((state) => state.refreshRates);
+
+  useEffect(() => {
+    void refreshRates();
+  }, [refreshRates]);
 
   const breadcrumbs = useMemo(() => {
-    const segments = pathname.split("/").filter(Boolean);
+    const segments = currentPath.split("/").filter(Boolean);
     return segments.map((segment, index) => {
       const href = `/${segments.slice(0, index + 1).join("/")}`;
       const label = segment
@@ -72,7 +85,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
 
       return { href, label };
     });
-  }, [pathname]);
+  }, [currentPath]);
 
   const onLogout = async () => {
     await authService.logout();
@@ -90,7 +103,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
       <Divider />
       <List sx={{ px: 1, py: 1 }}>
         {links.map((link) => {
-          const selected = pathname === link.href || pathname.startsWith(`${link.href}/`);
+          const selected = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
           return (
             <ListItemButton
               key={link.href}
@@ -109,6 +122,17 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
         })}
       </List>
       <Box sx={{ mt: "auto", p: 2 }}>
+        <Button
+          fullWidth
+          color="inherit"
+          variant="text"
+          component={Link}
+          href="/"
+          sx={{ mb: 1, justifyContent: "flex-start" }}
+          startIcon={<FontAwesomeIcon icon={faArrowUpRightFromSquare} size="sm" />}
+        >
+          View Storefront
+        </Button>
         <Button
           fullWidth
           color="inherit"
@@ -157,6 +181,34 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
                 </Link>
               ))}
             </Breadcrumbs>
+          </Box>
+
+          <Box sx={{ ml: "auto" }}>
+            <Select
+              size="small"
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value as CurrencyCode)}
+              variant="standard"
+              disableUnderline
+              sx={{
+                minWidth: { xs: 70, md: 88 },
+                fontSize: "0.72rem",
+                letterSpacing: "0.08em",
+                color: "text.secondary",
+                textTransform: "uppercase",
+                "& .MuiSelect-select": {
+                  py: 0.35,
+                  pr: "20px !important",
+                },
+              }}
+              renderValue={(value) => value}
+            >
+              {CURRENCY_OPTIONS.map((option) => (
+                <MenuItem key={option.code} value={option.code}>
+                  {option.code}
+                </MenuItem>
+              ))}
+            </Select>
           </Box>
         </Toolbar>
       </AppBar>
