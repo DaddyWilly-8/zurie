@@ -23,48 +23,18 @@ export const metadata = buildMetadata({
 
 export default async function AboutPage() {
   const brand = await getBrandContent();
-  const values = [
-    {
-      title: "Material Integrity",
-      text: "Full-grain leather, honest hardware, and finishes designed to mature beautifully.",
-    },
-    {
-      title: "Handcrafted",
-      text: "From edge paint to stitching, each step is treated as a ceremony of care.",
-    },
-    {
-      title: "Considered Design",
-      text: "Balanced silhouettes with practical compartments and refined daily proportions.",
-    },
-    {
-      title: "Lifetime Promise",
-      text: "Every piece is backed by dedicated aftercare and repair guidance.",
-    },
-  ];
-  const editorialPhotos = [
-    {
-      src: "/images/products/aurelia-2.png",
-      alt: "Zurie craftsmanship detail",
-      minHeight: { xs: 260, md: 420 },
-    },
-    {
-      src: "/images/instagram/ig-3.png",
-      alt: "Zurie atelier ritual",
-      minHeight: { xs: 180, md: 200 },
-    },
-    {
-      src: "/images/instagram/ig-6.png",
-      alt: "Zurie material palette",
-      minHeight: { xs: 180, md: 200 },
-    },
-  ];
+  const aboutStory =
+    brand.story ||
+    "Zuriè was founded to create handbags that blend timeless design, premium materials, and everyday functionality.";
+  const aboutStatement =
+    "We believe a bag should hold more than your essentials, it should hold your confidence.";
 
   return (
     <Stack spacing={0}>
       <Box
         sx={{
           position: "relative",
-          height: { xs: 160, md: 220 },
+          height: { xs: 260, sm: 360, md: 520 },
           width: "100vw",
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
@@ -76,78 +46,39 @@ export default async function AboutPage() {
           alt="Zuriè atelier"
           fill
           sizes="100vw"
-          style={{ objectFit: "cover", objectPosition: "50% 28%" }}
+          style={{ objectFit: "cover", objectPosition: "50% 18%" }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(180deg, rgba(20,18,16,0.18) 0%, rgba(20,18,16,0.38) 100%)",
+          }}
         />
       </Box>
 
       <Container
         maxWidth="md"
-        sx={{ py: { xs: 4.5, md: 6.5 }, textAlign: "center" }}
+        sx={{ py: { xs: 5.5, md: 8 }, textAlign: "center" }}
       >
         <Typography
           sx={{
-            fontFamily: "var(--font-playfair), serif",
-            fontSize: { xs: "1.8rem", md: "2.5rem" },
-            mb: 1,
+            textTransform: "uppercase",
+            letterSpacing: "0.24em",
+            fontSize: { xs: "0.68rem", md: "0.72rem" },
+            color: "#b39a72",
+            mb: 2,
           }}
         >
-          We believe a bag should hold more than your essentials, it should hold
-          your confidence.
+          Est. with intention
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 1.4 }}>
-          {brand.story}
+          {aboutStatement}
         </Typography>
         <Typography color="text.secondary">
-          Today every Zuriè piece is still shaped by hand intended to endure, to
-          age well, and to become part of a contemporary ritual.
+          {aboutStory}
         </Typography>
-      </Container>
-
-      <Container maxWidth="lg" sx={{ pb: { xs: 5, md: 6.4 } }}>
-        <Grid container spacing={{ xs: 1.2, md: 1.8 }}>
-          <Grid size={{ xs: 12, md: 7.2 }}>
-            <Box
-              sx={{
-                position: "relative",
-                minHeight: editorialPhotos[0].minHeight,
-                overflow: "hidden",
-                bgcolor: "#efe7dc",
-              }}
-            >
-              <Image
-                src={editorialPhotos[0].src}
-                alt={editorialPhotos[0].alt}
-                fill
-                sizes="(max-width: 900px) 100vw, 58vw"
-                style={{ objectFit: "cover" }}
-              />
-            </Box>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4.8 }}>
-            <Stack spacing={{ xs: 1.2, md: 1.8 }} sx={{ height: "100%" }}>
-              {editorialPhotos.slice(1).map((photo) => (
-                <Box
-                  key={photo.src}
-                  sx={{
-                    position: "relative",
-                    minHeight: photo.minHeight,
-                    overflow: "hidden",
-                    bgcolor: "#efe7dc",
-                    flex: 1,
-                  }}
-                >
-                  <Image
-                    src={photo.src}
-                    alt={photo.alt}
-                    fill
-                    sizes="(max-width: 900px) 100vw, 42vw"
-                    style={{ objectFit: "cover" }}
-                  />
-                </Box>
-              ))}
-            </Stack>
-          </Grid>
-        </Grid>
       </Container>
 
       <Box
@@ -155,162 +86,146 @@ export default async function AboutPage() {
           width: "100vw",
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
-          bgcolor: "#131211",
-          color: "#ece4d6",
-          py: { xs: 4, md: 5 },
+          bgcolor: "#121212",
+          color: "#f3eee4",
+          px: { xs: 2, md: 3.5 },
+          py: { xs: 2, md: 2.2 },
         }}
       >
-        <Container maxWidth="lg">
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography
-                sx={{
-                  textTransform: "uppercase",
-                  letterSpacing: "0.22em",
-                  fontSize: "0.68rem",
-                  color: "#bfa37e",
-                }}
-              >
-                Our Vision
-              </Typography>
-              <Typography sx={{ mt: 1.2 }}>{brand.vision}</Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography
-                sx={{
-                  textTransform: "uppercase",
-                  letterSpacing: "0.22em",
-                  fontSize: "0.68rem",
-                  color: "#bfa37e",
-                }}
-              >
-                Our Mission
-              </Typography>
-              <Typography sx={{ mt: 1.2 }}>{brand.mission}</Typography>
-            </Grid>
+        <Grid container spacing={{ xs: 2.5, md: 4 }} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box sx={{ position: "relative", height: { xs: 360, md: 700 } }}>
+              <Image
+                src={'/images/products/new3.avif'}
+                alt="Zuriè atelier"
+                fill
+                sizes="(max-width: 900px) 100vw, 48vw"
+                style={{ objectFit: "cover", objectPosition: "50% 22%" }}
+              />
+            </Box>
           </Grid>
-        </Container>
+          <Grid
+            size={{ xs: 12, md: 6 }}
+            sx={{
+              display: "grid",
+              placeItems: "center",
+              px: { xs: 1, md: 3 },
+              py: { xs: 2.5, md: 0 },
+            }}
+          >
+            <Box sx={{ maxWidth: 590 }}>
+              <Typography
+                sx={{
+                  textTransform: "uppercase",
+                  letterSpacing: "0.34em",
+                  fontSize: "0.66rem",
+                  color: "#b39a72",
+                }}
+              >
+                The Zuriè Philosophy
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.8,
+                  mb: 2.6,
+                  fontFamily: "var(--font-playfair), serif",
+                  fontSize: { xs: "2.1rem", md: "3.8rem" },
+                  lineHeight: 1.05,
+                  color: "#efe8db",
+                }}
+              >
+                Form follows feeling.
+              </Typography>
+              <Typography
+                sx={{
+                  color: "rgba(243,238,228,0.78)",
+                  fontSize: { xs: "1rem", md: "2rem" },
+                  lineHeight: 1.6,
+                  fontFamily: "var(--font-playfair), serif",
+                }}
+              >
+                {brand.story}
+              </Typography>
+              <Typography
+                component={Link}
+                href="/about"
+                sx={{
+                  mt: 3.4,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                  textDecoration: "none",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.32em",
+                  fontSize: "0.68rem",
+                  color: "#f3eee4",
+                  borderBottom: "1px solid rgba(243,238,228,0.34)",
+                  pb: 0.8,
+                }}
+              >
+                Discover Our Story
+                <FontAwesomeIcon icon={faArrowRight} fontSize={10} />
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: { xs: 4.5, md: 6.6 } }}>
-        <Stack alignItems="center" spacing={1.1} sx={{ mb: 3.2 }}>
-          <Typography
-            sx={{
-              textTransform: "uppercase",
-              letterSpacing: "0.24em",
-              fontSize: "0.68rem",
-              color: "primary.main",
-            }}
-          >
-            Why Zuriè
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: { xs: "2rem", md: "3rem" },
-            }}
-          >
-            The Zuriè Difference
-          </Typography>
-        </Stack>
-
         <Grid container spacing={{ xs: 1.2, md: 1.5 }}>
-          {values.map((value) => (
-            <Grid key={value.title} size={{ xs: 12, md: 3 }}>
-              <Card
-                sx={{
-                  border: "1px solid #e8ddcd",
-                  borderRadius: 0,
-                  boxShadow: "none",
-                  height: "100%",
-                }}
-              >
-                <CardContent>
-                  <Typography sx={{ fontWeight: 700, mb: 0.8 }}>
-                    {value.title}
-                  </Typography>
-                  <Typography
-                    color="text.secondary"
-                    sx={{ fontSize: "0.9rem" }}
-                  >
-                    {value.text}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card
+              sx={{
+                border: "1px solid #e8ddcd",
+                borderRadius: 0,
+                boxShadow: "none",
+                height: "100%",
+              }}
+            >
+              <CardContent>
+                <Typography sx={{ fontWeight: 700, mb: 0.8 }}>Material Integrity</Typography>
+                <Typography color="text.secondary" sx={{ fontSize: "0.9rem" }}>
+                  Full-grain leather, honest hardware, and finishes designed to mature beautifully.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card
+              sx={{
+                border: "1px solid #e8ddcd",
+                borderRadius: 0,
+                boxShadow: "none",
+                height: "100%",
+              }}
+            >
+              <CardContent>
+                <Typography sx={{ fontWeight: 700, mb: 0.8 }}>Handcrafted</Typography>
+                <Typography color="text.secondary" sx={{ fontSize: "0.9rem" }}>
+                  From edge paint to stitching, each step is treated as a ceremony of care.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card
+              sx={{
+                border: "1px solid #e8ddcd",
+                borderRadius: 0,
+                boxShadow: "none",
+                height: "100%",
+              }}
+            >
+              <CardContent>
+                <Typography sx={{ fontWeight: 700, mb: 0.8 }}>Lifetime Promise</Typography>
+                <Typography color="text.secondary" sx={{ fontSize: "0.9rem" }}>
+                  Every piece is backed by dedicated aftercare and repair guidance.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
       </Container>
-
-      <Box sx={{ bgcolor: "#f6f2ed", py: { xs: 4.5, md: 7 } }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={{ xs: 3, md: 4 }} alignItems="center">
-            <Grid size={{ xs: 12, md: 4.6 }}>
-              <Box sx={{ position: "relative", height: { xs: 320, md: 410 } }}>
-                <Image
-                  src="/images/products/luna-1.png"
-                  alt="Zuriè detail"
-                  fill
-                  sizes="(max-width: 900px) 100vw, 40vw"
-                  style={{ objectFit: "cover" }}
-                />
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, md: 7.4 }}>
-              <Typography
-                sx={{
-                  textTransform: "uppercase",
-                  letterSpacing: "0.22em",
-                  fontSize: "0.66rem",
-                  color: "primary.main",
-                }}
-              >
-                Craft in Detail
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 1,
-                  mb: 1.3,
-                  fontFamily: "var(--font-playfair), serif",
-                  fontSize: { xs: "1.8rem", md: "2.6rem" },
-                }}
-              >
-                Obsessed with the unseen.
-              </Typography>
-              <Typography color="text.secondary" sx={{ mb: 1.4 }}>
-                {brand.qualityCommitment}
-              </Typography>
-              <Stack spacing={0.7} color="text.secondary" sx={{ mb: 2.2 }}>
-                <Typography component="div">
-                  • Full-grain leather selected for texture retention
-                </Typography>
-                <Typography component="div">
-                  • Sculpted silhouettes balanced with all-day comfort
-                </Typography>
-                <Typography component="div">
-                  • Every seam inspected by a master artisan before release
-                </Typography>
-              </Stack>
-              <Typography
-                component={Link}
-                href="/shop"
-                sx={{
-                  textDecoration: "none",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.16em",
-                  fontSize: "0.72rem",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                Explore The Collection
-                <FontAwesomeIcon icon={faArrowRight} fontSize={10} />
-              </Typography>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
     </Stack>
   );
 }

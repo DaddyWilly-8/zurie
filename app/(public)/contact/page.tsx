@@ -22,19 +22,24 @@ export const metadata = buildMetadata({
 export default async function ContactPage() {
   const contact = await getContactInfo();
   const leadPhoto = {
-    src: "/images/hero/zurie-hero.png",
+    src: "/images/products/new1.avif",
     alt: "Zurie editorial hero",
   };
   const supportingPhotos = [
     {
-      src: "/images/instagram/ig-2.png",
+      src: "/images/products/new2.webp",
       alt: "Zurie boutique detail",
       title: "Private styling",
     },
     {
-      src: "/images/instagram/ig-5.png",
+      src: "/images/products/new3.avif",
       alt: "Zurie styling moment",
       title: "Curated moments",
+    },
+    {
+      src: "/images/products/new4.jpeg",
+      alt: "Zurie editorial detail",
+      title: "Maison Zuriè",
     },
   ];
 

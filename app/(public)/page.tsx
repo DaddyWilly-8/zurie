@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { SectionHeading } from "@/components/section-heading";
 import { ProductCard } from "@/components/product-card";
-import { InstagramGallery } from "@/components/instagram-gallery";
 import { TestimonialCards } from "@/components/testimonial-cards";
 import { getBrandContent, getHomepageContent } from "@/services/content";
 import { getProducts } from "@/services/products";
@@ -27,13 +26,10 @@ export default async function HomePage() {
   ]);
 
   const homepageData = (homepage as Record<string, unknown> | null) ?? null;
-  const heroTitle = String(homepageData?.heroTitle ?? "Zuriè");
-  const heroSubtitle = String(homepageData?.heroSubtitle ?? "The Atelier Collection");
-  const heroDescription = String(
-    homepageData?.heroDescription ??
-      "The architecture of elegance, handcrafted for the modern woman.",
-  );
-  const heroButtonText = String(homepageData?.heroButtonText ?? "Discover The Collection");
+  const heroTitle = "Zuriè";
+  const heroSubtitle = "The Atelier Collection";
+  const heroDescription = "The architecture of elegance, handcrafted for the modern woman.";
+  const heroButtonText = "Discover The Collection";
   const heroButtonLink = String(homepageData?.heroButtonLink ?? "/shop");
   const heroImageFromCms =
     typeof homepageData?.heroImage === "string" ? homepageData.heroImage : undefined;
@@ -76,11 +72,9 @@ export default async function HomePage() {
     featured[0]?.images[0]?.url,
     brand.heroImage,
   );
-  const philosophyImage = pickImage(
-    "/images/instagram/ig-4.png",
-    products[1]?.images[0]?.url,
-    heroImage,
-  );
+
+  const philosophyText =
+    "Zuriè was founded on a single, quiet conviction: that a handbag is not an accessory, but an architecture of self. Each piece is sculpted from full-grain calfskin, finished by hand, and engineered to age with grace. We believe in quiet luxury - objects that speak through their silence, their weight, their touch.";
 
   return (
     <Stack spacing={{ xs: 6.5, md: 10 }}>
@@ -323,73 +317,100 @@ export default async function HomePage() {
         </section>
 
         <section style={{ marginTop: "4.4rem" }}>
-          <Grid container spacing={{ xs: 2, md: 3 }} alignItems="stretch">
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ position: "relative", height: { xs: 360, md: 520 } }}>
-                <Image
-                  src={philosophyImage}
-                  alt="Zuriè atelier"
-                  fill
-                  sizes="(max-width: 900px) 100vw, 50vw"
-                  style={{ objectFit: "cover" }}
-                />
-              </Box>
+          <Box
+            sx={{
+              width: "100vw",
+              marginLeft: "calc(50% - 50vw)",
+              marginRight: "calc(50% - 50vw)",
+              bgcolor: "#121212",
+              color: "#f3eee4",
+              px: { xs: 2, md: 3.5 },
+              py: { xs: 2, md: 2.2 },
+            }}
+          >
+            <Grid container spacing={{ xs: 2.5, md: 4 }} alignItems="stretch">
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Box sx={{ position: "relative", height: { xs: 360, md: 700 } }}>
+                  <Image
+                    src={'/images/products/new2.webp'}
+                    alt="Zuriè atelier"
+                    fill
+                    sizes="(max-width: 900px) 100vw, 48vw"
+                    style={{ objectFit: "cover" }}
+                  />
+                </Box>
+              </Grid>
+              <Grid
+                size={{ xs: 12, md: 6 }}
+                sx={{
+                  display: "grid",
+                  placeItems: "center",
+                  px: { xs: 1, md: 3 },
+                  py: { xs: 2.5, md: 0 },
+                }}
+              >
+                <Box sx={{ maxWidth: 590 }}>
+                  <Typography
+                    sx={{
+                      textTransform: "uppercase",
+                      letterSpacing: "0.34em",
+                      fontSize: "0.66rem",
+                      color: "#b39a72",
+                    }}
+                  >
+                    The Zuriè Philosophy
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 1.8,
+                      mb: 2.6,
+                      fontFamily: "var(--font-playfair), serif",
+                      fontSize: { xs: "2.1rem", md: "3.8rem" },
+                      lineHeight: 1.05,
+                      color: "#efe8db",
+                    }}
+                  >
+                    Form follows feeling.
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: "rgba(243,238,228,0.78)",
+                      fontSize: { xs: "1rem", md: "1rem" },
+                      lineHeight: 1.6,
+                      fontFamily: "var(--font-playfair), serif",
+                    }}
+                  >
+                    {philosophyText}
+                  </Typography>
+                  <Typography
+                    component={Link}
+                    href="/about"
+                    sx={{
+                      mt: 3.4,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 1.2,
+                      textDecoration: "none",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.32em",
+                      fontSize: "0.68rem",
+                      color: "#f3eee4",
+                      borderBottom: "1px solid rgba(243,238,228,0.34)",
+                      pb: 0.8,
+                      transition: "border-color 180ms ease, color 180ms ease",
+                      "&:hover": {
+                        borderColor: "rgba(243,238,228,0.85)",
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    Discover Our Story
+                    <FontAwesomeIcon icon={faArrowRight} fontSize={10} />
+                  </Typography>
+                </Box>
+              </Grid>
             </Grid>
-            <Grid
-              size={{ xs: 12, md: 6 }}
-              sx={{
-                backgroundColor: "#f2ebde",
-                border: "1px solid #e6dccb",
-                display: "grid",
-                placeItems: "center",
-                px: { xs: 3, md: 6 },
-                py: { xs: 3.5, md: 0 },
-              }}
-            >
-              <Box>
-                <Typography
-                  sx={{
-                    textTransform: "uppercase",
-                    letterSpacing: "0.24em",
-                    fontSize: "0.72rem",
-                    color: "primary.main",
-                  }}
-                >
-                  The Zuriè Philosophy
-                </Typography>
-                <Typography
-                  variant="h2"
-                  sx={{ mt: 1, mb: 2, fontSize: { xs: "2rem", md: "3rem" } }}
-                >
-                  Form follows feeling.
-                </Typography>
-                <Typography color="text.secondary" sx={{ mb: 1.8 }}>
-                  {brand.story}
-                </Typography>
-                <Typography color="text.secondary">
-                  We believe in quiet luxury objects that speak through touch,
-                  weight, and timeless proportion.
-                </Typography>
-                <Typography
-                  component={Link}
-                  href="/about"
-                  sx={{
-                    mt: 3,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 1,
-                    textDecoration: "none",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.16em",
-                    fontSize: "0.74rem",
-                  }}
-                >
-                  Discover Our Story
-                  <FontAwesomeIcon icon={faArrowRight} fontSize={10} />
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
+          </Box>
         </section>
 
         <section style={{ marginTop: "4.4rem" }}>
@@ -479,15 +500,6 @@ export default async function HomePage() {
             title="The Zuriè Circle"
           />
           <TestimonialCards />
-        </section>
-
-        <section style={{ marginTop: "4.4rem" }}>
-          <SectionHeading
-            eyebrow="@zurie"
-            title="The Gallery"
-            subtitle="Follow our world on Instagram"
-          />
-          <InstagramGallery />
         </section>
       </Container>
 
