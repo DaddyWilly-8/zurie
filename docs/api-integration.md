@@ -1,5 +1,7 @@
 # API Integration Guide
 
+For full backend implementation requirements (admin + storefront + dynamic content contract), see `docs/backend-handoff-guide.md`.
+
 ## Environment Variables
 - `NEXT_PUBLIC_API_URL`: Laravel API base URL, example `https://api.example.com/api`
 - `NEXT_PUBLIC_API_MODE`: `mock` or `laravel`
