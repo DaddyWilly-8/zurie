@@ -26,14 +26,14 @@ export const MediaToolbar = ({
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         fullWidth
-        sx={{ bgcolor: "#ffffff" }}
+        sx={{ bgcolor: "background.paper" }}
       />
 
       <TextField
         label="Folder"
         value={folder}
         onChange={(event) => onFolderChange(event.target.value)}
-        sx={{ minWidth: 200, bgcolor: "#ffffff" }}
+        sx={{ minWidth: 200, bgcolor: "background.paper" }}
       />
 
       <Button
@@ -44,8 +44,8 @@ export const MediaToolbar = ({
           textTransform: "uppercase",
           letterSpacing: "0.18em",
           fontSize: "0.72rem",
-          borderColor: "#e0d4c1",
-          color: "#171512",
+          borderColor: "divider",
+          color: "text.primary",
         }}
       >
         Search
@@ -60,8 +60,8 @@ export const MediaToolbar = ({
           textTransform: "uppercase",
           letterSpacing: "0.18em",
           fontSize: "0.72rem",
-          bgcolor: "#171512",
-          "&:hover": { bgcolor: "#2d2a26" },
+          bgcolor: "text.primary",
+          "&:hover": { bgcolor: "text.secondary" },
         }}
       >
         Upload

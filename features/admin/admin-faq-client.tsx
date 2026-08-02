@@ -136,14 +136,14 @@ export const AdminFaqClient = () => {
         </Alert>
       )}
 
-      <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <CardContent sx={{ p: 3 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5 }}>
             <Stack spacing={0.5}>
-              <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+              <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>
                 FAQ
               </Typography>
-              <Typography variant="h6" sx={{ color: "#171512" }}>
+              <Typography variant="h6" sx={{ color: "text.primary" }}>
                 FAQ Management
               </Typography>
             </Stack>
@@ -157,16 +157,16 @@ export const AdminFaqClient = () => {
               variant="contained"
               startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
               onClick={() => setIsAdding(true)}
-              sx={{ borderRadius: 1, textTransform: "uppercase", letterSpacing: "0.18em", fontSize: "0.72rem", mb: 2, bgcolor: "#171512", "&:hover": { bgcolor: "#2d2a26" } }}
+              sx={{ borderRadius: 1, textTransform: "uppercase", letterSpacing: "0.18em", fontSize: "0.72rem", mb: 2, bgcolor: "text.primary", "&:hover": { bgcolor: "text.secondary" } }}
             >
               Add FAQ
             </Button>
           )}
 
           {isAdding && (
-            <Box sx={{ mb: 3, p: 2.5, bgcolor: "#f8f6f2", border: "1px solid #e9e2d8" }}>
+            <Box sx={{ mb: 3, p: 2.5, bgcolor: "background.default", border: "1px solid", borderColor: "divider" }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-                <Typography variant="subtitle2" fontWeight={600} sx={{ color: "#171512" }}>
+                <Typography variant="subtitle2" fontWeight={600} sx={{ color: "text.primary" }}>
                   New FAQ
                 </Typography>
                 <IconButton size="small" onClick={() => setIsAdding(false)}>
@@ -182,16 +182,16 @@ export const AdminFaqClient = () => {
                     type="number"
                     value={newDisplayOrder}
                     onChange={(e) => setNewDisplayOrder(Number(e.target.value))}
-                    sx={{ width: 180, bgcolor: "#ffffff", "& .MuiOutlinedInput-root": { borderRadius: 0 } }}
-                    InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "#7f7467", fontWeight: 500 } }}
+                    sx={{ width: 180, bgcolor: "background.paper", "& .MuiOutlinedInput-root": { borderRadius: 0 } }}
+                    InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
                   />
                   <AdminToggle label="Visible" checked={newIsVisible} onChange={setNewIsVisible} />
                 </Stack>
                 <Stack direction="row" spacing={1}>
-                  <Button variant="contained" onClick={createFaq} size="small" sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", bgcolor: "#171512", "&:hover": { bgcolor: "#2d2a26" } }}>
+                  <Button variant="contained" onClick={createFaq} size="small" sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", bgcolor: "text.primary", "&:hover": { bgcolor: "text.secondary" } }}>
                     Create FAQ
                   </Button>
-                  <Button variant="outlined" onClick={() => setIsAdding(false)} size="small" sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", borderColor: "#e0d4c1", color: "#171512" }}>
+                  <Button variant="outlined" onClick={() => setIsAdding(false)} size="small" sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", borderColor: "divider", color: "text.primary" }}>
                     Cancel
                   </Button>
                 </Stack>
@@ -217,8 +217,9 @@ export const AdminFaqClient = () => {
                     key={faq.id}
                     sx={{
                       p: 2,
-                      bgcolor: "#ffffff",
-                      border: isEditing ? "1px solid #171512" : "1px solid #e9e2d8",
+                      bgcolor: "background.paper",
+                      border: "1px solid",
+                      borderColor: isEditing ? "text.primary" : "divider",
                       transition: "all 0.2s ease",
                     }}
                   >
@@ -232,8 +233,8 @@ export const AdminFaqClient = () => {
                             type="number"
                             value={faq.display_order}
                             onChange={(e) => handleEditChange(faq.id, "display_order", Number(e.target.value))}
-                            sx={{ width: 180, bgcolor: "#ffffff", "& .MuiOutlinedInput-root": { borderRadius: 0 } }}
-                            InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "#7f7467", fontWeight: 500 } }}
+                            sx={{ width: 180, bgcolor: "background.paper", "& .MuiOutlinedInput-root": { borderRadius: 0 } }}
+                            InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
                           />
                           <AdminToggle label="Visible" checked={faq.is_visible} onChange={(checked) => handleEditChange(faq.id, "is_visible", checked)} />
                         </Stack>
@@ -242,7 +243,7 @@ export const AdminFaqClient = () => {
                             size="small"
                             variant="contained"
                             onClick={() => updateFaq(faq.id)}
-                            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", bgcolor: "#171512", "&:hover": { bgcolor: "#2d2a26" } }}
+                            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", bgcolor: "text.primary", "&:hover": { bgcolor: "text.secondary" } }}
                           >
                             Save
                           </Button>
@@ -250,7 +251,7 @@ export const AdminFaqClient = () => {
                             size="small"
                             variant="outlined"
                             onClick={() => setEditingId(null)}
-                            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", borderColor: "#e0d4c1", color: "#171512" }}
+                            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", borderColor: "divider", color: "text.primary" }}
                           >
                             Cancel
                           </Button>

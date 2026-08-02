@@ -17,6 +17,7 @@ import {
   ListItemText,
   MenuItem,
   Select,
+  Stack,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -30,15 +31,18 @@ import {
   faEnvelope,
   faGear,
   faHouse,
+  faMoon,
   faArrowUpRightFromSquare,
   faImage,
   faLayerGroup,
   faUserShield,
   faRightFromBracket,
+  faSun,
 } from "@fortawesome/free-solid-svg-icons";
 import { authService } from "@/services/auth/auth.service";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { CURRENCY_OPTIONS, type CurrencyCode } from "@/utils/currency";
+import { useThemeMode } from "@/providers/theme-provider";
 
 type AdminNavLink = {
   href: string;
@@ -71,6 +75,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const currency = useCurrencyStore((state) => state.currency);
   const setCurrency = useCurrencyStore((state) => state.setCurrency);
   const refreshRates = useCurrencyStore((state) => state.refreshRates);
+  const { mode, toggleMode } = useThemeMode();
 
   useEffect(() => {
     void refreshRates();
@@ -203,7 +208,15 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
             </Box>
           </Box>
 
-          <Box sx={{ ml: 0, flexShrink: 0 }}>
+          <Stack direction="row" spacing={1.2} alignItems="center" sx={{ ml: 0, flexShrink: 0 }}>
+            <IconButton
+              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={toggleMode}
+              sx={{ color: "text.secondary" }}
+            >
+              <FontAwesomeIcon icon={mode === "dark" ? faSun : faMoon} fontSize={14} />
+            </IconButton>
+
             <Select
               size="small"
               value={currency}
@@ -229,7 +242,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
                 </MenuItem>
               ))}
             </Select>
-          </Box>
+          </Stack>
         </Toolbar>
       </AppBar>
 

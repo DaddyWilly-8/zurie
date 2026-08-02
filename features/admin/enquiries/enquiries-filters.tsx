@@ -22,14 +22,14 @@ export const EnquiriesFilters = ({
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         fullWidth
-        sx={{ bgcolor: "#ffffff" }}
+        sx={{ bgcolor: "background.paper" }}
       />
       <TextField
         label="Status"
         select
         value={status}
         onChange={(event) => onStatusChange(event.target.value)}
-        sx={{ minWidth: 200, bgcolor: "#ffffff" }}
+        sx={{ minWidth: 200, bgcolor: "background.paper" }}
       >
         <MenuItem value="">All statuses</MenuItem>
         <MenuItem value="new">New</MenuItem>
@@ -45,8 +45,8 @@ export const EnquiriesFilters = ({
           textTransform: "uppercase",
           letterSpacing: "0.18em",
           fontSize: "0.72rem",
-          bgcolor: "#171512",
-          "&:hover": { bgcolor: "#2d2a26" },
+          bgcolor: "text.primary",
+          "&:hover": { bgcolor: "text.secondary" },
           px: 4,
         }}
       >

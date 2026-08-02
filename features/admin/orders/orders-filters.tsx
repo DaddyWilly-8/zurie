@@ -22,7 +22,7 @@ export const OrdersFilters = ({
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         fullWidth
-        sx={{ bgcolor: "#ffffff" }}
+        sx={{ bgcolor: "background.paper" }}
       />
 
       <TextField
@@ -30,7 +30,7 @@ export const OrdersFilters = ({
         select
         value={status}
         onChange={(event) => onStatusChange(event.target.value)}
-        sx={{ minWidth: 220, bgcolor: "#ffffff" }}
+        sx={{ minWidth: 220, bgcolor: "background.paper" }}
       >
         <MenuItem value="">All statuses</MenuItem>
         <MenuItem value="new">New</MenuItem>
@@ -49,8 +49,8 @@ export const OrdersFilters = ({
           textTransform: "uppercase",
           letterSpacing: "0.18em",
           fontSize: "0.72rem",
-          bgcolor: "#171512",
-          "&:hover": { bgcolor: "#2d2a26" },
+          bgcolor: "text.primary",
+          "&:hover": { bgcolor: "text.secondary" },
           px: 4,
         }}
       >

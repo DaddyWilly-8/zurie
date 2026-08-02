@@ -94,13 +94,13 @@ export const AdminHomepageClient = ({
   return (
     <Stack spacing={2.5}>
       {message ? <Alert severity="info">{message}</Alert> : null}
-      <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <CardContent sx={{ p: 3 }}>
           <Stack spacing={0.5} sx={{ mb: 2 }}>
-            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>
               Homepage
             </Typography>
-            <Typography variant="h6" sx={{ color: "#171512" }}>
+            <Typography variant="h6" sx={{ color: "text.primary" }}>
               Hero Section
             </Typography>
           </Stack>
@@ -167,13 +167,13 @@ export const AdminHomepageClient = ({
         </CardContent>
       </Card>
 
-      <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <CardContent sx={{ p: 3 }}>
           <Stack spacing={0.5} sx={{ mb: 2 }}>
-            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>
               Homepage
             </Typography>
-            <Typography variant="h6" sx={{ color: "#171512" }}>
+            <Typography variant="h6" sx={{ color: "text.primary" }}>
               Promotional Banner
             </Typography>
           </Stack>
@@ -242,8 +242,8 @@ export const AdminHomepageClient = ({
           textTransform: "uppercase",
           letterSpacing: "0.18em",
           fontSize: "0.72rem",
-          bgcolor: "#171512",
-          "&:hover": { bgcolor: "#2d2a26" },
+          bgcolor: "text.primary",
+          "&:hover": { bgcolor: "text.secondary" },
         }}
       >
         Save Homepage

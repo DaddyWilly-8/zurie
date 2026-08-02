@@ -84,13 +84,13 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
     <Stack spacing={3}>
       {message ? <Alert severity={messageType} onClose={() => setMessage("")} sx={{ borderRadius: 1.5 }}>{message}</Alert> : null}
 
-      <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <CardContent sx={{ p: 3 }}>
           <Stack spacing={0.5} sx={{ mb: 3 }}>
-            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>
               Media
             </Typography>
-            <Typography variant="h6" sx={{ color: "#171512" }}>
+            <Typography variant="h6" sx={{ color: "text.primary" }}>
               Media Library
             </Typography>
           </Stack>

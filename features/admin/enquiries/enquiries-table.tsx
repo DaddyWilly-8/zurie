@@ -19,10 +19,10 @@ type EnquiriesTableProps = {
 
 export const EnquiriesTable = ({ rows, onStatusChange }: EnquiriesTableProps) => {
   return (
-    <Card sx={{ overflowX: "auto", boxShadow: "none", border: "1px solid #e9e2d8" }}>
+    <Card sx={{ overflowX: "auto", boxShadow: "none", border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
       <Table>
         <TableHead>
-          <TableRow sx={{ bgcolor: "#f8f6f2" }}>
+          <TableRow sx={{ bgcolor: "action.hover" }}>
             <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
             <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
             <TableCell sx={{ fontWeight: 600 }}>Phone</TableCell>
@@ -46,7 +46,7 @@ export const EnquiriesTable = ({ rows, onStatusChange }: EnquiriesTableProps) =>
                   size="small"
                   value={row.status}
                   onChange={(event) => onStatusChange(row.id, event.target.value)}
-                  sx={{ minWidth: 160, bgcolor: "#ffffff" }}
+                  sx={{ minWidth: 160, bgcolor: "background.paper" }}
                 >
                   <MenuItem value="new">New</MenuItem>
                   <MenuItem value="read">Read</MenuItem>

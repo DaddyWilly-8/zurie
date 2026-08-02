@@ -132,12 +132,12 @@ export const AdminProductsClient = () => {
     <Stack spacing={3}>
       {message ? <Alert severity={messageType} onClose={() => setMessage("")}>{message}</Alert> : null}
 
-      <Paper sx={{ p: 3, borderRadius: 1.5, border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+      <Paper sx={{ p: 3, borderRadius: 1.5, border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <Stack spacing={2.5}>
           <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }} spacing={2}>
             <Stack spacing={0.5}>
-              <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>Dashboard</Typography>
-              <Typography variant="h6" sx={{ color: "#171512" }}>Products</Typography>
+              <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>Dashboard</Typography>
+              <Typography variant="h6" sx={{ color: "text.primary" }}>Products</Typography>
             </Stack>
             {!isAdding && (
               <Button
@@ -149,9 +149,9 @@ export const AdminProductsClient = () => {
                   textTransform: "uppercase",
                   letterSpacing: "0.18em",
                   fontSize: "0.72rem",
-                  bgcolor: "#171512",
+                  bgcolor: "text.primary",
                   px: 2.5,
-                  "&:hover": { bgcolor: "#2d2a26" },
+                  "&:hover": { bgcolor: "text.secondary" },
                 }}
               >
                 Add Product
@@ -166,7 +166,7 @@ export const AdminProductsClient = () => {
               onChange={(event) => setQuery(event.target.value)}
               sx={{
                 width: { xs: "100%", md: 275 },
-                bgcolor: "#ffffff",
+                bgcolor: "background.default",
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 0,
                 },
@@ -174,7 +174,7 @@ export const AdminProductsClient = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <FontAwesomeIcon icon={faSearch} size="sm" style={{ color: "#7f7467" }} />
+                    <FontAwesomeIcon icon={faSearch} size="sm" style={{ color: "currentColor" }} />
                   </InputAdornment>
                 ),
               }}

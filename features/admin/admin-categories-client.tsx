@@ -99,7 +99,7 @@ export const AdminCategoriesClient = () => {
         </Alert>
       ) : null}
 
-      <Typography sx={{ color: "#171512", fontSize: { xs: "2rem", md: "2.2rem" } }}>
+      <Typography sx={{ color: "text.primary", fontSize: { xs: "2rem", md: "2.2rem" } }}>
         Categories
       </Typography>
 
@@ -109,7 +109,7 @@ export const AdminCategoriesClient = () => {
         alignItems={{ xs: "flex-start", md: "center" }}
         spacing={1.2}
       >
-        <Typography sx={{ color: "#7a6f61", fontSize: "1rem" }}>
+        <Typography sx={{ color: "text.secondary", fontSize: "1rem" }}>
           {loading ? "Loading categories..." : `${items.length} categories`}
         </Typography>
 
@@ -124,8 +124,8 @@ export const AdminCategoriesClient = () => {
             fontSize: "0.72rem",
             px: 2.6,
             py: 1,
-            bgcolor: "#171512",
-            "&:hover": { bgcolor: "#2d2a26" },
+            bgcolor: "text.primary",
+            "&:hover": { bgcolor: "text.secondary" },
           }}
         >
           Add Category
@@ -137,7 +137,7 @@ export const AdminCategoriesClient = () => {
           Loading categories...
         </Typography>
       ) : items.length === 0 ? (
-        <Box sx={{ border: "1px solid #e5ded2", bgcolor: "#ffffff", px: 2, py: 3 }}>
+        <Box sx={{ border: "1px solid", borderColor: "divider", bgcolor: "background.paper", px: 2, py: 3 }}>
           <Typography color="text.secondary">No categories yet.</Typography>
         </Box>
       ) : (

@@ -37,8 +37,9 @@ export const ProductCreateDialog = ({
       PaperProps={{
         sx: {
           borderRadius: 0,
-          bgcolor: "#fbf8f3",
-          border: "1px solid #e6dccb",
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
           overflow: "hidden",
           width: "min(860px, calc(100vw - 32px))",
           maxHeight: "calc(100vh - 32px)",
@@ -55,15 +56,16 @@ export const ProductCreateDialog = ({
           px: { xs: 2.5, md: 3.5 },
           pt: { xs: 2.5, md: 3 },
           pb: 1,
-          bgcolor: "#fbf8f3",
-          borderBottom: "1px solid #e6dccb",
+          bgcolor: "background.paper",
+          borderBottom: "1px solid",
+          borderColor: "divider",
           flexShrink: 0,
         }}
       >
-        <Typography variant="h4" component="div" sx={{ color: "#171512", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
+        <Typography variant="h4" component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
           New Product
         </Typography>
-        <IconButton size="small" onClick={onClose} aria-label="Close add dialog" sx={{ color: "#7f7467" }}>
+        <IconButton size="small" onClick={onClose} aria-label="Close add dialog" sx={{ color: "text.secondary" }}>
           <FontAwesomeIcon icon={faTimes} size="sm" />
         </IconButton>
       </DialogTitle>
@@ -71,7 +73,7 @@ export const ProductCreateDialog = ({
         <DialogContent
           dividers
           sx={{
-            bgcolor: "#fbf8f3",
+            bgcolor: "background.paper",
             px: { xs: 2.5, md: 3.5 },
             py: 3,
             overflowY: "auto",
@@ -80,11 +82,11 @@ export const ProductCreateDialog = ({
               textTransform: "uppercase",
               letterSpacing: "0.2em",
               fontSize: "0.7rem",
-              color: "#7f7467",
+              color: "text.secondary",
               fontWeight: 500,
             },
             "& .MuiOutlinedInput-root": {
-              bgcolor: "#ffffff",
+              bgcolor: "background.paper",
               borderRadius: 0,
             },
             "& .MuiDialogContent-dividers": {
@@ -95,7 +97,7 @@ export const ProductCreateDialog = ({
         >
           <ProductFields state={form} onChange={onChange} />
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2.5, bgcolor: "#fbf8f3", borderTop: "1px solid #e6dccb", flexShrink: 0 }}>
+        <DialogActions sx={{ px: 3, py: 2.5, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider", flexShrink: 0 }}>
           <Button
             onClick={onClose}
             variant="outlined"
@@ -104,12 +106,12 @@ export const ProductCreateDialog = ({
               textTransform: "uppercase",
               letterSpacing: "0.3em",
               fontSize: "0.72rem",
-              borderColor: "#e0d4c1",
-              color: "#171512",
+              borderColor: "divider",
+              color: "text.primary",
               px: 3,
               "&:hover": {
-                borderColor: "#171512",
-                bgcolor: "#f5f0e8",
+                borderColor: "text.primary",
+                bgcolor: "action.hover",
               },
             }}
           >
@@ -123,9 +125,9 @@ export const ProductCreateDialog = ({
               textTransform: "uppercase",
               letterSpacing: "0.3em",
               fontSize: "0.72rem",
-              bgcolor: "#171512",
+              bgcolor: "text.primary",
               px: 4,
-              "&:hover": { bgcolor: "#2d2a26" },
+              "&:hover": { bgcolor: "text.secondary" },
             }}
           >
             Create Product

@@ -49,19 +49,19 @@ export const AdminActivityClient = () => {
   }, []);
 
   return (
-    <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+    <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
       <CardContent sx={{ p: 3 }}>
         <Stack spacing={0.5} sx={{ mb: 2 }}>
-          <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+          <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>
             Activity
           </Typography>
-          <Typography variant="h6" sx={{ color: "#171512" }}>
+          <Typography variant="h6" sx={{ color: "text.primary" }}>
             Admin Activity Logs
           </Typography>
         </Stack>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: "#f8f6f2" }}>
+            <TableRow sx={{ bgcolor: "action.hover" }}>
               <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Resource</TableCell>

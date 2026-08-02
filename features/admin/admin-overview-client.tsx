@@ -27,19 +27,20 @@ const StatCard = ({
   <Card
     sx={{
       height: "100%",
-      border: "1px solid #e5ded2",
+      border: "1px solid",
+      borderColor: "divider",
       boxShadow: "none",
       borderRadius: 0,
-      bgcolor: "#ffffff",
+      bgcolor: "background.paper",
       px: 2.6,
       py: 2.2,
     }}
   >
     <Stack spacing={1.6}>
-      <Box sx={{ color: "#b89a68" }}>
+      <Box sx={{ color: "primary.main" }}>
         <FontAwesomeIcon icon={icon} />
       </Box>
-      <Typography sx={{ fontSize: "2.1rem", lineHeight: 1, color: "#1d1a17" }}>
+      <Typography sx={{ fontSize: "2.1rem", lineHeight: 1, color: "text.primary" }}>
         {value}
       </Typography>
       <Typography
@@ -47,7 +48,7 @@ const StatCard = ({
           letterSpacing: "0.3em",
           textTransform: "uppercase",
           fontSize: "0.8rem",
-          color: "#6f6658",
+          color: "text.secondary",
         }}
       >
         {label}
@@ -120,8 +121,8 @@ export const AdminOverviewClient = () => {
 
   const actionButtonSx = {
     borderRadius: 0,
-    borderColor: "#e6ddd1",
-    color: "#1f1b16",
+    borderColor: "divider",
+    color: "text.primary",
     letterSpacing: "0.22em",
     textTransform: "uppercase",
     fontSize: "0.78rem",
@@ -130,14 +131,14 @@ export const AdminOverviewClient = () => {
     justifyContent: "flex-start",
     whiteSpace: "nowrap",
     "&:hover": {
-      borderColor: "#c9b8a0",
-      bgcolor: "#f7f3ec",
+      borderColor: "text.primary",
+      bgcolor: "action.hover",
     },
   } as const;
 
   return (
     <Stack spacing={4} sx={{ pb: 2 }}>
-      <Typography sx={{ color: "#1d1a17", fontSize: { xs: "2rem", md: "2.2rem" } }}>
+      <Typography sx={{ color: "text.primary", fontSize: { xs: "2rem", md: "2.2rem" } }}>
         Overview
       </Typography>
 
@@ -160,7 +161,7 @@ export const AdminOverviewClient = () => {
       <Stack spacing={1.4}>
         <Typography
           variant="overline"
-          sx={{ letterSpacing: "0.38em", color: "#6f6658", fontSize: "0.74rem" }}
+          sx={{ letterSpacing: "0.38em", color: "text.secondary", fontSize: "0.74rem" }}
         >
           Quick Actions
         </Typography>
@@ -199,11 +200,11 @@ export const AdminOverviewClient = () => {
         </Box>
       </Stack>
 
-      <Card sx={{ border: "1px solid #e5ded2", borderRadius: 0, boxShadow: "none", bgcolor: "#ffffff" }}>
+      <Card sx={{ border: "1px solid", borderColor: "divider", borderRadius: 0, boxShadow: "none", bgcolor: "background.paper" }}>
         <Box sx={{ px: 1.8, py: 1.6 }}>
           <Typography
             variant="overline"
-            sx={{ letterSpacing: "0.34em", color: "#6f6658", fontSize: "0.72rem" }}
+            sx={{ letterSpacing: "0.34em", color: "text.secondary", fontSize: "0.72rem" }}
           >
             Recently Added Products
           </Typography>
@@ -227,13 +228,14 @@ export const AdminOverviewClient = () => {
                   color: "inherit",
                   px: 1.8,
                   py: 1.4,
-                  borderTop: "1px solid #f0e8dd",
-                  "&:hover": { bgcolor: "#faf7f2" },
+                  borderTop: "1px solid",
+                  borderColor: "divider",
+                  "&:hover": { bgcolor: "action.hover" },
                 }}
               >
                 <Stack spacing={0.2}>
-                  <Typography sx={{ color: "#1d1a17", fontWeight: 500 }}>{item.name}</Typography>
-                  <Typography sx={{ color: "#7f7568", fontSize: "0.84rem" }}>
+                  <Typography sx={{ color: "text.primary", fontWeight: 500 }}>{item.name}</Typography>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.84rem" }}>
                     Stock {item.stock_count ?? 0}
                   </Typography>
                 </Stack>
@@ -241,7 +243,7 @@ export const AdminOverviewClient = () => {
                   sx={{
                     letterSpacing: "0.24em",
                     textTransform: "uppercase",
-                    color: "#6f6658",
+                    color: "text.secondary",
                     fontSize: "0.72rem",
                   }}
                 >

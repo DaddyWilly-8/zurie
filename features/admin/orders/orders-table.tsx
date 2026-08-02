@@ -23,10 +23,10 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
   const rates = useCurrencyStore((state) => state.rates);
 
   return (
-    <Box sx={{ overflowX: "auto", boxShadow: "none", border: "1px solid #e9e2d8", borderRadius: 1 }}>
+    <Box sx={{ overflowX: "auto", boxShadow: "none", border: "1px solid", borderColor: "divider", borderRadius: 1, bgcolor: "background.paper" }}>
       <Table>
         <TableHead>
-          <TableRow sx={{ bgcolor: "#f8f6f2" }}>
+          <TableRow sx={{ bgcolor: "action.hover" }}>
             <TableCell sx={{ fontWeight: 600 }}>Order</TableCell>
             <TableCell sx={{ fontWeight: 600 }}>Customer</TableCell>
             <TableCell sx={{ fontWeight: 600 }}>WhatsApp</TableCell>
@@ -55,7 +55,7 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
                   size="small"
                   value={row.status}
                   onChange={(event) => onStatusChange(row.id, event.target.value)}
-                  sx={{ minWidth: 180, bgcolor: "#ffffff" }}
+                  sx={{ minWidth: 180, bgcolor: "background.paper" }}
                 >
                   <MenuItem value="new">New</MenuItem>
                   <MenuItem value="confirmed">Confirmed</MenuItem>

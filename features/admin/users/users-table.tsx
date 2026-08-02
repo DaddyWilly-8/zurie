@@ -18,10 +18,10 @@ type Props = {
 
 export const UsersTable = ({ rows, onRoleChange }: Props) => {
   return (
-    <Card sx={{ overflowX: "auto", boxShadow: "none", border: "1px solid #e9e2d8" }}>
+    <Card sx={{ overflowX: "auto", boxShadow: "none", border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
       <Table>
         <TableHead>
-          <TableRow sx={{ bgcolor: "#f8f6f2" }}>
+          <TableRow sx={{ bgcolor: "action.hover" }}>
             <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
             <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
             <TableCell sx={{ fontWeight: 600 }}>Created</TableCell>
@@ -42,7 +42,7 @@ export const UsersTable = ({ rows, onRoleChange }: Props) => {
                   select
                   value={row.role}
                   onChange={(event) => onRoleChange(row.id, event.target.value as UserRole)}
-                  sx={{ minWidth: 180, bgcolor: "#ffffff" }}
+                  sx={{ minWidth: 180, bgcolor: "background.paper" }}
                 >
                   <MenuItem value="super_admin">Super Admin</MenuItem>
                   <MenuItem value="admin">Admin</MenuItem>

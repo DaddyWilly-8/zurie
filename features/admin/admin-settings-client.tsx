@@ -78,14 +78,14 @@ export const AdminSettingsClient = ({
   };
 
   return (
-    <Card sx={{ border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#fbf8f3" }}>
+    <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
       <CardContent sx={{ p: 3 }}>
         <Stack spacing={2.2}>
           <Stack spacing={0.5}>
-            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "#aa8d66" }}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>
               Settings
             </Typography>
-            <Typography variant="h6" sx={{ color: "#171512" }}>
+            <Typography variant="h6" sx={{ color: "text.primary" }}>
               Website Settings
             </Typography>
           </Stack>
@@ -106,8 +106,8 @@ export const AdminSettingsClient = ({
               textTransform: "uppercase",
               letterSpacing: "0.18em",
               fontSize: "0.72rem",
-              bgcolor: "#171512",
-              "&:hover": { bgcolor: "#2d2a26" },
+              bgcolor: "text.primary",
+              "&:hover": { bgcolor: "text.secondary" },
             }}
           >
             Save Settings

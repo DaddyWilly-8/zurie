@@ -27,14 +27,14 @@ export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
         required
         variant="outlined"
         sx={{
-          bgcolor: "#ffffff",
+          bgcolor: "background.paper",
           "& .MuiOutlinedInput-root": {
             borderRadius: 0,
           },
         }}
-        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "#7f7467", fontWeight: 500 } }}
+        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
         InputProps={{
-          startAdornment: <InputAdornment position="start" sx={{ color: "#7f7467" }}>$</InputAdornment>,
+          startAdornment: <InputAdornment position="start" sx={{ color: "text.secondary" }}>$</InputAdornment>,
         }}
       />
     </Grid>
@@ -47,19 +47,19 @@ export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
         fullWidth
         variant="outlined"
         sx={{
-          bgcolor: "#ffffff",
+          bgcolor: "background.paper",
           "& .MuiOutlinedInput-root": {
             borderRadius: 0,
           },
         }}
-        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "#7f7467", fontWeight: 500 } }}
+        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
         InputProps={{
-          startAdornment: <InputAdornment position="start" sx={{ color: "#7f7467" }}>$</InputAdornment>,
+          startAdornment: <InputAdornment position="start" sx={{ color: "text.secondary" }}>$</InputAdornment>,
         }}
         helperText="Optional: Original price for sale items"
         FormHelperTextProps={{
           sx: {
-            color: "#7f7467",
+            color: "text.secondary",
             fontSize: "0.7rem",
             marginLeft: 0,
           },
@@ -76,12 +76,12 @@ export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
         required
         variant="outlined"
         sx={{
-          bgcolor: "#ffffff",
+          bgcolor: "background.paper",
           "& .MuiOutlinedInput-root": {
             borderRadius: 0,
           },
         }}
-        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "#7f7467", fontWeight: 500 } }}
+        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
       >
         <MenuItem value="handbags">Handbags</MenuItem>
         <MenuItem value="tote-bags">Tote Bags</MenuItem>

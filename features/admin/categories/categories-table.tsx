@@ -34,11 +34,12 @@ export const CategoriesTable = ({ items, onEdit, onDelete }: CategoriesTableProp
           key={item.id}
           sx={{
             boxShadow: "none",
-            border: "1px solid #e5ded2",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 0,
-            bgcolor: "#ffffff",
+            bgcolor: "background.paper",
             p: 1.6,
-            "&:hover": { bgcolor: "#fcfaf6" },
+            "&:hover": { bgcolor: "action.hover" },
           }}
         >
           <Stack direction="row" spacing={1.5}>
@@ -48,7 +49,7 @@ export const CategoriesTable = ({ items, onEdit, onDelete }: CategoriesTableProp
                 height: 68,
                 borderRadius: 0,
                 overflow: "hidden",
-                bgcolor: "#e9e2d8",
+                bgcolor: "background.default",
                 flexShrink: 0,
               }}
             >
@@ -62,10 +63,10 @@ export const CategoriesTable = ({ items, onEdit, onDelete }: CategoriesTableProp
             </Box>
 
             <Stack spacing={0.45} sx={{ minWidth: 0, flex: 1 }}>
-              <Typography sx={{ color: "#171512", fontSize: "1.05rem" }}>{item.name}</Typography>
+              <Typography sx={{ color: "text.primary", fontSize: "1.05rem" }}>{item.name}</Typography>
               <Typography
                 sx={{
-                  color: "#7a6f61",
+                  color: "text.secondary",
                   fontSize: "0.92rem",
                   lineHeight: 1.25,
                   minHeight: "2.3em",
@@ -83,7 +84,7 @@ export const CategoriesTable = ({ items, onEdit, onDelete }: CategoriesTableProp
                 sx={{
                   letterSpacing: "0.32em",
                   textTransform: "uppercase",
-                  color: "#6f6658",
+                  color: "text.secondary",
                   fontSize: "0.72rem",
                 }}
               >

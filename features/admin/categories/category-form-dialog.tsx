@@ -44,8 +44,9 @@ export const CategoryFormDialog = ({
       PaperProps={{
         sx: {
           borderRadius: 0.5,
-          bgcolor: "#fbf8f3",
-          border: "1px solid #e6dccb",
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
           overflow: "hidden",
           width: "min(860px, calc(100vw - 32px))",
           maxHeight: "calc(100vh - 32px)",
@@ -63,7 +64,7 @@ export const CategoryFormDialog = ({
           pb: 1,
         }}
       >
-        <Typography variant="h4" component="div" sx={{ color: "#171512", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
+        <Typography variant="h4" component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
           {editing ? "Edit Category" : "New Category"}
         </Typography>
         <IconButton size="small" onClick={onClose} aria-label="Close category dialog">
@@ -75,7 +76,7 @@ export const CategoryFormDialog = ({
         <DialogContent
           dividers
           sx={{
-            bgcolor: "#fbf8f3",
+            bgcolor: "background.paper",
             px: { xs: 2.5, md: 3.5 },
             pb: 3,
             pt: 0.5,
@@ -84,10 +85,10 @@ export const CategoryFormDialog = ({
               textTransform: "uppercase",
               letterSpacing: "0.24em",
               fontSize: "0.72rem",
-              color: "#7f7467",
+              color: "text.secondary",
             },
             "& .MuiOutlinedInput-root": {
-              bgcolor: "#ffffff",
+              bgcolor: "background.paper",
               borderRadius: 0,
             },
           }}
@@ -137,11 +138,11 @@ export const CategoryFormDialog = ({
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2, bgcolor: "#fbf8f3" }}>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider" }}>
           <Button
             onClick={onClose}
             variant="outlined"
-            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.72rem", borderColor: "#e0d4c1", color: "#171512", px: 3 }}
+            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.72rem", borderColor: "divider", color: "text.primary", px: 3 }}
           >
             Cancel
           </Button>
@@ -149,7 +150,7 @@ export const CategoryFormDialog = ({
             type="submit"
             variant="contained"
             disabled={saving}
-            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.72rem", bgcolor: "#171512", px: 4, "&:hover": { bgcolor: "#2d2a26" } }}
+            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.72rem", bgcolor: "text.primary", px: 4, "&:hover": { bgcolor: "text.secondary" } }}
           >
             {saving ? "Saving..." : editing ? "Save Changes" : "Create Category"}
           </Button>

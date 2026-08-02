@@ -13,11 +13,12 @@ export const MediaGrid = ({ rows, onCopyUrl, onDelete }: Props) => {
     <Grid container spacing={2}>
       {rows.map((item) => (
         <Grid key={item.id} size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: "100%", border: "1px solid #ebe2d5", boxShadow: "none", bgcolor: "#ffffff" }}>
+          <Card sx={{ height: "100%", border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
             <CardContent>
               <Box
                 sx={{
-                  border: "1px solid #eee6db",
+                  border: "1px solid",
+                  borderColor: "divider",
                   borderRadius: 1,
                   overflow: "hidden",
                   mb: 1,
