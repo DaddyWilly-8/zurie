@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppProviders } from "@/providers/app-providers";
 import { SITE } from "@/constants/site";
 import { Analytics } from "@/components/analytics";
+import { PwaRegister } from "@/components/pwa-register";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -51,6 +52,7 @@ export default function RootLayout({
     <html lang="en" className={`${manrope.variable} ${playfair.variable}`}>
       <body>
         <AppProviders>{children}</AppProviders>
+        <PwaRegister />
         <Analytics />
       </body>
     </html>
