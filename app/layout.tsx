@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/providers/app-providers";
@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   },
   description: SITE.description,
   applicationName: "Zurie",
-  themeColor: "#171512",
   appleWebApp: {
     capable: true,
     title: "Zurie",
@@ -41,6 +40,10 @@ export const metadata: Metadata = {
     apple: "/icons/icon-192.png",
   },
   manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#171512",
 };
 
 export default function RootLayout({

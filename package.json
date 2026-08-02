@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NEXT_DIST_DIR=.next-dev next dev",
+    "dev": "next dev",
+    "dev:local": "NEXT_DIST_DIR=.next-dev next dev",
     "clean": "rm -rf .next .next-dev .next-prod",
     "clean:prod": "rm -rf .next-prod",
     "build": "next build",
