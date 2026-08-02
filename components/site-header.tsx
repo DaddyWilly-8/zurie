@@ -86,7 +86,7 @@ export const SiteHeader = () => {
               Zuriè
             </Typography>
 
-            <Box sx={{ minWidth: 0, px: { xs: 0.4, md: 0 } }}>
+            <Box sx={{ minWidth: 0, px: { xs: 0.4, md: 0 }, display: { xs: "none", md: "block" } }}>
               <SiteHeaderNavLinks pathname={pathname ?? ""} />
             </Box>
 
@@ -110,6 +110,10 @@ export const SiteHeader = () => {
               />
             </Box>
           </Toolbar>
+
+          <Box sx={{ display: { xs: "block", md: "none" }, pb: 1, px: 0.2 }}>
+            <SiteHeaderNavLinks pathname={pathname ?? ""} />
+          </Box>
 
           {isSearchOpen ? (
             <SiteHeaderSearchPanel
