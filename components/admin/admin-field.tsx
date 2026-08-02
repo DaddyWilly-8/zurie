@@ -16,7 +16,7 @@ const labelSx = {
   textTransform: "uppercase",
   letterSpacing: "0.2em",
   fontSize: "0.7rem",
-  color: "#7f7467",
+  color: "text.secondary",
   fontWeight: 500,
 };
 
@@ -44,7 +44,7 @@ export const AdminField = ({
       fullWidth={fullWidth}
       variant="outlined"
       sx={{
-        bgcolor: "#ffffff",
+        bgcolor: "background.paper",
         "& .MuiOutlinedInput-root": {
           borderRadius: 0,
         },
@@ -64,7 +64,7 @@ export const AdminToggle = ({ label, checked, onChange }: AdminToggleProps) => {
   return (
     <Stack direction="row" alignItems="center" spacing={0.5}>
       <Checkbox checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      <Typography sx={{ fontSize: "0.85rem", color: "#171512" }}>{label}</Typography>
+      <Typography sx={{ fontSize: "0.85rem", color: "text.primary" }}>{label}</Typography>
     </Stack>
   );
 };

@@ -241,7 +241,8 @@ export default async function HomePage() {
                     sx={{
                       position: "relative",
                       height: { xs: 220, sm: 260, md: 300 },
-                      border: "1px solid #e8dfd1",
+                      border: "1px solid",
+                      borderColor: "divider",
                       overflow: "hidden",
                     }}
                   >
@@ -455,7 +456,8 @@ export default async function HomePage() {
                 position: "relative",
                 minHeight: { xs: 240, md: 300 },
                 overflow: "hidden",
-                border: "1px solid #e6dccb",
+                border: "1px solid",
+                borderColor: "divider",
                 mb: 4,
               }}
             >

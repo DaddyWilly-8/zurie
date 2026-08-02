@@ -152,7 +152,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f6f4f0" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -160,9 +160,10 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
         sx={{
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           ml: { md: `${DRAWER_WIDTH}px` },
-          bgcolor: "#ffffff",
-          borderBottom: "1px solid #e9e2d8",
-          color: "#171512",
+          bgcolor: "background.paper",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          color: "text.primary",
         }}
       >
         <Toolbar
@@ -252,7 +253,8 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: DRAWER_WIDTH,
-              borderRight: "1px solid #e9e2d8",
+              borderRight: "1px solid",
+              borderColor: "divider",
             },
           }}
           open

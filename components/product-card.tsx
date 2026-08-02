@@ -48,9 +48,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       sx={{
         borderRadius: 0,
         overflow: "hidden",
-        border: "1px solid #e8dfd1",
+        border: (theme) =>
+          `1px solid ${theme.palette.mode === "dark" ? "#383129" : "#e8dfd1"}`,
         boxShadow: "none",
-        backgroundColor: "#fcf8f2",
+        backgroundColor: "background.paper",
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -86,13 +87,19 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             position: "absolute",
             top: 8,
             right: 8,
-            backgroundColor: "rgba(255,255,255,0.92)",
-            "&:hover": { backgroundColor: "#fff" },
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(34, 31, 27, 0.92)"
+                : "rgba(255,255,255,0.92)",
+            "&:hover": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "rgba(45, 41, 36, 0.95)" : "#fff",
+            },
           }}
         >
           <FontAwesomeIcon
             icon={faHeartRegular}
-            color={inWishlist ? "#b58a57" : "#1f1f1f"}
+            color={inWishlist ? "#b58a57" : "currentColor"}
             fontSize={13}
           />
         </IconButton>

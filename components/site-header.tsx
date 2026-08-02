@@ -18,6 +18,7 @@ import {
   SiteHeaderNavLinks,
   SiteHeaderSearchPanel,
 } from "@/components/site-header/index";
+import { useThemeMode } from "@/providers/theme-provider";
 
 export const SiteHeader = () => {
   const pathname = usePathname();
@@ -35,6 +36,7 @@ export const SiteHeader = () => {
   const rates = useCurrencyStore((state) => state.rates);
   const setCurrency = useCurrencyStore((state) => state.setCurrency);
   const refreshRates = useCurrencyStore((state) => state.refreshRates);
+  const { mode, toggleMode } = useThemeMode();
 
   useEffect(() => {
     void refreshRates();
@@ -52,8 +54,13 @@ export const SiteHeader = () => {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: "rgba(252, 249, 245, 0.95)",
-          borderBottom: "1px solid #e7dfd3",
+          bgcolor: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(26, 25, 23, 0.94)"
+              : "rgba(252, 249, 245, 0.95)",
+          borderBottom: (theme) =>
+            `1px solid ${theme.palette.mode === "dark" ? "#2f2a24" : "#e7dfd3"}`,
+          backdropFilter: "blur(10px)",
         }}
       >
         <Container maxWidth="xl">
@@ -101,6 +108,8 @@ export const SiteHeader = () => {
               <SiteHeaderActions
                 currency={currency}
                 cartCount={cartCount}
+                mode={mode}
+                onThemeToggle={toggleMode}
                 onCurrencyChange={setCurrency}
                 onSearchToggle={() => setIsSearchOpen((prev) => !prev)}
                 onCartOpen={() => {

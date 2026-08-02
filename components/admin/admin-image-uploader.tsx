@@ -46,7 +46,7 @@ export const AdminImageUploader = ({
           textTransform: "uppercase",
           letterSpacing: "0.2em",
           fontSize: "0.7rem",
-          color: "#7f7467",
+          color: "text.secondary",
           fontWeight: 500,
           pl: 1.5,
         }}
@@ -58,8 +58,9 @@ export const AdminImageUploader = ({
           sx={{
             width: 108,
             height: 108,
-            border: "1px solid #e2d8c8",
-            bgcolor: "#efe7dc",
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
             overflow: "hidden",
             flexShrink: 0,
           }}
@@ -80,12 +81,12 @@ export const AdminImageUploader = ({
             height: 108,
             borderRadius: 0,
             borderStyle: "dashed",
-            borderColor: "#e2d8c8",
-            color: "#7f7467",
+            borderColor: "divider",
+            color: "text.secondary",
             textTransform: "uppercase",
             letterSpacing: "0.16em",
             fontSize: "0.68rem",
-            bgcolor: "#fbf8f3",
+            bgcolor: "background.default",
             flexDirection: "column",
             gap: 0.75,
           }}

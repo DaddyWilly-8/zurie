@@ -30,7 +30,7 @@ export const TestimonialCards = () => {
                 fontStyle: "italic",
                 fontSize: { xs: "1.45rem", md: "1.95rem" },
                 lineHeight: { xs: 1.38, md: 1.34 },
-                color: "#2f2922",
+                color: "text.primary",
               }}
             >
               &ldquo;{item.quote}&rdquo;
@@ -42,12 +42,12 @@ export const TestimonialCards = () => {
                   textTransform: "uppercase",
                   letterSpacing: "0.42em",
                   fontSize: "0.68rem",
-                  color: "#3d362f",
+                  color: "text.primary",
                 }}
               >
                 {item.name}
               </Typography>
-              <Typography sx={{ fontSize: "1rem", color: "#6f6559", mt: 0.25 }}>
+              <Typography sx={{ fontSize: "1rem", color: "text.secondary", mt: 0.25 }}>
                 {item.location}
               </Typography>
             </Box>

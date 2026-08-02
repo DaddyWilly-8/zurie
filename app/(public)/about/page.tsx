@@ -176,10 +176,12 @@ export default async function AboutPage() {
           <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
-                border: "1px solid #e8ddcd",
+                border: "1px solid",
+                borderColor: "divider",
                 borderRadius: 0,
                 boxShadow: "none",
                 height: "100%",
+                bgcolor: "background.paper",
               }}
             >
               <CardContent>
@@ -193,10 +195,12 @@ export default async function AboutPage() {
           <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
-                border: "1px solid #e8ddcd",
+                border: "1px solid",
+                borderColor: "divider",
                 borderRadius: 0,
                 boxShadow: "none",
                 height: "100%",
+                bgcolor: "background.paper",
               }}
             >
               <CardContent>
@@ -210,10 +214,12 @@ export default async function AboutPage() {
           <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
-                border: "1px solid #e8ddcd",
+                border: "1px solid",
+                borderColor: "divider",
                 borderRadius: 0,
                 boxShadow: "none",
                 height: "100%",
+                bgcolor: "background.paper",
               }}
             >
               <CardContent>

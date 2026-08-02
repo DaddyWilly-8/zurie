@@ -11,7 +11,8 @@ export const SiteHeaderSearchPanel = ({ value, onChange }: Props) => {
   return (
     <Box
       sx={{
-        borderTop: "1px solid #ece2d5",
+        borderTop: "1px solid",
+        borderColor: "divider",
         py: 1.1,
         display: "grid",
         gridTemplateColumns: { xs: "1fr", md: "1fr auto" },

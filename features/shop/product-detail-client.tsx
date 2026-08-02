@@ -78,7 +78,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
       <Typography
         component="div"
         sx={{
-          color: "#8a8176",
+          color: "text.secondary",
           fontSize: "0.76rem",
           display: "flex",
           gap: 0.8,
@@ -93,7 +93,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
           Shop
         </Typography>
         /
-        <Typography sx={{ color: "#4b443d", fontSize: "inherit" }}>
+        <Typography sx={{ color: "text.primary", fontSize: "inherit" }}>
           {product.name}
         </Typography>
       </Typography>
@@ -105,7 +105,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
             position: "relative",
             height: { xs: 380, sm: 520, md: 760 },
             overflow: "hidden",
-            bgcolor: "#f3ede4",
+            bgcolor: "background.paper",
             mb: 1.6,
           }}
         >
@@ -126,9 +126,9 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                 p: 0,
                 minWidth: 0,
                 border:
-                  activeImage === image.url ? "1px solid #171411" : "1px solid #e8e1d5",
+                  activeImage === image.url ? "1px solid" : "1px solid",
                 borderColor:
-                  activeImage === image.url ? "#171411" : "#e8e1d5",
+                  activeImage === image.url ? "text.primary" : "divider",
               }}
             >
               <Box
@@ -199,7 +199,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                 textTransform: "uppercase",
                 letterSpacing: "0.32em",
                 fontSize: "0.65rem",
-                color: "#73695f",
+                color: "text.secondary",
               }}
             >
               Colour: {selectedColor?.name ?? "Classic"}
@@ -218,9 +218,9 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                       py: 0.75,
                       borderRadius: 0,
                       border: "1px solid",
-                      borderColor: isActive ? "#d9c2a0" : "#ece2d5",
-                      bgcolor: isActive ? "#faf4ea" : "#fff",
-                      color: "#534a41",
+                      borderColor: isActive ? "primary.main" : "divider",
+                      bgcolor: isActive ? "action.selected" : "background.paper",
+                      color: "text.primary",
                       fontSize: "0.75rem",
                       fontWeight: 400,
                     }}
@@ -238,7 +238,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                 textTransform: "uppercase",
                 letterSpacing: "0.32em",
                 fontSize: "0.65rem",
-                color: "#73695f",
+                color: "text.secondary",
               }}
             >
               Quantity
@@ -247,7 +247,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
             <Stack direction="row" spacing={0} alignItems="center">
               <IconButton
                 onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                sx={{ width: 34, height: 34, border: "1px solid #ebe4d8", borderRadius: 0 }}
+                sx={{ width: 34, height: 34, border: "1px solid", borderColor: "divider", borderRadius: 0 }}
               >
                 <RemoveIcon sx={{ fontSize: 16 }} />
               </IconButton>
@@ -255,8 +255,9 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                 sx={{
                   width: 44,
                   height: 34,
-                  borderTop: "1px solid #ebe4d8",
-                  borderBottom: "1px solid #ebe4d8",
+                  borderTop: "1px solid",
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
                   display: "grid",
                   placeItems: "center",
                   fontSize: "0.9rem",
@@ -266,7 +267,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
               </Box>
               <IconButton
                 onClick={() => setQuantity((current) => current + 1)}
-                sx={{ width: 34, height: 34, border: "1px solid #ebe4d8", borderRadius: 0 }}
+                sx={{ width: 34, height: 34, border: "1px solid", borderColor: "divider", borderRadius: 0 }}
               >
                 <AddIcon sx={{ fontSize: 16 }} />
               </IconButton>
@@ -284,13 +285,13 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
               sx={{
                 flex: 1,
                 borderRadius: 0,
-                bgcolor: "#121212",
+                bgcolor: "text.primary",
                 py: 1.35,
                 fontSize: "0.68rem",
                 letterSpacing: "0.3em",
                 textTransform: "uppercase",
                 boxShadow: "none",
-                "&:hover": { bgcolor: "#000" },
+                "&:hover": { bgcolor: "text.secondary" },
               }}
             >
               Add to Bag
@@ -309,7 +310,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                 fontSize: "0.68rem",
                 letterSpacing: "0.26em",
                 textTransform: "uppercase",
-                borderColor: "#b7aca0",
+                borderColor: "divider",
               }}
               startIcon={<WhatsAppIcon sx={{ fontSize: 16 }} />}
             >
@@ -321,16 +322,17 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
               sx={{
                 width: 48,
                 height: 48,
-                border: "1px solid #e5dccf",
+                border: "1px solid",
+                borderColor: "divider",
                 borderRadius: 0,
-                color: inWishlist ? "#b58a57" : "#514941",
+                color: inWishlist ? "#b58a57" : "text.primary",
               }}
             >
               <FavoriteBorderIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Stack>
 
-          <Divider sx={{ borderColor: "#ece4d8", my: 2 }} />
+          <Divider sx={{ borderColor: "divider", my: 2 }} />
 
           <Stack spacing={1.4}>
             <Typography
@@ -338,13 +340,13 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                 textTransform: "uppercase",
                 letterSpacing: "0.32em",
                 fontSize: "0.66rem",
-                color: "#73695f",
+                color: "text.secondary",
               }}
             >
               Specifications
             </Typography>
 
-            <Stack divider={<Divider sx={{ borderColor: "#ede5da" }} />}> 
+            <Stack divider={<Divider sx={{ borderColor: "divider" }} />}> 
               {specificationRows.map((item) => (
                 <Stack
                   key={item.label}
@@ -353,10 +355,10 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                   spacing={2}
                   sx={{ py: 1.05 }}
                 >
-                  <Typography sx={{ color: "#7b736a", fontSize: "0.9rem" }}>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
                     {item.label}
                   </Typography>
-                  <Typography sx={{ color: "#3d3630", fontSize: "0.9rem", textAlign: "right" }}>
+                  <Typography sx={{ color: "text.primary", fontSize: "0.9rem", textAlign: "right" }}>
                     {item.value}
                   </Typography>
                 </Stack>
@@ -366,9 +368,9 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
 
           <Grid container spacing={1.15} sx={{ pt: 1.2 }}>
             {[
-              { icon: <LocalShippingOutlinedIcon sx={{ fontSize: 16, color: "#b4946c" }} />, label: "Free Delivery" },
-              { icon: <ShieldOutlinedIcon sx={{ fontSize: 16, color: "#b4946c" }} />, label: "Authenticity Guaranteed" },
-              { icon: <ReplayOutlinedIcon sx={{ fontSize: 16, color: "#b4946c" }} />, label: "14-Day Returns" },
+              { icon: <LocalShippingOutlinedIcon sx={{ fontSize: 16, color: "primary.main" }} />, label: "Free Delivery" },
+              { icon: <ShieldOutlinedIcon sx={{ fontSize: 16, color: "primary.main" }} />, label: "Authenticity Guaranteed" },
+              { icon: <ReplayOutlinedIcon sx={{ fontSize: 16, color: "primary.main" }} />, label: "14-Day Returns" },
             ].map((item) => (
               <Grid key={item.label} size={{ xs: 12, sm: 4 }}>
                 <Stack
@@ -377,7 +379,8 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                   justifyContent="center"
                   sx={{
                     minHeight: 82,
-                    border: "1px solid #ece3d7",
+                    border: "1px solid",
+                    borderColor: "divider",
                     textAlign: "center",
                     px: 1.2,
                   }}
@@ -388,7 +391,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
                       textTransform: "uppercase",
                       letterSpacing: "0.18em",
                       fontSize: "0.6rem",
-                      color: "#5f564d",
+                      color: "text.secondary",
                     }}
                   >
                     {item.label}
@@ -398,7 +401,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
             ))}
           </Grid>
 
-          <Typography sx={{ color: "#8a8176", fontSize: "0.78rem", lineHeight: 1.5 }}>
+          <Typography sx={{ color: "text.secondary", fontSize: "0.78rem", lineHeight: 1.5 }}>
             Orders are completed manually through WhatsApp concierge for delivery
             confirmation and payment guidance.
           </Typography>

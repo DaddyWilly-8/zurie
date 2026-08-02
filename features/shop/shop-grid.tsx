@@ -135,7 +135,7 @@ export const ShopGrid = ({
         </Typography>
       </Stack>
 
-      <Divider sx={{ borderColor: "#ece3d7" }} />
+      <Divider sx={{ borderColor: "divider" }} />
 
       <Grid container spacing={{ xs: 2.5, md: 4 }}>
       <Grid size={{ xs: 12, md: 2.2 }}>
@@ -165,7 +165,7 @@ export const ShopGrid = ({
               onChange={(event) => updateCategory(event.target.value)}
               sx={{
                 borderRadius: 0,
-                backgroundColor: "#fff",
+                backgroundColor: "background.paper",
                 fontSize: "0.88rem",
               }}
             >
@@ -183,7 +183,7 @@ export const ShopGrid = ({
               onClick={() => updateCategory("all")}
               sx={{
                 fontSize: "0.86rem",
-                color: category === "all" ? "#171411" : "text.secondary",
+                color: category === "all" ? "text.primary" : "text.secondary",
                 cursor: "pointer",
                 transition: "color 160ms ease",
               }}
@@ -235,7 +235,7 @@ export const ShopGrid = ({
                   width: { xs: "100%", sm: 220, md: 220 },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 0,
-                    backgroundColor: "#fff",
+                    backgroundColor: "background.paper",
                   },
                 }}
               />
@@ -249,7 +249,7 @@ export const ShopGrid = ({
                   width: { xs: "100%", sm: 180 },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 0,
-                    backgroundColor: "#fff",
+                    backgroundColor: "background.paper",
                   },
                 }}
               >

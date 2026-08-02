@@ -72,7 +72,7 @@ export const CartClient = () => {
         {cart.map((item) => (
           <Box
             key={item.productId}
-            sx={{ py: { xs: 2, md: 2.75 }, borderBottom: "1px solid #eee6db" }}
+            sx={{ py: { xs: 2, md: 2.75 }, borderBottom: "1px solid", borderColor: "divider" }}
           >
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -86,7 +86,7 @@ export const CartClient = () => {
                     position: "relative",
                     width: { xs: 88, md: 118 },
                     height: { xs: 112, md: 146 },
-                    bgcolor: "#f3ede4",
+                    bgcolor: "background.paper",
                     flexShrink: 0,
                     overflow: "hidden",
                   }}
@@ -127,7 +127,8 @@ export const CartClient = () => {
                       sx={{
                         width: 30,
                         height: 30,
-                        border: "1px solid #ebe4d8",
+                        border: "1px solid",
+                        borderColor: "divider",
                         borderRadius: 0,
                       }}
                     >
@@ -137,8 +138,9 @@ export const CartClient = () => {
                       sx={{
                         width: 38,
                         height: 30,
-                        borderTop: "1px solid #ebe4d8",
-                        borderBottom: "1px solid #ebe4d8",
+                        borderTop: "1px solid",
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
                         display: "grid",
                         placeItems: "center",
                         fontSize: "0.84rem",
@@ -151,7 +153,8 @@ export const CartClient = () => {
                       sx={{
                         width: 30,
                         height: 30,
-                        border: "1px solid #ebe4d8",
+                        border: "1px solid",
+                        borderColor: "divider",
                         borderRadius: 0,
                       }}
                     >
@@ -171,7 +174,7 @@ export const CartClient = () => {
                   sx={{
                     minWidth: "auto",
                     p: 0,
-                    color: "#85796c",
+                    color: "text.secondary",
                     fontSize: "1.1rem",
                     lineHeight: 1,
                     alignSelf: { xs: "flex-end", sm: "auto" },
@@ -179,7 +182,7 @@ export const CartClient = () => {
                 >
                   ×
                 </Button>
-                <Typography sx={{ fontSize: "0.94rem", color: "#3c352f", pt: { sm: 1.5 } }}>
+                <Typography sx={{ fontSize: "0.94rem", color: "text.primary", pt: { sm: 1.5 } }}>
                   {formatCurrency(
                     convertFromUsd(item.product.price * item.quantity, currency, rates),
                     currency,
@@ -197,7 +200,7 @@ export const CartClient = () => {
           sx={{
             alignSelf: "flex-start",
             mt: 1.3,
-            color: "#8e8377",
+            color: "text.secondary",
             fontSize: "0.76rem",
           }}
         >
@@ -209,7 +212,9 @@ export const CartClient = () => {
         sx={{
           width: "100%",
           maxWidth: { xs: "100%", lg: 340 },
-          bgcolor: "#f7f3ee",
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
           p: { xs: 2.2, md: 2.4 },
           position: { lg: "sticky" },
           top: { lg: 110 },
@@ -227,24 +232,24 @@ export const CartClient = () => {
 
         <Stack spacing={1.25}>
           <Stack direction="row" justifyContent="space-between" spacing={2}>
-            <Typography sx={{ fontSize: "0.88rem", color: "#665d54" }}>
+            <Typography sx={{ fontSize: "0.88rem", color: "text.secondary" }}>
               Subtotal
             </Typography>
-            <Typography sx={{ fontSize: "0.88rem", color: "#3a332d" }}>
+            <Typography sx={{ fontSize: "0.88rem", color: "text.primary" }}>
               {formatCurrency(convertFromUsd(total, currency, rates), currency)}
             </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between" spacing={2}>
-            <Typography sx={{ fontSize: "0.88rem", color: "#665d54" }}>
+            <Typography sx={{ fontSize: "0.88rem", color: "text.secondary" }}>
               Delivery
             </Typography>
-            <Typography sx={{ fontSize: "0.82rem", color: "#3a332d" }}>
+            <Typography sx={{ fontSize: "0.82rem", color: "text.primary" }}>
               Calculated via WhatsApp
             </Typography>
           </Stack>
         </Stack>
 
-        <Divider sx={{ my: 2.1, borderColor: "#e6ddd0" }} />
+        <Divider sx={{ my: 2.1, borderColor: "divider" }} />
 
         <Stack direction="row" justifyContent="space-between" spacing={2} sx={{ mb: 2.1 }}>
           <Typography
@@ -252,7 +257,7 @@ export const CartClient = () => {
               fontSize: "0.66rem",
               letterSpacing: "0.32em",
               textTransform: "uppercase",
-              color: "#8d8174",
+              color: "text.secondary",
             }}
           >
             Total
@@ -274,7 +279,7 @@ export const CartClient = () => {
               fontSize: "0.66rem",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
-              color: "#8d8174",
+              color: "text.secondary",
             }}
           >
             Your Name *
@@ -288,7 +293,7 @@ export const CartClient = () => {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 0,
-                backgroundColor: "#fff",
+                backgroundColor: "background.default",
               },
               "& .MuiOutlinedInput-input::placeholder": {
                 opacity: 0.72,
@@ -301,7 +306,7 @@ export const CartClient = () => {
               fontSize: "0.66rem",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
-              color: "#8d8174",
+              color: "text.secondary",
               mt: 0.4,
             }}
           >
@@ -315,7 +320,7 @@ export const CartClient = () => {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 0,
-                backgroundColor: "#fff",
+                backgroundColor: "background.default",
               },
               "& .MuiOutlinedInput-input::placeholder": {
                 opacity: 0.72,
@@ -349,7 +354,7 @@ export const CartClient = () => {
           sx={{
             mt: 1.2,
             textAlign: "center",
-            color: "#8d8174",
+            color: "text.secondary",
             fontSize: "0.72rem",
             lineHeight: 1.45,
           }}

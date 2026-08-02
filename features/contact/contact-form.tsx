@@ -65,10 +65,10 @@ export const ContactForm = () => {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 0,
-                backgroundColor: "#fff",
+                backgroundColor: "background.paper",
               },
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#efebe5",
+                borderColor: "divider",
               },
             }}
           />
@@ -84,10 +84,10 @@ export const ContactForm = () => {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 0,
-                backgroundColor: "#fff",
+                backgroundColor: "background.paper",
               },
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#efebe5",
+                borderColor: "divider",
               },
             }}
           />
@@ -101,10 +101,10 @@ export const ContactForm = () => {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 0,
-                backgroundColor: "#fff",
+                backgroundColor: "background.paper",
               },
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#efebe5",
+                borderColor: "divider",
               },
             }}
           />
@@ -118,10 +118,10 @@ export const ContactForm = () => {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 0,
-                backgroundColor: "#fff",
+                backgroundColor: "background.paper",
               },
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#efebe5",
+                borderColor: "divider",
               },
             }}
           />
@@ -138,10 +138,10 @@ export const ContactForm = () => {
         sx={{
           "& .MuiOutlinedInput-root": {
             borderRadius: 0,
-            backgroundColor: "#fff",
+            backgroundColor: "background.paper",
           },
           "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#efebe5",
+            borderColor: "divider",
           },
         }}
       />
@@ -154,14 +154,14 @@ export const ContactForm = () => {
           px: 2.4,
           minWidth: 130,
           borderRadius: 0,
-          bgcolor: "#111",
-          color: "#fff",
+          bgcolor: "text.primary",
+          color: "background.paper",
           fontSize: "0.62rem",
           letterSpacing: "0.3em",
           textTransform: "uppercase",
           py: 1,
           "&:hover": {
-            bgcolor: "#000",
+            bgcolor: "text.secondary",
           },
         }}
       >

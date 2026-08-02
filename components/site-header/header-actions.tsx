@@ -1,14 +1,17 @@
 import { IconButton, MenuItem, Select, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBagShopping, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faBagShopping, faMoon, faMagnifyingGlass, faSun } from "@fortawesome/free-solid-svg-icons";
 import {
   CURRENCY_OPTIONS,
   type CurrencyCode,
 } from "@/utils/currency";
+import type { PaletteMode } from "@mui/material";
 
 type Props = {
   currency: CurrencyCode;
   cartCount: number;
+  mode: PaletteMode;
+  onThemeToggle: () => void;
   onCurrencyChange: (currency: CurrencyCode) => void;
   onSearchToggle: () => void;
   onCartOpen: () => void;
@@ -17,6 +20,8 @@ type Props = {
 export const SiteHeaderActions = ({
   currency,
   cartCount,
+  mode,
+  onThemeToggle,
   onCurrencyChange,
   onSearchToggle,
   onCartOpen,
@@ -51,6 +56,13 @@ export const SiteHeaderActions = ({
 
       <IconButton aria-label="Search" onClick={onSearchToggle}>
         <FontAwesomeIcon icon={faMagnifyingGlass} fontSize={15} />
+      </IconButton>
+
+      <IconButton
+        aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        onClick={onThemeToggle}
+      >
+        <FontAwesomeIcon icon={mode === "dark" ? faSun : faMoon} fontSize={15} />
       </IconButton>
 
       <IconButton aria-label="Cart" onClick={onCartOpen}>

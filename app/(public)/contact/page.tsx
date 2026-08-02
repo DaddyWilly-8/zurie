@@ -166,7 +166,14 @@ export default async function ContactPage() {
               </Stack>
             </Box>
 
-            <Box sx={{ border: "1px solid #ebe4d9", p: 0, overflow: "hidden" }}>
+            <Box
+              sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                p: 0,
+                overflow: "hidden",
+              }}
+            >
               <iframe
                 src={contact.mapEmbedUrl}
                 width="100%"
@@ -214,7 +221,7 @@ export default async function ContactPage() {
               position: "relative",
               minHeight: { xs: 340, sm: 420, md: 560 },
               overflow: "hidden",
-              bgcolor: "#f3ede4",
+              bgcolor: "background.paper",
             }}
           >
             <Image
@@ -268,7 +275,7 @@ export default async function ContactPage() {
                   position: "relative",
                   minHeight: { xs: 220, sm: 240, md: 271 },
                   overflow: "hidden",
-                  bgcolor: "#f3ede4",
+                  bgcolor: "background.paper",
                   flex: 1,
                 }}
               >

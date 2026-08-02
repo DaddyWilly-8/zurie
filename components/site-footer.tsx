@@ -15,7 +15,13 @@ export const SiteFooter = () => {
   return (
     <Box
       component="footer"
-      sx={{ mt: 10, bgcolor: "#12100f", color: "#f2efe9", pt: 0, pb: 4 }}
+      sx={{
+        mt: 10,
+        bgcolor: "#12100f",
+        color: "#f2efe9",
+        pt: 0,
+        pb: 4,
+      }}
     >
       <Container maxWidth="xl">
         <Box sx={{ py: { xs: 4.2, md: 5.2 } }}>
