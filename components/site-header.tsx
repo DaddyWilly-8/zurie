@@ -62,9 +62,10 @@ export const SiteHeader = () => {
             sx={{
               py: 1.2,
               display: "grid",
-              gridTemplateColumns: "1fr auto 1fr",
+              gridTemplateColumns: { xs: "auto 1fr auto", md: "1fr auto 1fr" },
               alignItems: "center",
-              gap: 2,
+              gap: { xs: 1, md: 2 },
+              minWidth: 0,
             }}
           >
             <Typography
@@ -74,7 +75,7 @@ export const SiteHeader = () => {
               sx={{
                 justifySelf: "start",
                 fontFamily: "var(--font-playfair), serif",
-                fontSize: { xs: "1.7rem", md: "2rem" },
+                fontSize: { xs: "1.35rem", md: "2rem" },
                 fontWeight: 500,
                 color: "text.primary",
                 textDecoration: "none",
@@ -85,7 +86,9 @@ export const SiteHeader = () => {
               Zuriè
             </Typography>
 
-            <SiteHeaderNavLinks pathname={pathname ?? ""} />
+            <Box sx={{ minWidth: 0, px: { xs: 0.4, md: 0 } }}>
+              <SiteHeaderNavLinks pathname={pathname ?? ""} />
+            </Box>
 
             <Box
               sx={{

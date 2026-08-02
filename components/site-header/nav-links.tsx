@@ -11,8 +11,13 @@ export const SiteHeaderNavLinks = ({ pathname }: Props) => {
     <Box
       sx={{
         display: "flex",
-        gap: { xs: 1.8, md: 3.2 },
+        gap: { xs: 1.4, md: 3.2 },
         justifySelf: "center",
+        overflowX: { xs: "auto", md: "visible" },
+        maxWidth: "100%",
+        whiteSpace: "nowrap",
+        scrollbarWidth: "none",
+        "&::-webkit-scrollbar": { display: "none" },
       }}
     >
       {NAV_LINKS.map((link) => (
@@ -23,12 +28,13 @@ export const SiteHeaderNavLinks = ({ pathname }: Props) => {
           variant="body2"
           sx={{
             textTransform: "uppercase",
-            letterSpacing: "0.34em",
-            fontSize: "0.72rem",
+            letterSpacing: { xs: "0.22em", md: "0.34em" },
+            fontSize: { xs: "0.64rem", md: "0.72rem" },
             fontWeight: pathname === link.href ? 700 : 500,
             color: pathname === link.href ? "primary.main" : "text.secondary",
             textDecoration: "none",
             transition: "color 180ms ease",
+            flexShrink: 0,
             "&:hover": { color: "text.primary" },
           }}
         >

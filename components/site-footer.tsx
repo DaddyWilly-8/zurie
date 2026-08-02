@@ -119,6 +119,9 @@ export const SiteFooter = () => {
               <ListItem disableGutters sx={{ py: 0.4 }}>
                 <Link href="/shop">Best Sellers</Link>
               </ListItem>
+              <ListItem disableGutters sx={{ py: 0.4 }}>
+                <Link href="/admin/login">Admin Login</Link>
+              </ListItem>
             </List>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>

@@ -47,6 +47,7 @@ type AdminNavLink = {
 };
 
 const DRAWER_WIDTH = 260;
+const MOBILE_DRAWER_WIDTH = "86vw";
 
 const links: AdminNavLink[] = [
   { href: "/admin", label: "Overview", icon: faHouse },
@@ -74,6 +75,10 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     void refreshRates();
   }, [refreshRates]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [currentPath]);
 
   const breadcrumbs = useMemo(() => {
     const segments = currentPath.split("/").filter(Boolean);
@@ -160,30 +165,44 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
           color: "#171512",
         }}
       >
-        <Toolbar>
+        <Toolbar
+          sx={{
+            minHeight: { xs: 62, md: 64 },
+            gap: 1,
+            px: { xs: 1.4, md: 2.5 },
+          }}
+        >
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={() => setMobileOpen(true)}
-            sx={{ mr: 2, display: { md: "none" } }}
+            sx={{ mr: 0.8, display: { md: "none" } }}
           >
             <FontAwesomeIcon icon={faBars} />
           </IconButton>
-          <Box>
-            <Typography variant="subtitle1" fontWeight={700}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="subtitle1" fontWeight={700} noWrap>
               Dashboard
             </Typography>
-            <Breadcrumbs aria-label="breadcrumb" sx={{ fontSize: "0.8rem" }}>
-              {breadcrumbs.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  {item.label}
-                </Link>
-              ))}
-            </Breadcrumbs>
+            <Box
+              sx={{
+                display: { xs: "none", sm: "block" },
+                overflowX: "auto",
+                "&::-webkit-scrollbar": { height: 4 },
+              }}
+            >
+              <Breadcrumbs aria-label="breadcrumb" sx={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}>
+                {breadcrumbs.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    {item.label}
+                  </Link>
+                ))}
+              </Breadcrumbs>
+            </Box>
           </Box>
 
-          <Box sx={{ ml: "auto" }}>
+          <Box sx={{ ml: 0, flexShrink: 0 }}>
             <Select
               size="small"
               value={currency}
@@ -191,7 +210,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
               variant="standard"
               disableUnderline
               sx={{
-                minWidth: { xs: 70, md: 88 },
+                minWidth: { xs: 62, md: 88 },
                 fontSize: "0.72rem",
                 letterSpacing: "0.08em",
                 color: "text.secondary",
@@ -221,7 +240,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: DRAWER_WIDTH },
+            "& .MuiDrawer-paper": { boxSizing: "border-box", width: MOBILE_DRAWER_WIDTH, maxWidth: DRAWER_WIDTH },
           }}
         >
           {drawer}
@@ -246,12 +265,13 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, md: 3 },
+          p: { xs: 1.35, sm: 2, md: 3 },
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          mt: 8,
+          mt: { xs: 8.5, md: 8 },
+          overflowX: "hidden",
         }}
       >
-        {children}
+        <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>{children}</Box>
       </Box>
     </Box>
   );
