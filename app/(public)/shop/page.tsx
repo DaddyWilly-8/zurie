@@ -4,7 +4,7 @@ import { getProducts } from "@/services/products";
 import { ShopGrid } from "@/features/shop/shop-grid";
 
 export const metadata = buildMetadata({
-  title: "Shop | Zuriè",
+  title: "Zuriè",
   description:
     "Browse premium handbags, totes, shoulder, crossbody, backpacks, and wallets.",
   path: "/shop",
