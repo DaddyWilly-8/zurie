@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Stack, Typography } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Alert, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import {
   categoryActions,
   CategoriesTable,
@@ -98,38 +97,31 @@ export const AdminCategoriesClient = () => {
           {message}
         </Alert>
       ) : null}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.2}>
+        <Stack spacing={0.3}>
+          <Typography sx={{ color: "text.primary", fontSize: { xs: "2rem", md: "2.2rem" } }}>
+            Categories
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: "1rem" }}>
+            {loading ? "Loading categories..." : `${items.length} categories`}
+          </Typography>
+        </Stack>
 
-      <Typography sx={{ color: "text.primary", fontSize: { xs: "2rem", md: "2.2rem" } }}>
-        Categories
-      </Typography>
-
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "flex-start", md: "center" }}
-        spacing={1.2}
-      >
-        <Typography sx={{ color: "text.secondary", fontSize: "1rem" }}>
-          {loading ? "Loading categories..." : `${items.length} categories`}
-        </Typography>
-
-        <Button
-          variant="contained"
-          startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
-          onClick={openNew}
-          sx={{
-            borderRadius: 0,
-            textTransform: "uppercase",
-            letterSpacing: "0.24em",
-            fontSize: "0.72rem",
-            px: 2.6,
-            py: 1,
-            bgcolor: "text.primary",
-            "&:hover": { bgcolor: "text.secondary" },
-          }}
-        >
-          Add Category
-        </Button>
+        <Tooltip title="Add Category" arrow>
+          <IconButton
+            onClick={openNew}
+            aria-label="Add Category"
+            sx={{
+              border: "1px solid",
+              borderColor: "divider",
+              color: "text.primary",
+              bgcolor: "background.paper",
+              "&:hover": { bgcolor: "action.hover" },
+            }}
+          >
+            <AddOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Stack>
 
       {loading ? (

@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
-  Button,
+  IconButton,
   InputAdornment,
   Paper,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSearch } from "@fortawesome/free-solid-svg-icons";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import SearchIcon from "@mui/icons-material/Search";
 import {
   emptyFormState,
   productActions,
@@ -131,31 +132,25 @@ export const AdminProductsClient = () => {
   return (
     <Stack spacing={3}>
       {message ? <Alert severity={messageType} onClose={() => setMessage("")}>{message}</Alert> : null}
-
       <Paper sx={{ p: 3, borderRadius: 1.5, border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <Stack spacing={2.5}>
-          <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }} spacing={2}>
-            <Stack spacing={0.5}>
-              <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>Dashboard</Typography>
-              <Typography variant="h6" sx={{ color: "text.primary" }}>Products</Typography>
-            </Stack>
+          <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1}>
             {!isAdding && (
-              <Button
-                variant="contained"
-                startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
-                onClick={() => setIsAdding(true)}
-                sx={{
-                  borderRadius: 1,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.18em",
-                  fontSize: "0.72rem",
-                  bgcolor: "text.primary",
-                  px: 2.5,
-                  "&:hover": { bgcolor: "text.secondary" },
-                }}
-              >
-                Add Product
-              </Button>
+              <Tooltip title="Add Product" arrow>
+                <IconButton
+                  onClick={() => setIsAdding(true)}
+                  aria-label="Add Product"
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    color: "text.primary",
+                    bgcolor: "background.paper",
+                    "&:hover": { bgcolor: "action.hover" },
+                  }}
+                >
+                  <AddOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             )}
           </Stack>
 
@@ -163,9 +158,11 @@ export const AdminProductsClient = () => {
             <TextField
               placeholder="Search products..."
               value={query}
+              size="small"
               onChange={(event) => setQuery(event.target.value)}
               sx={{
                 width: { xs: "100%", md: 275 },
+                mb: 1,
                 bgcolor: "background.default",
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 0,
@@ -174,7 +171,7 @@ export const AdminProductsClient = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <FontAwesomeIcon icon={faSearch} size="sm" style={{ color: "currentColor" }} />
+                    <SearchIcon fontSize="small" />
                   </InputAdornment>
                 ),
               }}
@@ -201,7 +198,7 @@ export const AdminProductsClient = () => {
         ) : filteredProducts.length === 0 ? (
           <Box sx={{ py: 6, textAlign: "center" }}>
             <Typography color="text.secondary">No products yet.</Typography>
-            <Typography variant="caption" color="text.secondary">Click the &quot;Add Product&quot; button to create your first product.</Typography>
+            <Typography variant="caption" color="text.secondary">Use the add icon on the top right to create your first product.</Typography>
           </Box>
         ) : (
           <ProductsTable

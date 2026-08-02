@@ -10,11 +10,13 @@ import {
   IconButton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
   Chip,
 } from "@mui/material";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faPlus, faEdit, faTimes, faGripVertical } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faEdit, faTimes, faGripVertical } from "@fortawesome/free-solid-svg-icons";
 import { AdminField, AdminToggle } from "@/components/admin";
 import { faqService, type FAQ } from "@/services/faq/faq.service";
 
@@ -152,16 +154,25 @@ export const AdminFaqClient = () => {
             </Typography>
           </Stack>
 
-          {!isAdding && (
-            <Button
-              variant="contained"
-              startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
-              onClick={() => setIsAdding(true)}
-              sx={{ borderRadius: 1, textTransform: "uppercase", letterSpacing: "0.18em", fontSize: "0.72rem", mb: 2, bgcolor: "text.primary", "&:hover": { bgcolor: "text.secondary" } }}
-            >
-              Add FAQ
-            </Button>
-          )}
+          {!isAdding ? (
+            <Stack direction="row" justifyContent="flex-end" sx={{ mb: 2 }}>
+              <Tooltip title="Add FAQ" arrow>
+                <IconButton
+                  onClick={() => setIsAdding(true)}
+                  aria-label="Add FAQ"
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    color: "text.primary",
+                    bgcolor: "background.paper",
+                    "&:hover": { bgcolor: "action.hover" },
+                  }}
+                >
+                  <AddOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          ) : null}
 
           {isAdding && (
             <Box sx={{ mb: 3, p: 2.5, bgcolor: "background.default", border: "1px solid", borderColor: "divider" }}>
@@ -205,7 +216,7 @@ export const AdminFaqClient = () => {
             <Box sx={{ py: 4, textAlign: "center" }}>
               <Typography color="text.secondary">No FAQs yet.</Typography>
               <Typography variant="caption" color="text.secondary">
-                Click the &quot;Add FAQ&quot; button to create your first FAQ.
+                Use the add icon on the top right to create your first FAQ.
               </Typography>
             </Box>
           ) : (
