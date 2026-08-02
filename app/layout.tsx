@@ -23,10 +23,10 @@ export const metadata: Metadata = {
     template: "%s | Zuriè",
   },
   description: SITE.description,
-  applicationName: "Zurie",
+  applicationName: "ZURIÈ",
   appleWebApp: {
     capable: true,
-    title: "Zurie",
+    title: "ZURIÈ",
     statusBarStyle: "default",
   },
   icons: {
