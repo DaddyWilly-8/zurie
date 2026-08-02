@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
   IconButton,
   InputAdornment,
+  Pagination,
   Paper,
   Stack,
   TextField,
@@ -26,6 +27,8 @@ import {
   type ProductFormState,
 } from "@/features/admin/products";
 
+const PRODUCTS_PAGE_SIZE = 10;
+
 export const AdminProductsClient = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [edits, setEdits] = useState<ProductEdits>({});
@@ -36,6 +39,7 @@ export const AdminProductsClient = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const loadProducts = async () => {
     try {
@@ -129,10 +133,30 @@ export const AdminProductsClient = () => {
     return text.includes(query.trim().toLowerCase());
   });
 
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PAGE_SIZE)),
+    [filteredProducts.length],
+  );
+
+  const paginatedProducts = useMemo(() => {
+    const start = (page - 1) * PRODUCTS_PAGE_SIZE;
+    return filteredProducts.slice(start, start + PRODUCTS_PAGE_SIZE);
+  }, [filteredProducts, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   return (
     <Stack spacing={3}>
       {message ? <Alert severity={messageType} onClose={() => setMessage("")}>{message}</Alert> : null}
-      <Paper sx={{ p: 3, borderRadius: 1.5, border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
+      <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 1.5, border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <Stack spacing={2.5}>
           <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1}>
             {!isAdding && (
@@ -201,12 +225,31 @@ export const AdminProductsClient = () => {
             <Typography variant="caption" color="text.secondary">Use the add icon on the top right to create your first product.</Typography>
           </Box>
         ) : (
-          <ProductsTable
-            products={filteredProducts}
-            onEdit={(id) => setEditingId((current) => (current === id ? null : id))}
-            onDuplicate={duplicateProduct}
-            onDelete={deleteProduct}
-          />
+          <>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: { xs: "block", md: "none" }, mb: 1 }}
+            >
+              Swipe left/right to view full table.
+            </Typography>
+            <ProductsTable
+              products={paginatedProducts}
+              onEdit={(id) => setEditingId((current) => (current === id ? null : id))}
+              onDuplicate={duplicateProduct}
+              onDelete={deleteProduct}
+            />
+            {filteredProducts.length > PRODUCTS_PAGE_SIZE ? (
+              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={(_, value) => setPage(value)}
+                  color="primary"
+                />
+              </Stack>
+            ) : null}
+          </>
         )}
 
         <ProductEditDialog

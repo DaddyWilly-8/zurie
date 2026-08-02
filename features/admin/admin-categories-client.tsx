@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Alert, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { Alert, Box, IconButton, Pagination, Stack, Tooltip, Typography } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import {
   categoryActions,
@@ -14,6 +14,7 @@ import {
 } from "@/features/admin/categories";
 
 export const AdminCategoriesClient = () => {
+  const CATEGORIES_PAGE_SIZE = 9;
   const [items, setItems] = useState<Category[]>([]);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
@@ -23,6 +24,7 @@ export const AdminCategoriesClient = () => {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryForm>(emptyCategoryForm);
+  const [page, setPage] = useState(1);
 
   const load = async () => {
     try {
@@ -90,6 +92,22 @@ export const AdminCategoriesClient = () => {
     }
   };
 
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(items.length / CATEGORIES_PAGE_SIZE)),
+    [items.length],
+  );
+
+  const paginatedItems = useMemo(() => {
+    const start = (page - 1) * CATEGORIES_PAGE_SIZE;
+    return items.slice(start, start + CATEGORIES_PAGE_SIZE);
+  }, [items, page]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   return (
     <Stack spacing={3.2}>
       {message ? (
@@ -133,7 +151,19 @@ export const AdminCategoriesClient = () => {
           <Typography color="text.secondary">No categories yet.</Typography>
         </Box>
       ) : (
-        <CategoriesTable items={items} onEdit={openEdit} onDelete={removeCategory} />
+        <>
+          <CategoriesTable items={paginatedItems} onEdit={openEdit} onDelete={removeCategory} />
+          {items.length > CATEGORIES_PAGE_SIZE ? (
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+              />
+            </Stack>
+          ) : null}
+        </>
       )}
 
       <CategoryFormDialog

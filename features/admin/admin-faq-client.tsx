@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   IconButton,
+  Pagination,
   Stack,
   TextField,
   Tooltip,
@@ -21,6 +22,7 @@ import { AdminField, AdminToggle } from "@/components/admin";
 import { faqService, type FAQ } from "@/services/faq/faq.service";
 
 export const AdminFaqClient = () => {
+  const FAQ_PAGE_SIZE = 8;
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
@@ -31,6 +33,7 @@ export const AdminFaqClient = () => {
   const [newDisplayOrder, setNewDisplayOrder] = useState(1);
   const [newIsVisible, setNewIsVisible] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
 
   const loadFaqs = async () => {
     setLoading(true);
@@ -130,6 +133,22 @@ export const AdminFaqClient = () => {
     );
   };
 
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(faqs.length / FAQ_PAGE_SIZE)),
+    [faqs.length],
+  );
+
+  const paginatedFaqs = useMemo(() => {
+    const start = (page - 1) * FAQ_PAGE_SIZE;
+    return faqs.slice(start, start + FAQ_PAGE_SIZE);
+  }, [faqs, page]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   return (
     <Stack spacing={3}>
       {message && (
@@ -220,8 +239,9 @@ export const AdminFaqClient = () => {
               </Typography>
             </Box>
           ) : (
-            <Stack spacing={1.5}>
-              {faqs.map((faq) => {
+            <>
+              <Stack spacing={1.5}>
+                {paginatedFaqs.map((faq) => {
                 const isEditing = editingId === faq.id;
                 return (
                   <Box
@@ -317,8 +337,19 @@ export const AdminFaqClient = () => {
                     )}
                   </Box>
                 );
-              })}
-            </Stack>
+                })}
+              </Stack>
+              {faqs.length > FAQ_PAGE_SIZE ? (
+                <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(_, value) => setPage(value)}
+                    color="primary"
+                  />
+                </Stack>
+              ) : null}
+            </>
           )}
         </CardContent>
       </Card>

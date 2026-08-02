@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardContent,
+  Pagination,
   Stack,
   Table,
   TableBody,
@@ -23,30 +24,40 @@ type ActivityLogRow = {
 };
 
 export const AdminActivityClient = () => {
+  const PAGE_SIZE = 20;
   const [entries, setEntries] = useState<ActivityLogRow[]>([]);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(count / PAGE_SIZE)),
+    [count],
+  );
 
   useEffect(() => {
     let active = true;
 
-    const load = async () => {
+    const load = async (nextPage: number) => {
       try {
-        const payload = await activityService.listActivity(1, 20);
+        const payload = await activityService.listActivity(nextPage, PAGE_SIZE);
         if (active) {
           setEntries((payload.data ?? []) as ActivityLogRow[]);
+          setCount(payload.count ?? 0);
         }
       } catch {
         if (active) {
           setEntries([]);
+          setCount(0);
         }
       }
     };
 
-    void load();
+    void load(page);
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [page]);
 
   return (
     <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
@@ -86,6 +97,17 @@ export const AdminActivityClient = () => {
             ) : null}
           </TableBody>
         </Table>
+
+        {count > PAGE_SIZE ? (
+          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              color="primary"
+            />
+          </Stack>
+        ) : null}
       </CardContent>
     </Card>
   );
