@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
@@ -27,33 +28,27 @@ export const AdminContentClient = ({
   const [heroImage, setHeroImage] = useState(initial?.heroImage ?? "/images/hero/zurie-hero.png");
   const [message, setMessage] = useState("");
 
+  const {
+    data: content = initial ?? null,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-brand-content"],
+    queryFn: contentService.getBrandContent,
+    enabled: !initial,
+    initialData: initial,
+  });
+
   useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const payload = await contentService.getBrandContent();
-        if (!active) return;
-        setStory(payload.story);
-        setMission(payload.mission);
-        setVision(payload.vision);
-        setQualityCommitment(payload.qualityCommitment);
-        setHeroImage(payload.heroImage);
-      } catch {
-        if (active) {
-          setMessage("Failed to load content");
-        }
-      }
-    };
-
-    if (!initial) {
-      void load();
+    if (content) {
+      setStory(content.story);
+      setMission(content.mission);
+      setVision(content.vision);
+      setQualityCommitment(content.qualityCommitment);
+      setHeroImage(content.heroImage);
     }
-
-    return () => {
-      active = false;
-    };
-  }, [initial]);
+  }, [content]);
 
   const saveContent = async () => {
     const payload = {
@@ -73,6 +68,7 @@ export const AdminContentClient = ({
     try {
       await contentService.updateBrandContent(payload.payload);
       setMessage("Content updated");
+      await refetch();
     } catch {
       setMessage("Failed to update content");
     }
@@ -90,6 +86,8 @@ export const AdminContentClient = ({
               About / Brand Content
             </Typography>
           </Stack>
+          {isError ? <Alert severity="error">Failed to load content</Alert> : null}
+          {isLoading ? <Typography color="text.secondary">Loading content...</Typography> : null}
           <AdminField label="Story" value={story} onChange={setStory} multiline minRows={3} />
           <AdminField label="Mission" value={mission} onChange={setMission} multiline minRows={3} />
           <AdminField label="Vision" value={vision} onChange={setVision} multiline minRows={3} />

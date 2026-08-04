@@ -5,6 +5,7 @@ export type AdminProduct = {
   description: string;
   short_description?: string;
   price: number;
+  buying_price?: number;
   sale_price?: number | null;
   sku?: string;
   status?: "draft" | "published" | "archived";
@@ -12,6 +13,7 @@ export type AdminProduct = {
   seo_title?: string;
   seo_description?: string;
   featured_image_url?: string;
+  category_id?: string;
   category: string;
   featured: boolean;
   best_seller: boolean;
@@ -36,6 +38,7 @@ export type ProductFormState = {
   description: string;
   shortDescription: string;
   price: number;
+  buyingPrice: number;
   compareAt: number;
   sku: string;
   status: "draft" | "published" | "archived";
@@ -46,6 +49,7 @@ export type ProductFormState = {
   seoTitle: string;
   seoDescription: string;
   featuredImageUrl: string;
+  categoryId: string;
   category: string;
   featured: boolean;
   bestSeller: boolean;
@@ -62,4 +66,5 @@ export type ProductEdits = Record<string, ProductFormState>;
 export type ProductFieldsProps = {
   state: ProductFormState;
   onChange: <K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) => void;
+  categoryOptions: Array<{ value: string; label: string }>;
 };

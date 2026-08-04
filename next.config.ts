@@ -3,6 +3,18 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   outputFileTracingRoot: process.cwd(),
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: "https://test.weldtech.co.tz/api/v1/:path*",
+      },
+      {
+        source: "/sanctum/:path*",
+        destination: "https://test.weldtech.co.tz/sanctum/:path*",
+      },
+    ];
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

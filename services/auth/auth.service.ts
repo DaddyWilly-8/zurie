@@ -73,13 +73,21 @@ export const authService = {
     return apiClient.post<{ success: boolean }>(API_ENDPOINTS.auth.forgotPassword, { email });
   },
 
-  async resetPassword(password: string) {
+  async resetPassword(payload: {
+    token: string;
+    email: string;
+    password: string;
+    passwordConfirmation: string;
+  }) {
     if (isMockMode()) {
       return { success: true };
     }
 
     return apiClient.post<{ success: boolean }>(API_ENDPOINTS.auth.resetPassword, {
-      password,
+      token: payload.token,
+      email: payload.email,
+      password: payload.password,
+      password_confirmation: payload.passwordConfirmation,
     });
   },
 };

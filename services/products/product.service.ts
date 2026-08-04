@@ -9,6 +9,7 @@ export type AdminProductPayload = {
   description: string;
   shortDescription?: string;
   price: number;
+  buyingPrice: number;
   salePrice?: number | null;
   sku?: string;
   status?: "draft" | "published" | "archived";
@@ -16,7 +17,7 @@ export type AdminProductPayload = {
   seoTitle?: string;
   seoDescription?: string;
   featuredImageUrl?: string;
-  category: string;
+  categoryId: string;
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;
@@ -80,24 +81,34 @@ export const productService = {
     if (isMockMode()) {
       return mockBackend.products.create({
         ...payload,
+        category: payload.categoryId,
+        buyingPrice: payload.buyingPrice,
         inStock: (payload.quantity ?? 0) > 0,
         stockCount: payload.quantity ?? 0,
       });
     }
 
-    return apiClient.post<{ success: boolean; id: string }>(API_ENDPOINTS.products.list, payload);
+    return apiClient.post<{ success: boolean; id: string }>(API_ENDPOINTS.products.list, {
+      ...payload,
+      categoryId: Number(payload.categoryId),
+    });
   },
 
   updateProduct(id: string, payload: AdminProductPayload) {
     if (isMockMode()) {
       return mockBackend.products.update(id, {
         ...payload,
+        category: payload.categoryId,
+        buyingPrice: payload.buyingPrice,
         inStock: true,
         stockCount: 1,
       });
     }
 
-    return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.products.byId(id), payload);
+    return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.products.byId(id), {
+      ...payload,
+      categoryId: Number(payload.categoryId),
+    });
   },
 
   deleteProduct(id: string) {

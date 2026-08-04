@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
@@ -28,36 +29,30 @@ export const AdminSettingsClient = ({
   const [mapEmbedUrl, setMapEmbedUrl] = useState(initial?.mapEmbedUrl ?? "");
   const [message, setMessage] = useState("");
 
+  const {
+    data: settings = initial,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-settings"],
+    queryFn: contentService.getContactInfo,
+    enabled: !initial,
+    initialData: initial,
+  });
+
   useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const payload = await contentService.getContactInfo();
-        if (!active) return;
-        setWhatsappNumber(payload.whatsappNumber);
-        setPhone(payload.phone);
-        setEmail(payload.email);
-        setAddress(payload.address);
-        setInstagram(payload.instagram);
-        setFacebook(payload.facebook);
-        setTiktok(payload.tiktok);
-        setMapEmbedUrl(payload.mapEmbedUrl);
-      } catch {
-        if (active) {
-          setMessage("Failed to load settings");
-        }
-      }
-    };
-
-    if (!initial) {
-      void load();
+    if (settings) {
+      setWhatsappNumber(settings.whatsappNumber);
+      setPhone(settings.phone);
+      setEmail(settings.email);
+      setAddress(settings.address);
+      setInstagram(settings.instagram);
+      setFacebook(settings.facebook);
+      setTiktok(settings.tiktok);
+      setMapEmbedUrl(settings.mapEmbedUrl);
     }
-
-    return () => {
-      active = false;
-    };
-  }, [initial]);
+  }, [settings]);
 
   const saveSettings = async () => {
     try {
@@ -72,6 +67,7 @@ export const AdminSettingsClient = ({
         mapEmbedUrl,
       });
       setMessage("Settings updated");
+      await refetch();
     } catch {
       setMessage("Failed to update settings");
     }
@@ -89,6 +85,8 @@ export const AdminSettingsClient = ({
               Website Settings
             </Typography>
           </Stack>
+          {isError ? <Alert severity="error">Failed to load settings.</Alert> : null}
+          {isLoading ? <Typography color="text.secondary">Loading settings...</Typography> : null}
           <AdminField label="WhatsApp Number" value={whatsappNumber} onChange={setWhatsappNumber} />
           <AdminField label="Phone" value={phone} onChange={setPhone} />
           <AdminField label="Email" value={email} onChange={setEmail} />

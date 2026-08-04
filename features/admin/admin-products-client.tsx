@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -15,6 +16,7 @@ import {
 } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import SearchIcon from "@mui/icons-material/Search";
+import { categoryService } from "@/services/categories/category.service";
 import {
   emptyFormState,
   productActions,
@@ -30,9 +32,7 @@ import {
 const PRODUCTS_PAGE_SIZE = 10;
 
 export const AdminProductsClient = () => {
-  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [edits, setEdits] = useState<ProductEdits>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
   const [message, setMessage] = useState("");
   const [form, setForm] = useState<ProductFormState>(emptyFormState);
@@ -41,22 +41,31 @@ export const AdminProductsClient = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
-  const loadProducts = async () => {
-    try {
-      const productList = await productActions.list();
-      setProducts(productList);
-      setEdits(Object.fromEntries(productList.map((item) => [item.id, toFormState(item)])));
-    } catch {
-      setMessage("Failed to load products");
-      setMessageType("error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-products"],
+    queryFn: productActions.list,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["admin-product-categories"],
+    queryFn: categoryService.listAdminCategories,
+  });
+
+  const categoryOptions = useMemo(
+    () => categories.map((item) => ({ value: item.id, label: item.name })),
+    [categories],
+  );
 
   useEffect(() => {
-    void loadProducts();
-  }, []);
+    if (products.length > 0) {
+      setEdits(Object.fromEntries(products.map((item) => [item.id, toFormState(item)])));
+    }
+  }, [products]);
 
   const createProduct = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -66,7 +75,7 @@ export const AdminProductsClient = () => {
       setForm(emptyFormState);
       setMessageType("success");
       setMessage("Product created successfully.");
-      await loadProducts();
+      await refetch();
       return true;
     } catch {
       setMessageType("error");
@@ -82,7 +91,7 @@ export const AdminProductsClient = () => {
       await productActions.remove(id);
       setMessageType("success");
       setMessage("Product removed successfully.");
-      await loadProducts();
+      await refetch();
     } catch {
       setMessageType("error");
       setMessage("Failed to remove product.");
@@ -97,7 +106,7 @@ export const AdminProductsClient = () => {
       await productActions.update(id, edit);
       setMessageType("success");
       setMessage("Product updated successfully.");
-      await loadProducts();
+      await refetch();
       return true;
     } catch {
       setMessageType("error");
@@ -111,7 +120,7 @@ export const AdminProductsClient = () => {
       await productActions.duplicate(id);
       setMessageType("success");
       setMessage("Product duplicated successfully.");
-      await loadProducts();
+      await refetch();
     } catch {
       setMessageType("error");
       setMessage("Failed to duplicate product.");
@@ -128,10 +137,17 @@ export const AdminProductsClient = () => {
     }));
   };
 
-  const filteredProducts = products.filter((item) => {
-    const text = `${item.name} ${item.category} ${item.slug}`.toLowerCase();
-    return text.includes(query.trim().toLowerCase());
-  });
+  const filteredProducts = useMemo(
+    () =>
+      products.filter((item) => {
+        const categoryLabel =
+          categoryOptions.find((category) => category.value === (item.category_id ?? item.category))?.label ??
+          item.category;
+        const text = `${item.name} ${categoryLabel} ${item.slug}`.toLowerCase();
+        return text.includes(query.trim().toLowerCase());
+      }),
+    [products, query, categoryOptions],
+  );
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PAGE_SIZE)),
@@ -207,6 +223,7 @@ export const AdminProductsClient = () => {
         <ProductCreateDialog
           open={isAdding}
           form={form}
+          categoryOptions={categoryOptions}
           onClose={() => setIsAdding(false)}
           onChange={(key, value) => setForm((prev) => ({ ...prev, [key]: value }))}
           onSubmit={async (event) => {
@@ -219,6 +236,10 @@ export const AdminProductsClient = () => {
 
         {isLoading ? (
           <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>Loading products...</Typography>
+        ) : isError ? (
+          <Box sx={{ py: 6, textAlign: "center" }}>
+            <Typography color="error.main">Failed to load products.</Typography>
+          </Box>
         ) : filteredProducts.length === 0 ? (
           <Box sx={{ py: 6, textAlign: "center" }}>
             <Typography color="text.secondary">No products yet.</Typography>
@@ -235,6 +256,7 @@ export const AdminProductsClient = () => {
             </Typography>
             <ProductsTable
               products={paginatedProducts}
+              categoryOptions={categoryOptions}
               onEdit={(id) => setEditingId((current) => (current === id ? null : id))}
               onDuplicate={duplicateProduct}
               onDelete={deleteProduct}
@@ -255,6 +277,7 @@ export const AdminProductsClient = () => {
         <ProductEditDialog
           editingId={editingId}
           edits={edits}
+          categoryOptions={categoryOptions}
           onClose={() => setEditingId(null)}
           onChange={updateEditField}
           onSubmit={async (event) => {

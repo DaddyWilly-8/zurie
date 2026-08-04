@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -32,25 +33,21 @@ export const AdminFaqClient = () => {
   const [newAnswer, setNewAnswer] = useState("");
   const [newDisplayOrder, setNewDisplayOrder] = useState(1);
   const [newIsVisible, setNewIsVisible] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
 
-  const loadFaqs = async () => {
-    setLoading(true);
-    try {
-      const data = await faqService.listFaqs();
-      setFaqs(data as FAQ[]);
-    } catch {
-      setMessage("Failed to load FAQs");
-      setMessageType("error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: faqData = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-faq"],
+    queryFn: faqService.listFaqs,
+  });
 
   useEffect(() => {
-    void loadFaqs();
-  }, []);
+    setFaqs(faqData as FAQ[]);
+  }, [faqData]);
 
   const createFaq = async () => {
     if (!newQuestion.trim() || !newAnswer.trim()) {
@@ -63,8 +60,8 @@ export const AdminFaqClient = () => {
       await faqService.createFaq({
         question: newQuestion.trim(),
         answer: newAnswer.trim(),
-        display_order: newDisplayOrder,
-        is_visible: newIsVisible,
+        sortOrder: newDisplayOrder,
+        visible: newIsVisible,
       });
       setNewQuestion("");
       setNewAnswer("");
@@ -73,7 +70,7 @@ export const AdminFaqClient = () => {
       setIsAdding(false);
       setMessage("FAQ created successfully");
       setMessageType("success");
-      await loadFaqs();
+      await refetch();
     } catch {
       setMessage("Failed to create FAQ");
       setMessageType("error");
@@ -88,13 +85,13 @@ export const AdminFaqClient = () => {
       await faqService.updateFaq(id, {
         question: faq.question,
         answer: faq.answer,
-        display_order: faq.display_order,
-        is_visible: faq.is_visible,
+        sortOrder: faq.sortOrder,
+        visible: faq.visible,
       });
       setEditingId(null);
       setMessage("FAQ updated successfully");
       setMessageType("success");
-      await loadFaqs();
+      await refetch();
     } catch {
       setMessage("Failed to update FAQ");
       setMessageType("error");
@@ -108,7 +105,7 @@ export const AdminFaqClient = () => {
       await faqService.deleteFaq(id);
       setMessage("FAQ deleted successfully");
       setMessageType("success");
-      await loadFaqs();
+      await refetch();
     } catch {
       setMessage("Failed to delete FAQ");
       setMessageType("error");
@@ -117,8 +114,8 @@ export const AdminFaqClient = () => {
 
   const toggleVisibility = async (id: string, currentVisibility: boolean) => {
     try {
-      await faqService.updateFaq(id, { is_visible: !currentVisibility });
-      await loadFaqs();
+      await faqService.updateFaq(id, { visible: !currentVisibility });
+      await refetch();
     } catch {
       setMessage("Failed to update FAQ visibility");
       setMessageType("error");
@@ -229,8 +226,10 @@ export const AdminFaqClient = () => {
             </Box>
           )}
 
-          {loading ? (
+          {isLoading ? (
             <Typography color="text.secondary">Loading FAQs...</Typography>
+          ) : isError ? (
+            <Typography color="error.main">Failed to load FAQs.</Typography>
           ) : faqs.length === 0 ? (
             <Box sx={{ py: 4, textAlign: "center" }}>
               <Typography color="text.secondary">No FAQs yet.</Typography>
@@ -262,12 +261,12 @@ export const AdminFaqClient = () => {
                           <TextField
                             label="Display Order"
                             type="number"
-                            value={faq.display_order}
-                            onChange={(e) => handleEditChange(faq.id, "display_order", Number(e.target.value))}
+                            value={faq.sortOrder}
+                            onChange={(e) => handleEditChange(faq.id, "sortOrder", Number(e.target.value))}
                             sx={{ width: 180, bgcolor: "background.paper", "& .MuiOutlinedInput-root": { borderRadius: 0 } }}
                             InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
                           />
-                          <AdminToggle label="Visible" checked={faq.is_visible} onChange={(checked) => handleEditChange(faq.id, "is_visible", checked)} />
+                          <AdminToggle label="Visible" checked={faq.visible} onChange={(checked) => handleEditChange(faq.id, "visible", checked)} />
                         </Stack>
                         <Stack direction="row" spacing={1}>
                           <Button
@@ -294,9 +293,9 @@ export const AdminFaqClient = () => {
                           <Box sx={{ flex: 1 }}>
                             <Stack direction="row" alignItems="center" spacing={1}>
                               <Typography variant="body2" fontWeight={600}>
-                                {faq.display_order}. {faq.question}
+                                {faq.sortOrder}. {faq.question}
                               </Typography>
-                              {!faq.is_visible && (
+                              {!faq.visible && (
                                 <Chip
                                   label="Hidden"
                                   size="small"
@@ -312,8 +311,8 @@ export const AdminFaqClient = () => {
                           <Stack direction="row" spacing={0.5} alignItems="center">
                             <IconButton
                               size="small"
-                              onClick={() => toggleVisibility(faq.id, faq.is_visible)}
-                              sx={{ color: faq.is_visible ? "text.secondary" : "text.disabled" }}
+                              onClick={() => toggleVisibility(faq.id, faq.visible)}
+                              sx={{ color: faq.visible ? "text.secondary" : "text.disabled" }}
                             >
                               <FontAwesomeIcon icon={faGripVertical} size="sm" />
                             </IconButton>

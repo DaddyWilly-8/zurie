@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Grid,
   InputAdornment,
@@ -6,10 +8,12 @@ import {
   TextField,
 } from "@mui/material";
 import { AdminField, AdminImageUploader, AdminToggle } from "@/components/admin";
+import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { parseImageUrls } from "./product-utils";
 import type { ProductFieldsProps } from "./types";
+import { getCurrencySymbol } from "@/utils/currency";
 
-export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
+export const ProductFields = ({ state, onChange, categoryOptions }: ProductFieldsProps) => (
   <Grid container spacing={2.5}>
     <Grid size={{ xs: 12, md: 6 }}>
       <AdminField label="Name" value={state.name} onChange={(value) => onChange("name", value)} required />
@@ -18,60 +22,25 @@ export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
       <AdminField label="Slug" value={state.slug} onChange={(value) => onChange("slug", value)} required />
     </Grid>
     <Grid size={{ xs: 12, md: 6 }}>
-      <TextField
-        label="Price"
-        type="number"
-        value={state.price}
-        onChange={(event) => onChange("price", Number(event.target.value))}
-        fullWidth
-        required
-        variant="outlined"
-        sx={{
-          bgcolor: "background.paper",
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 0,
-          },
-        }}
-        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
-        InputProps={{
-          startAdornment: <InputAdornment position="start" sx={{ color: "text.secondary" }}>$</InputAdornment>,
-        }}
-      />
+      <CurrencyInput label="Price" value={state.price} onChange={(value) => onChange("price", value)} required />
     </Grid>
     <Grid size={{ xs: 12, md: 6 }}>
-      <TextField
+      <CurrencyInput label="Buying Price" value={state.buyingPrice} onChange={(value) => onChange("buyingPrice", value)} required />
+    </Grid>
+    <Grid size={{ xs: 12, md: 6 }}>
+      <CurrencyInput
         label="Compare At"
-        type="number"
         value={state.compareAt}
-        onChange={(event) => onChange("compareAt", Number(event.target.value))}
-        fullWidth
-        variant="outlined"
-        sx={{
-          bgcolor: "background.paper",
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 0,
-          },
-        }}
-        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
-        InputProps={{
-          startAdornment: <InputAdornment position="start" sx={{ color: "text.secondary" }}>$</InputAdornment>,
-        }}
+        onChange={(value) => onChange("compareAt", value)}
         helperText="Optional: Original price for sale items"
-        FormHelperTextProps={{
-          sx: {
-            color: "text.secondary",
-            fontSize: "0.7rem",
-            marginLeft: 0,
-          },
-        }}
       />
     </Grid>
     <Grid size={{ xs: 12 }}>
       <TextField
         label="Category"
         select
-        value={state.category}
-        onChange={(event) => onChange("category", event.target.value)}
+        value={state.categoryId}
+        onChange={(event) => onChange("categoryId", event.target.value)}
         fullWidth
         required
         variant="outlined"
@@ -83,13 +52,11 @@ export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
         }}
         InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
       >
-        <MenuItem value="handbags">Handbags</MenuItem>
-        <MenuItem value="tote-bags">Tote Bags</MenuItem>
-        <MenuItem value="shoulder-bags">Shoulder Bags</MenuItem>
-        <MenuItem value="crossbody-bags">Crossbody Bags</MenuItem>
-        <MenuItem value="backpacks">Backpacks</MenuItem>
-        <MenuItem value="wallets">Wallets</MenuItem>
-        <MenuItem value="accessories">Accessories</MenuItem>
+        {categoryOptions.map((category) => (
+          <MenuItem key={category.value} value={category.value}>
+            {category.label}
+          </MenuItem>
+        ))}
       </TextField>
     </Grid>
     <Grid size={{ xs: 12 }}>
@@ -176,3 +143,40 @@ export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
     </Grid>
   </Grid>
 );
+
+type CurrencyInputProps = {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  required?: boolean;
+  helperText?: string;
+};
+
+const CurrencyInput = ({ label, value, onChange, required, helperText }: CurrencyInputProps) => {
+  const currency = useCurrencyStore((state) => state.currency);
+  const symbol = getCurrencySymbol(currency);
+
+  return (
+    <TextField
+      label={label}
+      type="number"
+      value={value}
+      onChange={(event) => onChange(Number(event.target.value))}
+      fullWidth
+      required={required}
+      variant="outlined"
+      sx={{
+        bgcolor: "background.paper",
+        "& .MuiOutlinedInput-root": {
+          borderRadius: 0,
+        },
+      }}
+      InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
+      InputProps={{
+        startAdornment: <InputAdornment position="start" sx={{ color: "text.secondary" }}>{symbol}</InputAdornment>,
+      }}
+      helperText={helperText}
+      FormHelperTextProps={helperText ? { sx: { color: "text.secondary", fontSize: "0.7rem", marginLeft: 0 } } : undefined}
+    />
+  );
+};

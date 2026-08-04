@@ -1,45 +1,15 @@
+import axios, { AxiosError } from "axios";
 import { API_BASE_URL, API_TIMEOUT_MS } from "@/services/api/config";
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import type { ApiRequestOptions } from "@/services/api/types";
 
-const joinUrl = (path: string, query?: ApiRequestOptions["query"]) => {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = `${API_BASE_URL}${normalizedPath}`;
-
-  if (!query) return url;
-
-  const params = new URLSearchParams();
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      params.set(key, String(value));
-    }
-  });
-
-  const queryString = params.toString();
-  return queryString ? `${url}?${queryString}` : url;
-};
-
-const withTimeout = async (request: Promise<Response>, timeoutMs: number) => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  const timeoutPromise = new Promise<Response>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error("Request timed out")), timeoutMs);
-  });
-
-  try {
-    const response = await Promise.race([request, timeoutPromise]);
-    return response as Response;
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-};
-
-const parseJsonSafely = async (response: Response) => {
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
-};
+const axiosClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: API_TIMEOUT_MS,
+  withCredentials: true,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
+});
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -79,10 +49,9 @@ const ensureCsrfCookie = async () => {
   const apiOrigin = getApiOrigin();
   const csrfUrl = `${apiOrigin}${API_ENDPOINTS.auth.csrfCookie}`;
 
-  csrfBootstrapPromise = fetch(csrfUrl, {
-    method: "GET",
-    credentials: "include",
-  }).then(() => undefined);
+  csrfBootstrapPromise = axios
+    .get(csrfUrl, { withCredentials: true, timeout: API_TIMEOUT_MS })
+    .then(() => undefined);
 
   try {
     await csrfBootstrapPromise;
@@ -103,53 +72,54 @@ export const apiClient = {
 
     const isFormData =
       typeof FormData !== "undefined" && init.body instanceof FormData;
-    const mergedHeaders = new Headers(headers ?? undefined);
-    if (!isFormData && !mergedHeaders.has("Content-Type")) {
-      mergedHeaders.set("Content-Type", "application/json");
+    const mergedHeaders: Record<string, string> = {};
+    Object.entries(headers ?? {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        mergedHeaders[key] = String(value);
+      }
+    });
+
+    if (!isFormData && !mergedHeaders["Content-Type"]) {
+      mergedHeaders["Content-Type"] = "application/json";
     }
 
-    if (needsCsrf && !mergedHeaders.has("X-XSRF-TOKEN")) {
+    if (needsCsrf && !mergedHeaders["X-XSRF-TOKEN"]) {
       const csrfToken = readCookieValue("XSRF-TOKEN");
       if (csrfToken) {
-        mergedHeaders.set("X-XSRF-TOKEN", csrfToken);
+        mergedHeaders["X-XSRF-TOKEN"] = csrfToken;
       }
     }
 
-    const url = joinUrl(path, query);
+    const execute = async () => {
+      const response = await axiosClient.request<T>({
+        url: path,
+        method: method as ApiRequestOptions["method"],
+        params: query,
+        headers: mergedHeaders,
+        data: init.body,
+        timeout: timeoutMs,
+      });
 
-    const send = () =>
-      withTimeout(
-        fetch(url, {
-          ...init,
-          method,
-          credentials: "include",
-          headers: mergedHeaders,
-        }),
-        timeoutMs,
-      );
+      return response.data;
+    };
 
-    let response = await send();
+    try {
+      return await execute();
+    } catch (error) {
+      const axiosError = error as AxiosError<{ error?: string; message?: string }>;
 
-    if (response.status === 419 && needsCsrf) {
-      await ensureCsrfCookie();
-      const csrfToken = readCookieValue("XSRF-TOKEN");
-      if (csrfToken) {
-        mergedHeaders.set("X-XSRF-TOKEN", csrfToken);
+      if (axiosError.response?.status === 419 && needsCsrf) {
+        await ensureCsrfCookie();
+        const csrfToken = readCookieValue("XSRF-TOKEN");
+        if (csrfToken) {
+          mergedHeaders["X-XSRF-TOKEN"] = csrfToken;
+        }
+        return await execute();
       }
-      response = await send();
-    }
 
-    const payload = await parseJsonSafely(response);
-
-    if (!response.ok) {
-      const message =
-        (payload as { error?: string; message?: string } | null)?.message ||
-        (payload as { error?: string; message?: string } | null)?.error ||
-        "Request failed";
+      const message = axiosError.response?.data?.message || axiosError.response?.data?.error || axiosError.message || "Request failed";
       throw new Error(message);
     }
-
-    return payload as T;
   },
 
   get<T>(path: string, options?: Omit<ApiRequestOptions, "method" | "body">) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Card,
@@ -22,8 +23,6 @@ type Props = {
 };
 
 export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) => {
-  const [rows, setRows] = useState(initialData);
-  const [count, setCount] = useState(initialCount);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [folder, setFolder] = useState("general");
@@ -31,19 +30,20 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
   const [loading, setLoading] = useState(false);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / mediaActions.pageSize)), [count]);
+  const {
+    data: payload = { data: initialData, count: initialCount },
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-media", page, search],
+    queryFn: () => mediaActions.list(page, search),
+    initialData: { data: initialData, count: initialCount },
+  });
 
-  const load = useCallback(async (nextPage: number, nextSearch = search) => {
-    try {
-      const payload = await mediaActions.list(nextPage, nextSearch);
-      setRows(payload.data);
-      setCount(payload.count);
-      setPage(nextPage);
-    } catch {
-      setMessage("Failed to load media");
-      setMessageType("error");
-    }
-  }, [search]);
+  const rows = payload.data;
+  const count = payload.count;
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / mediaActions.pageSize)), [count]);
 
   const upload = async (file: File) => {
     setLoading(true);
@@ -59,7 +59,7 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
     } finally {
       setLoading(false);
     }
-    await load(1);
+    await refetch();
   };
 
   const remove = async (id: string) => {
@@ -71,14 +71,8 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
       setMessage("Delete failed");
       setMessageType("error");
     }
-    await load(page);
+    await refetch();
   };
-
-  useEffect(() => {
-    if (initialData.length === 0) {
-      void load(1);
-    }
-  }, [initialData.length, load]);
 
   return (
     <Stack spacing={3}>
@@ -102,7 +96,8 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
             onSearchChange={setSearch}
             onFolderChange={setFolder}
             onSearch={() => {
-              void load(1, search);
+              setPage(1);
+              void refetch();
             }}
             onUpload={(file) => {
               void upload(file);
@@ -122,16 +117,18 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
       />
 
       {rows.length === 0 ? (
-        <Typography color="text.secondary">No media uploaded yet.</Typography>
+        isError ? (
+          <Typography color="error.main">Failed to load media.</Typography>
+        ) : (
+          <Typography color="text.secondary">No media uploaded yet.</Typography>
+        )
       ) : null}
 
       <Stack direction="row" justifyContent="flex-end">
         <Pagination
           count={totalPages}
           page={page}
-          onChange={(_, value) => {
-            void load(value);
-          }}
+          onChange={(_, value) => setPage(value)}
         />
       </Stack>
     </Stack>

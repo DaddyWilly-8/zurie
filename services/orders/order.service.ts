@@ -29,8 +29,8 @@ export const orderService = {
     customerName: string;
     customerPhone?: string;
     whatsappNumber: string;
-    total: number;
-    items: Array<{ quantity: number; product: { name: string; price: number } }>;
+    customerEmail?: string | null;
+    items: Array<{ productId: string; quantity: number }>;
   }) {
     if (shouldUseMockForFeature("orders")) {
       return mockBackend.orders.createFromWhatsApp(payload);

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Box, Button, Card, Stack, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -86,30 +87,15 @@ const emptyOverview: Overview = {
 };
 
 export const AdminOverviewClient = () => {
-  const [overview, setOverview] = useState<Overview>(emptyOverview);
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const payload = await dashboardService.getOverview();
-        if (active) {
-          setOverview(payload as Overview);
-        }
-      } catch {
-        if (active) {
-          setOverview(emptyOverview);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const {
+    data: overview = emptyOverview,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["admin-overview"],
+    queryFn: () => dashboardService.getOverview() as Promise<Overview>,
+    initialData: emptyOverview,
+  });
 
   const stats = [
     { label: "Total Products", value: overview.totalProducts, icon: faBoxArchive },
@@ -141,6 +127,11 @@ export const AdminOverviewClient = () => {
       <Typography sx={{ color: "text.primary", fontSize: { xs: "2rem", md: "2.2rem" } }}>
         Overview
       </Typography>
+      {isError ? (
+        <Typography color="error.main">Failed to load overview.</Typography>
+      ) : isLoading ? (
+        <Typography color="text.secondary">Loading overview...</Typography>
+      ) : null}
 
       <Box
         sx={{

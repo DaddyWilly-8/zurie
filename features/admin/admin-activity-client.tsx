@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -25,39 +26,22 @@ type ActivityLogRow = {
 
 export const AdminActivityClient = () => {
   const PAGE_SIZE = 20;
-  const [entries, setEntries] = useState<ActivityLogRow[]>([]);
-  const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
 
+  const {
+    data: payload = { data: [], count: 0 },
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["admin-activity", page],
+    queryFn: () => activityService.listActivity(page, PAGE_SIZE),
+  });
+
+  const entries = (payload.data ?? []) as ActivityLogRow[];
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(count / PAGE_SIZE)),
-    [count],
+    () => Math.max(1, Math.ceil((payload.count ?? 0) / PAGE_SIZE)),
+    [payload.count],
   );
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async (nextPage: number) => {
-      try {
-        const payload = await activityService.listActivity(nextPage, PAGE_SIZE);
-        if (active) {
-          setEntries((payload.data ?? []) as ActivityLogRow[]);
-          setCount(payload.count ?? 0);
-        }
-      } catch {
-        if (active) {
-          setEntries([]);
-          setCount(0);
-        }
-      }
-    };
-
-    void load(page);
-
-    return () => {
-      active = false;
-    };
-  }, [page]);
 
   return (
     <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
@@ -70,6 +54,15 @@ export const AdminActivityClient = () => {
             Admin Activity Logs
           </Typography>
         </Stack>
+        {isError ? (
+          <Typography color="error.main" sx={{ py: 2 }}>
+            Failed to load activity logs.
+          </Typography>
+        ) : isLoading ? (
+          <Typography color="text.secondary" sx={{ py: 2 }}>
+            Loading activity logs...
+          </Typography>
+        ) : null}
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: "action.hover" }}>
@@ -98,7 +91,7 @@ export const AdminActivityClient = () => {
           </TableBody>
         </Table>
 
-        {count > PAGE_SIZE ? (
+        {((payload.count ?? 0) > PAGE_SIZE) ? (
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
             <Pagination
               count={totalPages}

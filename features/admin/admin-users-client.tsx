@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Card,
@@ -18,34 +19,19 @@ import {
 
 export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] }) => {
   const USERS_PAGE_SIZE = 10;
-  const [rows, setRows] = useState(initialData);
   const [message, setMessage] = useState("");
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const payload = await userActions.list();
-        if (active) {
-          setRows(payload);
-        }
-      } catch {
-        if (active) {
-          setMessage("Failed to load users");
-        }
-      }
-    };
-
-    if (initialData.length === 0) {
-      void load();
-    }
-
-    return () => {
-      active = false;
-    };
-  }, [initialData]);
+  const {
+    data: rows = initialData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: userActions.list,
+    initialData: initialData.length > 0 ? initialData : undefined,
+  });
 
   const updateRole = async (id: string, role: UserRole) => {
     try {
@@ -55,8 +41,8 @@ export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] 
       return;
     }
 
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, role } : row)));
     setMessage("Role updated");
+    await refetch();
   };
 
   const totalPages = useMemo(
@@ -85,9 +71,14 @@ export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] 
               Users
             </Typography>
             <Typography variant="h6" sx={{ color: "text.primary" }}>
-              Admin Users & Roles
+              {isLoading ? "Loading admin users..." : "Admin Users & Roles"}
             </Typography>
           </Stack>
+          {isError ? (
+            <Typography color="error.main" sx={{ py: 2 }}>
+              Failed to load users.
+            </Typography>
+          ) : null}
           <UsersTable rows={paginatedRows} onRoleChange={updateRole} />
           {rows.length > USERS_PAGE_SIZE ? (
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>

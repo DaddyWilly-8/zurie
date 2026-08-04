@@ -21,14 +21,17 @@ import type { AdminProduct } from "./types";
 
 type ProductsTableProps = {
   products: AdminProduct[];
+  categoryOptions: Array<{ value: string; label: string }>;
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
-export const ProductsTable = ({ products, onEdit, onDuplicate, onDelete }: ProductsTableProps) => {
+export const ProductsTable = ({ products, categoryOptions, onEdit, onDuplicate, onDelete }: ProductsTableProps) => {
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
+
+  const categoryLabelByValue = new Map(categoryOptions.map((item) => [item.value, item.label]));
 
   const getStockLabel = (item: AdminProduct) => {
     const status = item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
@@ -79,7 +82,9 @@ export const ProductsTable = ({ products, onEdit, onDuplicate, onDelete }: Produ
                       </Stack>
                     </Stack>
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: "nowrap", fontSize: "0.85rem" }}>{item.category.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap", fontSize: "0.85rem" }}>
+                    {categoryLabelByValue.get(item.category_id ?? item.category) ?? item.category}
+                  </TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap", fontSize: "0.85rem", fontWeight: 500 }}>
                     {formatUsdPriceInCurrency(item.price, currency, rates)}
                   </TableCell>

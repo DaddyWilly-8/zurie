@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
@@ -57,35 +58,29 @@ export const AdminHomepageClient = ({
   const [state, setState] = useState<HomepagePayload>(initialData ?? defaults);
   const [message, setMessage] = useState("");
 
+  const {
+    data: homepage = initialData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-homepage"],
+    queryFn: contentService.getHomepageSettings,
+    enabled: !initialData,
+    initialData,
+  });
+
   useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const payload = await contentService.getHomepageSettings();
-        if (active && payload) {
-          setState((prev) => ({ ...prev, ...(payload as HomepagePayload) }));
-        }
-      } catch {
-        if (active) {
-          setState((prev) => prev);
-        }
-      }
-    };
-
-    if (!initialData) {
-      void load();
+    if (homepage) {
+      setState((prev) => ({ ...prev, ...(homepage as HomepagePayload) }));
     }
-
-    return () => {
-      active = false;
-    };
-  }, [initialData]);
+  }, [homepage]);
 
   const save = async () => {
     try {
       await contentService.updateHomepageSettings(state as Record<string, unknown>);
       setMessage("Homepage settings updated");
+      await refetch();
     } catch {
       setMessage("Update failed");
     }
@@ -94,6 +89,8 @@ export const AdminHomepageClient = ({
   return (
     <Stack spacing={2.5}>
       {message ? <Alert severity="info">{message}</Alert> : null}
+      {isError ? <Alert severity="error">Failed to load homepage settings.</Alert> : null}
+      {isLoading ? <Typography color="text.secondary">Loading homepage settings...</Typography> : null}
       <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <CardContent sx={{ p: 3 }}>
           <Stack spacing={0.5} sx={{ mb: 2 }}>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Card,
@@ -31,27 +32,26 @@ export const AdminOrdersClient = ({
   initialSearch,
   initialStatus,
 }: Props) => {
-  const [rows, setRows] = useState(initialData);
-  const [count, setCount] = useState(initialCount);
   const [page, setPage] = useState(initialPage);
   const [search, setSearch] = useState(initialSearch);
   const [status, setStatus] = useState(initialStatus);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / orderActions.pageSize)), [count]);
+  const {
+    data: payload = { data: initialData, count: initialCount },
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-orders", page, search, status],
+    queryFn: () => orderActions.list(page, search, status),
+    initialData: { data: initialData, count: initialCount },
+  });
 
-  const load = useCallback(async (nextPage: number, nextSearch = search, nextStatus = status) => {
-    try {
-      const payload = await orderActions.list(nextPage, nextSearch, nextStatus);
-      setRows(payload.data);
-      setCount(payload.count);
-      setPage(nextPage);
-    } catch {
-      setMessage("Failed to load orders");
-      setMessageType("error");
-    }
-  }, [search, status]);
+  const rows = payload.data;
+  const count = payload.count;
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / orderActions.pageSize)), [count]);
 
   const updateStatus = async (id: string, nextStatus: string) => {
     try {
@@ -62,14 +62,12 @@ export const AdminOrdersClient = ({
       setMessage("Failed to update order");
       setMessageType("error");
     }
-    await load(page);
+    await refetch();
   };
 
   useEffect(() => {
-    if (initialData.length === 0) {
-      void load(initialPage, initialSearch, initialStatus);
-    }
-  }, [initialData.length, initialPage, initialSearch, initialStatus, load]);
+    setPage(1);
+  }, [search, status]);
 
   return (
     <Stack spacing={3}>
@@ -92,19 +90,27 @@ export const AdminOrdersClient = ({
           onSearchChange={setSearch}
           onStatusChange={setStatus}
           onApply={() => {
-            void load(1, search, status);
+            setPage(1);
           }}
         />
 
-        <OrdersTable rows={rows} onStatusChange={updateStatus} />
+        {isError ? (
+          <Typography color="error.main" sx={{ py: 2 }}>
+            Failed to load orders.
+          </Typography>
+        ) : isLoading ? (
+          <Typography color="text.secondary" sx={{ py: 2 }}>
+            Loading orders...
+          </Typography>
+        ) : (
+          <OrdersTable rows={rows} onStatusChange={updateStatus} />
+        )}
 
         <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
           <Pagination
             count={totalPages}
             page={page}
-            onChange={(_, value) => {
-              void load(value);
-            }}
+            onChange={(_, value) => setPage(value)}
             color="primary"
           />
         </Stack>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Alert, Box, IconButton, Pagination, Stack, Tooltip, Typography } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import {
@@ -15,10 +16,8 @@ import {
 
 export const AdminCategoriesClient = () => {
   const CATEGORIES_PAGE_SIZE = 9;
-  const [items, setItems] = useState<Category[]>([]);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
-  const [loading, setLoading] = useState(true);
 
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -26,22 +25,15 @@ export const AdminCategoriesClient = () => {
   const [form, setForm] = useState<CategoryForm>(emptyCategoryForm);
   const [page, setPage] = useState(1);
 
-  const load = async () => {
-    try {
-      setLoading(true);
-      const categories = await categoryActions.list();
-      setItems(categories);
-    } catch {
-      setMessage("Failed to load categories");
-      setMessageType("error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, []);
+  const {
+    data: items = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-categories"],
+    queryFn: categoryActions.list,
+  });
 
   const openNew = () => {
     setEditing(null);
@@ -69,7 +61,7 @@ export const AdminCategoriesClient = () => {
       }
       setMessageType("success");
       setOpen(false);
-      await load();
+      await refetch();
     } catch {
       setMessage(editing ? "Category update failed" : "Category creation failed");
       setMessageType("error");
@@ -85,7 +77,7 @@ export const AdminCategoriesClient = () => {
       await categoryActions.remove(id);
       setMessage("Category deleted successfully");
       setMessageType("success");
-      await load();
+      await refetch();
     } catch {
       setMessage("Category deletion failed");
       setMessageType("error");
@@ -121,7 +113,7 @@ export const AdminCategoriesClient = () => {
             Categories
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: "1rem" }}>
-            {loading ? "Loading categories..." : `${items.length} categories`}
+            {isLoading ? "Loading categories..." : `${items.length} categories`}
           </Typography>
         </Stack>
 
@@ -142,10 +134,14 @@ export const AdminCategoriesClient = () => {
         </Tooltip>
       </Stack>
 
-      {loading ? (
+      {isLoading ? (
         <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
           Loading categories...
         </Typography>
+      ) : isError ? (
+        <Box sx={{ border: "1px solid", borderColor: "divider", bgcolor: "background.paper", px: 2, py: 3 }}>
+          <Typography color="error.main">Failed to load categories.</Typography>
+        </Box>
       ) : items.length === 0 ? (
         <Box sx={{ border: "1px solid", borderColor: "divider", bgcolor: "background.paper", px: 2, py: 3 }}>
           <Typography color="text.secondary">No categories yet.</Typography>

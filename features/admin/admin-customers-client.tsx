@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -26,7 +27,6 @@ import {
 const CUSTOMERS_PAGE_SIZE = 10;
 
 export const AdminCustomersClient = () => {
-  const [rows, setRows] = useState<AdminCustomerRow[]>([]);
   const [detail, setDetail] = useState<AdminCustomerDetail | null>(null);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -34,29 +34,14 @@ export const AdminCustomersClient = () => {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const data = await customerActions.list();
-        if (active) {
-          setRows(data);
-        }
-      } catch {
-        if (active) {
-          setMessage("Failed to load customers");
-          setMessageType("error");
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const {
+    data: rows = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["admin-customers"],
+    queryFn: customerActions.list,
+  });
 
   const viewDetail = async (id: string) => {
     setOpen(true);
@@ -109,9 +94,15 @@ export const AdminCustomersClient = () => {
               Customers
             </Typography>
             <Typography variant="h6" sx={{ color: "text.primary" }}>
-              Customer Records
+              {isLoading ? "Loading customer records..." : "Customer Records"}
             </Typography>
           </Stack>
+
+          {isError ? (
+            <Typography color="error.main" sx={{ py: 2 }}>
+              Failed to load customers.
+            </Typography>
+          ) : null}
 
           <CustomersTable rows={paginatedRows} onView={viewDetail} />
 

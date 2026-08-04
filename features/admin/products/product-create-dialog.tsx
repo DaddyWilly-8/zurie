@@ -16,6 +16,7 @@ import type { ProductFormState } from "./types";
 type ProductCreateDialogProps = {
   open: boolean;
   form: ProductFormState;
+  categoryOptions: Array<{ value: string; label: string }>;
   onClose: () => void;
   onChange: <K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -24,6 +25,7 @@ type ProductCreateDialogProps = {
 export const ProductCreateDialog = ({
   open,
   form,
+  categoryOptions,
   onClose,
   onChange,
   onSubmit,
@@ -95,7 +97,7 @@ export const ProductCreateDialog = ({
             },
           }}
         >
-          <ProductFields state={form} onChange={onChange} />
+          <ProductFields state={form} onChange={onChange} categoryOptions={categoryOptions} />
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2.5, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider", flexShrink: 0 }}>
           <Button

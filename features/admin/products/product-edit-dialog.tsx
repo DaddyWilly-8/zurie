@@ -17,6 +17,7 @@ import type { ProductEdits, ProductFormState } from "./types";
 type ProductEditDialogProps = {
   editingId: string | null;
   edits: ProductEdits;
+  categoryOptions: Array<{ value: string; label: string }>;
   onClose: () => void;
   onChange: <K extends keyof ProductFormState>(id: string, key: K, value: ProductFormState[K]) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -25,6 +26,7 @@ type ProductEditDialogProps = {
 export const ProductEditDialog = ({
   editingId,
   edits,
+  categoryOptions,
   onClose,
   onChange,
   onSubmit,
@@ -100,6 +102,7 @@ export const ProductEditDialog = ({
             <ProductFields
               state={edits[editingId] ?? emptyFormState}
               onChange={(key, value) => onChange(editingId, key, value)}
+              categoryOptions={categoryOptions}
             />
           ) : null}
         </DialogContent>

@@ -213,7 +213,9 @@ export const mockBackend = {
       slug: string;
       description: string;
       price: number;
-      category: string;
+      buyingPrice?: number;
+      categoryId?: string;
+      category?: string;
       featured: boolean;
       bestSeller: boolean;
       newArrival: boolean;
@@ -234,7 +236,9 @@ export const mockBackend = {
       slug: string;
       description: string;
       price: number;
-      category: string;
+      buyingPrice?: number;
+      categoryId?: string;
+      category?: string;
       featured: boolean;
       bestSeller: boolean;
       newArrival: boolean;
@@ -309,8 +313,8 @@ export const mockBackend = {
       customerName: string;
       customerPhone?: string;
       whatsappNumber: string;
-      total: number;
-      items: Array<{ quantity: number; product: { name: string; price: number } }>;
+      customerEmail?: string | null;
+      items: Array<{ productId: string; quantity: number }>;
     }) {
       const orderId = createId("ord");
       orders.unshift({
@@ -319,7 +323,7 @@ export const mockBackend = {
         customer_name: payload.customerName,
         customer_phone: payload.customerPhone ?? "",
         whatsapp_number: payload.whatsappNumber,
-        total_amount: payload.total,
+        total_amount: 0,
         status: "new",
         notes: null,
         created_at: nowIso(),

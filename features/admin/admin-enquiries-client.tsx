@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Alert, Card, CardContent, Pagination, Stack, Typography } from "@mui/material";
 import {
   enquiryActions,
@@ -15,34 +16,33 @@ type Props = {
 };
 
 export const AdminEnquiriesClient = ({ initialData, initialCount }: Props) => {
-  const [rows, setRows] = useState(initialData);
-  const [count, setCount] = useState(initialCount);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / enquiryActions.pageSize)), [count]);
+  const {
+    data: payload = { data: initialData, count: initialCount },
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-enquiries", page, search, status],
+    queryFn: () => enquiryActions.list(page, search, status),
+    initialData: { data: initialData, count: initialCount },
+  });
 
-  const load = useCallback(async (nextPage: number, nextSearch = search, nextStatus = status) => {
-    try {
-      const payload = await enquiryActions.list(nextPage, nextSearch, nextStatus);
-      setRows(payload.data);
-      setCount(payload.count);
-      setPage(nextPage);
-    } catch {
-      setMessage("Failed to load enquiries");
-      setMessageType("error");
-    }
-  }, [search, status]);
+  const rows = payload.data;
+  const count = payload.count;
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / enquiryActions.pageSize)), [count]);
 
   const updateStatus = async (id: string, nextStatus: string) => {
     try {
       await enquiryActions.updateStatus(id, nextStatus);
       setMessage("Enquiry updated successfully");
       setMessageType("success");
-      await load(page);
+      await refetch();
     } catch {
       setMessage("Failed to update enquiry");
       setMessageType("error");
@@ -50,10 +50,8 @@ export const AdminEnquiriesClient = ({ initialData, initialCount }: Props) => {
   };
 
   useEffect(() => {
-    if (initialData.length === 0) {
-      void load(1);
-    }
-  }, [initialData.length, load]);
+    setPage(1);
+  }, [search, status]);
 
   return (
     <Stack spacing={3}>
@@ -79,20 +77,26 @@ export const AdminEnquiriesClient = ({ initialData, initialCount }: Props) => {
             status={status}
             onSearchChange={setSearch}
             onStatusChange={setStatus}
-            onApply={() => {
-              void load(1, search, status);
-            }}
+            onApply={() => setPage(1)}
           />
 
-          <EnquiriesTable rows={rows} onStatusChange={updateStatus} />
+          {isError ? (
+            <Typography color="error.main" sx={{ py: 2 }}>
+              Failed to load enquiries.
+            </Typography>
+          ) : isLoading ? (
+            <Typography color="text.secondary" sx={{ py: 2 }}>
+              Loading enquiries...
+            </Typography>
+          ) : (
+            <EnquiriesTable rows={rows} onStatusChange={updateStatus} />
+          )}
 
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
             <Pagination
               count={totalPages}
               page={page}
-              onChange={(_, value) => {
-                void load(value);
-              }}
+              onChange={(_, value) => setPage(value)}
               color="primary"
             />
           </Stack>

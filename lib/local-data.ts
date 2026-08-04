@@ -140,7 +140,9 @@ export const createProductState = (payload: {
   slug: string;
   description: string;
   price: number;
-  category: string;
+  buyingPrice?: number;
+  categoryId?: string;
+  category?: string;
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;
@@ -165,7 +167,7 @@ export const createProductState = (payload: {
     name: payload.name,
     description: payload.description,
     price: payload.price,
-    category: payload.category as Product["category"],
+    category: (payload.categoryId ?? payload.category ?? "handbags") as Product["category"],
     featured: payload.featured,
     bestSeller: payload.bestSeller,
     newArrival: payload.newArrival,
@@ -194,7 +196,9 @@ export const updateProductState = (
     slug: string;
     description: string;
     price: number;
-    category: string;
+    buyingPrice?: number;
+    categoryId?: string;
+    category?: string;
     featured: boolean;
     bestSeller: boolean;
     newArrival: boolean;
@@ -216,7 +220,7 @@ export const updateProductState = (
     slug: payload.slug,
     description: payload.description,
     price: payload.price,
-    category: payload.category as Product["category"],
+    category: (payload.categoryId ?? payload.category ?? existing.category) as Product["category"],
     featured: payload.featured,
     bestSeller: payload.bestSeller,
     newArrival: payload.newArrival,

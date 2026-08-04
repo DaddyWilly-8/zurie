@@ -1,4 +1,6 @@
-export const API_BASE_URL= "https://test.weldtech.co.tz/api/v1";
+const LIVE_API_BASE_URL = "https://test.weldtech.co.tz/api/v1";
+
+export const API_BASE_URL = typeof window === "undefined" ? LIVE_API_BASE_URL : "/api/v1";
 
 export const API_MODE= process.env.NEXT_PUBLIC_API_MODE === "mock" ? "mock" : "laravel";
 

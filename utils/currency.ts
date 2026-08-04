@@ -57,6 +57,16 @@ export const formatCurrency = (
   }).format(amount);
 };
 
+export const getCurrencySymbol = (currency: CurrencyCode): string => {
+  const parts = new Intl.NumberFormat(LOCALE_BY_CURRENCY[currency], {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).formatToParts(0);
+
+  return parts.find((part) => part.type === "currency")?.value ?? currency;
+};
+
 export const formatUsdPriceInCurrency = (
   amountInUsd: number,
   currency: CurrencyCode,

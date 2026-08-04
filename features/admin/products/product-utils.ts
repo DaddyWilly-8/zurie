@@ -12,7 +12,11 @@ const parseList = (value: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-export const parseImageUrls = (value: string) => parseList(value);
+export const parseImageUrls = (value: string) =>
+  value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 const getColorHex = (name: string): string => {
   const colorMap: Record<string, string> = {
@@ -94,6 +98,7 @@ export const emptyFormState: ProductFormState = {
   description: "",
   shortDescription: "",
   price: 0,
+  buyingPrice: 0,
   compareAt: 0,
   sku: "",
   status: "draft",
@@ -104,6 +109,7 @@ export const emptyFormState: ProductFormState = {
   seoTitle: "",
   seoDescription: "",
   featuredImageUrl: "",
+  categoryId: "",
   category: "tote-bags",
   featured: false,
   bestSeller: false,
@@ -121,6 +127,7 @@ export const toFormState = (product: AdminProduct): ProductFormState => ({
   description: product.description,
   shortDescription: product.short_description ?? "",
   price: product.price,
+  buyingPrice: product.buying_price ?? product.price,
   compareAt: product.sale_price ?? 0,
   sku: product.sku ?? "",
   status: product.status ?? "published",
@@ -131,6 +138,7 @@ export const toFormState = (product: AdminProduct): ProductFormState => ({
   seoTitle: product.seo_title ?? "",
   seoDescription: product.seo_description ?? "",
   featuredImageUrl: product.featured_image_url ?? "",
+  categoryId: product.category_id ?? product.category ?? "",
   category: product.category,
   featured: product.featured,
   bestSeller: product.best_seller,
@@ -148,6 +156,7 @@ const toBasePayload = (state: ProductFormState) => ({
   description: state.description.trim(),
   shortDescription: state.shortDescription.trim(),
   price: Number(state.price),
+  buyingPrice: Number(state.buyingPrice),
   salePrice: Number(state.compareAt) > 0 ? Number(state.compareAt) : null,
   sku: state.sku.trim(),
   status: state.status,
@@ -155,7 +164,7 @@ const toBasePayload = (state: ProductFormState) => ({
   seoTitle: state.seoTitle.trim(),
   seoDescription: state.seoDescription.trim(),
   featuredImageUrl: state.featuredImageUrl.trim() || undefined,
-  category: state.category.trim(),
+  categoryId: state.categoryId.trim(),
   featured: state.featured,
   bestSeller: state.bestSeller,
   newArrival: state.newArrival,
