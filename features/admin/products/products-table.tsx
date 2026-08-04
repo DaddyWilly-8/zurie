@@ -30,6 +30,13 @@ export const ProductsTable = ({ products, onEdit, onDuplicate, onDelete }: Produ
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
 
+  const getStockLabel = (item: AdminProduct) => {
+    const status = item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
+    if (status === "LOW_STOCK") return "Low Stock";
+    if (status === "OUT_OF_STOCK") return "Out of Stock";
+    return "In Stock";
+  };
+
   return (
     <Card sx={{ boxShadow: "none", border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
       <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
@@ -90,8 +97,11 @@ export const ProductsTable = ({ products, onEdit, onDuplicate, onDelete }: Produ
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {item.in_stock ? "In Stock" : "Out of Stock"}
+                      {getStockLabel(item)}
                     </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: "0.68rem" }}>
+                      Qty: {item.stock_count}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption" sx={{ color: "primary.main", fontSize: "0.7rem", whiteSpace: "nowrap" }}>

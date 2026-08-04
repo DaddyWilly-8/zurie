@@ -11,7 +11,7 @@ export type AdminProductPayload = {
   price: number;
   salePrice?: number | null;
   sku?: string;
-  status?: "draft" | "published" | "out_of_stock" | "archived";
+  status?: "draft" | "published" | "archived";
   material?: string;
   seoTitle?: string;
   seoDescription?: string;
@@ -20,12 +20,19 @@ export type AdminProductPayload = {
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;
-  inStock: boolean;
-  stockCount: number;
   colors: Array<{ name: string; hex: string }>;
   sizes: string[];
   specifications: string[];
   imageUrls: string[];
+};
+
+export type AdminCreateProductPayload = AdminProductPayload & {
+  quantity?: number;
+};
+
+export type InventoryUpdatePayload = {
+  quantity?: number;
+  stockStatus?: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
 };
 
 export const productService = {
@@ -64,14 +71,18 @@ export const productService = {
       return mockBackend.products.listAdmin();
     }
 
-    return apiClient.get<{ products: unknown[] }>(API_ENDPOINTS.products.list).then((res) =>
-      res.products ?? [],
+    return apiClient.get<{ products?: unknown[]; data?: unknown[] }>(API_ENDPOINTS.products.adminList).then((res) =>
+      res.products ?? res.data ?? [],
     );
   },
 
-  createProduct(payload: AdminProductPayload) {
+  createProduct(payload: AdminCreateProductPayload) {
     if (isMockMode()) {
-      return mockBackend.products.create(payload);
+      return mockBackend.products.create({
+        ...payload,
+        inStock: (payload.quantity ?? 0) > 0,
+        stockCount: payload.quantity ?? 0,
+      });
     }
 
     return apiClient.post<{ success: boolean; id: string }>(API_ENDPOINTS.products.list, payload);
@@ -79,7 +90,11 @@ export const productService = {
 
   updateProduct(id: string, payload: AdminProductPayload) {
     if (isMockMode()) {
-      return mockBackend.products.update(id, payload);
+      return mockBackend.products.update(id, {
+        ...payload,
+        inStock: true,
+        stockCount: 1,
+      });
     }
 
     return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.products.byId(id), payload);
@@ -99,5 +114,23 @@ export const productService = {
     }
 
     return apiClient.post<{ success: boolean; id: string }>(API_ENDPOINTS.products.duplicate(id));
+  },
+
+  getInventory(id: string) {
+    if (isMockMode()) {
+      return Promise.resolve({ data: { productId: id, quantity: 0, stockStatus: "OUT_OF_STOCK" as const } });
+    }
+
+    return apiClient.get<{ data: { productId: string | number; quantity: number; stockStatus: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" } }>(
+      API_ENDPOINTS.products.inventory(id),
+    );
+  },
+
+  updateInventory(id: string, payload: InventoryUpdatePayload) {
+    if (isMockMode()) {
+      return Promise.resolve({ success: true });
+    }
+
+    return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.products.inventory(id), payload);
   },
 };

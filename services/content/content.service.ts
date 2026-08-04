@@ -1,12 +1,12 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
-import { isMockMode } from "@/services/api/runtime";
+import { shouldUseMockForFeature } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
 import type { BrandContent, ContactInfo } from "@/types/content";
 
 export const contentService = {
   getBrandContent() {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("settings")) {
       return mockBackend.content.getBrandContent();
     }
 
@@ -16,7 +16,7 @@ export const contentService = {
   },
 
   updateBrandContent(payload: Partial<BrandContent>) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("settings")) {
       return mockBackend.content.updateBrandContent(payload);
     }
 
@@ -24,7 +24,7 @@ export const contentService = {
   },
 
   getContactInfo() {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("settings")) {
       return mockBackend.content.getContactInfo();
     }
 
@@ -34,7 +34,7 @@ export const contentService = {
   },
 
   updateContactInfo(payload: Partial<ContactInfo>) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("settings")) {
       return mockBackend.content.updateContactInfo(payload);
     }
 
@@ -42,7 +42,7 @@ export const contentService = {
   },
 
   getHomepageSettings() {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("settings")) {
       return mockBackend.content.getHomepage();
     }
 
@@ -52,7 +52,7 @@ export const contentService = {
   },
 
   updateHomepageSettings(payload: Record<string, unknown>) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("settings")) {
       return mockBackend.content.updateHomepage(payload);
     }
 

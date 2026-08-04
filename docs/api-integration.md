@@ -3,7 +3,7 @@
 For full backend implementation requirements (admin + storefront + dynamic content contract), see `docs/backend-handoff-guide.md`.
 
 ## Environment Variables
-- `NEXT_PUBLIC_API_URL`: Laravel API base URL, example `https://api.example.com/api`
+- `NEXT_PUBLIC_API_URL`: Laravel API base URL, current `https://test.weldtech.co.tz/api/v1`
 - `NEXT_PUBLIC_API_MODE`: `mock` or `laravel`
 
 ## API Client
@@ -15,6 +15,8 @@ Capabilities:
 - timeout handling
 - JSON parsing with clear error propagation
 - `credentials: include` for cookie-based auth
+- Sanctum CSRF bootstrap before state-changing requests
+- automatic `X-XSRF-TOKEN` header from cookie
 
 ## Endpoint Contracts
 All endpoint paths are centralized in `services/api/endpoints.ts`.
@@ -52,11 +54,28 @@ Services decide runtime adapter:
 - `POST /auth/logout`
 - `GET /auth/user`
 
-## CSRF/Sanctum Readiness
-When backend is ready:
-- call Sanctum CSRF endpoint before auth POSTs
-- keep `credentials: include`
-- preserve cookie/session behavior in browser
+## Sanctum Authentication
+The shared API client now performs Sanctum flow automatically for mutating requests:
+- `GET /sanctum/csrf-cookie`
+- include cookies with `credentials: include`
+- attach `X-XSRF-TOKEN` from cookie
+
+## Backend Availability (Current)
+Live and wired to Laravel:
+- Auth
+- Products and Categories
+- Inventory
+- Customers (admin read-only)
+
+Temporarily pinned to mock backend until backend endpoints are implemented:
+- Orders
+- Media upload/library
+- FAQ
+- Enquiries / Contact
+- Newsletter
+- Dashboard overview
+- Settings / Content
+- Activity log
 
 ## Error/Loading Pattern
 For API-driven screens:

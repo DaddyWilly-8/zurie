@@ -7,7 +7,7 @@ import type { AuthUser } from "@/types/domain";
 const AUTH_STORAGE_KEY = "zurie_admin_session";
 
 type LoginResponse = {
-  token: string;
+  token?: string;
   user: AuthUser;
 };
 

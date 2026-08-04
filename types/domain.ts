@@ -2,7 +2,7 @@ export type EntityId = string;
 
 export type AdminRole = "super_admin" | "admin" | "staff";
 
-export type ProductStatus = "draft" | "published" | "out_of_stock" | "archived";
+export type ProductStatus = "draft" | "published" | "archived";
 
 export type OrderStatus =
   | "new"
@@ -179,6 +179,7 @@ export type AuthUser = {
   name: string;
   email: string;
   role: AdminRole;
+  permissions?: string[];
 };
 
 export type AuthSession = {

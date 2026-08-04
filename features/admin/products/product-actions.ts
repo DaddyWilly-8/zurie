@@ -1,5 +1,5 @@
 import { productService } from "@/services/products/product.service";
-import { toPayload } from "./product-utils";
+import { toCreatePayload, toInventoryPayload, toUpdatePayload } from "./product-utils";
 import type { AdminProduct, ProductFormState } from "./types";
 
 export const productActions = {
@@ -9,11 +9,12 @@ export const productActions = {
   },
 
   async create(form: ProductFormState) {
-    return productService.createProduct(toPayload(form));
+    return productService.createProduct(toCreatePayload(form));
   },
 
   async update(id: string, form: ProductFormState) {
-    return productService.updateProduct(id, toPayload(form));
+    await productService.updateProduct(id, toUpdatePayload(form));
+    return productService.updateInventory(id, toInventoryPayload(form));
   },
 
   async remove(id: string) {

@@ -134,6 +134,23 @@ export const ProductFields = ({ state, onChange }: ProductFieldsProps) => (
       />
     </Grid>
     <Grid size={{ xs: 12, md: 6 }}>
+      <TextField
+        label="Stock Quantity"
+        type="number"
+        value={state.stockCount}
+        onChange={(event) => onChange("stockCount", Math.max(0, Number(event.target.value) || 0))}
+        fullWidth
+        variant="outlined"
+        sx={{
+          bgcolor: "background.paper",
+          "& .MuiOutlinedInput-root": {
+            borderRadius: 0,
+          },
+        }}
+        InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
+      />
+    </Grid>
+    <Grid size={{ xs: 12, md: 6 }}>
       <AdminField
         label="Hardware"
         value={state.hardware}

@@ -1,11 +1,11 @@
 import { apiClient } from "@/services/api/client";
 import { API_ENDPOINTS } from "@/services/api/endpoints";
-import { isMockMode } from "@/services/api/runtime";
+import { shouldUseMockForFeature } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
 
 export const dashboardService = {
   async getOverview() {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("dashboard")) {
       return mockBackend.dashboard.getOverview();
     }
 

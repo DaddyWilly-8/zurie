@@ -18,7 +18,7 @@ export const categoryService = {
       return mockBackend.categories.list();
     }
 
-    return apiClient.get<{ data: unknown[] }>(API_ENDPOINTS.categories.list).then((res) =>
+    return apiClient.get<{ data: unknown[] }>(API_ENDPOINTS.categories.adminList).then((res) =>
       (res as unknown as { categories: unknown[] }).categories ?? (res.data ?? []),
     );
   },

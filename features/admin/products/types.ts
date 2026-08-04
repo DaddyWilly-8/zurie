@@ -7,7 +7,7 @@ export type AdminProduct = {
   price: number;
   sale_price?: number | null;
   sku?: string;
-  status?: "draft" | "published" | "out_of_stock" | "archived";
+  status?: "draft" | "published" | "archived";
   material?: string;
   seo_title?: string;
   seo_description?: string;
@@ -18,6 +18,7 @@ export type AdminProduct = {
   new_arrival: boolean;
   in_stock: boolean;
   stock_count: number;
+  stock_status?: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
   colors: Array<{ name: string; hex: string }>;
   sizes: string[];
   specifications: string[];
@@ -37,7 +38,7 @@ export type ProductFormState = {
   price: number;
   compareAt: number;
   sku: string;
-  status: "draft" | "published" | "out_of_stock" | "archived";
+  status: "draft" | "published" | "archived";
   material: string;
   dimensions: string;
   hardware: string;

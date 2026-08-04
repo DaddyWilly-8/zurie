@@ -1,5 +1,11 @@
 import type { AdminProduct, ProductFormState } from "./types";
 
+const toInventoryStatus = (state: ProductFormState) => {
+  if (!state.inStock) return "OUT_OF_STOCK" as const;
+  if (state.stockCount <= 0) return "OUT_OF_STOCK" as const;
+  return "IN_STOCK" as const;
+};
+
 const parseList = (value: string) =>
   value
     .split(/\n|,/)
@@ -129,14 +135,14 @@ export const toFormState = (product: AdminProduct): ProductFormState => ({
   featured: product.featured,
   bestSeller: product.best_seller,
   newArrival: product.new_arrival,
-  inStock: product.in_stock,
+  inStock: (product.stock_status ?? (product.in_stock ? "IN_STOCK" : "OUT_OF_STOCK")) !== "OUT_OF_STOCK",
   stockCount: product.stock_count,
   imageUrlsText: product.product_images.map((item) => item.url).join("\n"),
   colorsText: product.colors.map((item) => item.name).join(", "),
   sizesText: product.sizes.join(", "),
 });
 
-export const toPayload = (state: ProductFormState) => ({
+const toBasePayload = (state: ProductFormState) => ({
   name: state.name.trim(),
   slug: state.slug.trim(),
   description: state.description.trim(),
@@ -153,10 +159,20 @@ export const toPayload = (state: ProductFormState) => ({
   featured: state.featured,
   bestSeller: state.bestSeller,
   newArrival: state.newArrival,
-  inStock: state.inStock,
-  stockCount: Number(state.stockCount),
   colors: parseColors(state.colorsText),
   sizes: parseList(state.sizesText),
   specifications: [state.material, state.dimensions, state.hardware, state.lining].map((item) => item.trim()),
   imageUrls: parseImageUrls(state.imageUrlsText),
+});
+
+export const toCreatePayload = (state: ProductFormState) => ({
+  ...toBasePayload(state),
+  quantity: Math.max(0, Number(state.stockCount) || 0),
+});
+
+export const toUpdatePayload = (state: ProductFormState) => toBasePayload(state);
+
+export const toInventoryPayload = (state: ProductFormState) => ({
+  quantity: Math.max(0, Number(state.stockCount) || 0),
+  stockStatus: toInventoryStatus(state),
 });

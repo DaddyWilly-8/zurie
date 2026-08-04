@@ -1,11 +1,11 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
-import { isMockMode } from "@/services/api/runtime";
+import { shouldUseMockForFeature } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
 
 export const orderService = {
   listOrders(params: { page: number; pageSize: number; search?: string; status?: string }) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("orders")) {
       return mockBackend.orders.list(params);
     }
 
@@ -18,7 +18,7 @@ export const orderService = {
   },
 
   updateOrderStatus(id: string, status: string, notes?: string) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("orders")) {
       return mockBackend.orders.updateStatus(id, status as never);
     }
 
@@ -32,7 +32,7 @@ export const orderService = {
     total: number;
     items: Array<{ quantity: number; product: { name: string; price: number } }>;
   }) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("orders")) {
       return mockBackend.orders.createFromWhatsApp(payload);
     }
 

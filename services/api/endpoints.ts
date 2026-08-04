@@ -1,5 +1,6 @@
 export const API_ENDPOINTS = {
   auth: {
+    csrfCookie: "/sanctum/csrf-cookie",
     login: "/auth/login",
     logout: "/auth/logout",
     currentUser: "/auth/user",
@@ -8,12 +9,15 @@ export const API_ENDPOINTS = {
   },
   products: {
     list: "/products",
+    adminList: "/admin/products",
     byId: (id: string) => `/products/${id}`,
     bySlug: (slug: string) => `/products/${slug}`,
     duplicate: (id: string) => `/products/${id}/duplicate`,
+    inventory: (id: string) => `/products/${id}/inventory`,
   },
   categories: {
     list: "/categories",
+    adminList: "/admin/categories",
     byId: (id: string) => `/categories/${id}`,
   },
   orders: {
@@ -42,6 +46,10 @@ export const API_ENDPOINTS = {
   adminUsers: {
     list: "/admin/users",
     byId: (id: string) => `/admin/users/${id}`,
+  },
+  customers: {
+    list: "/admin/customers",
+    byId: (id: string) => `/admin/customers/${id}`,
   },
   whatsappCheckout: "/checkout/whatsapp",
   contact: "/contact",

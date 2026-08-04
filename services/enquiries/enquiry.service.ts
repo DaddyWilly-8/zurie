@@ -1,11 +1,11 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
-import { isMockMode } from "@/services/api/runtime";
+import { shouldUseMockForFeature } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
 
 export const enquiryService = {
   listEnquiries(params: { page: number; pageSize: number; search?: string; status?: string }) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("enquiries")) {
       return mockBackend.enquiries.list(params);
     }
 
@@ -18,7 +18,7 @@ export const enquiryService = {
   },
 
   createEnquiry(payload: { name: string; email: string; message: string }) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("contact")) {
       return mockBackend.enquiries.create(payload);
     }
 
@@ -26,7 +26,7 @@ export const enquiryService = {
   },
 
   updateEnquiryStatus(id: string, status: string) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("enquiries")) {
       return { success: true };
     }
 

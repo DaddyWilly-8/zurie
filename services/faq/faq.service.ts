@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
-import { isMockMode } from "@/services/api/runtime";
+import { shouldUseMockForFeature } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
 
 export type FAQ = {
@@ -15,7 +15,7 @@ export type FAQ = {
 
 export const faqService = {
   listFaqs() {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("faq")) {
       return mockBackend.faq.list();
     }
 
@@ -23,7 +23,7 @@ export const faqService = {
   },
 
   createFaq(payload: { question: string; answer: string; display_order: number; is_visible: boolean }) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("faq")) {
       return mockBackend.faq.create(payload);
     }
 
@@ -31,7 +31,7 @@ export const faqService = {
   },
 
   updateFaq(id: string, payload: { question?: string; answer?: string; display_order?: number; is_visible?: boolean }) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("faq")) {
       return mockBackend.faq.update(id, payload);
     }
 
@@ -39,7 +39,7 @@ export const faqService = {
   },
 
   deleteFaq(id: string) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("faq")) {
       return mockBackend.faq.delete(id);
     }
 

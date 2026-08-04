@@ -1,10 +1,15 @@
 import { z } from "zod";
 
+const httpsUrl = z
+  .string()
+  .url()
+  .refine((value) => value.startsWith("https://"), "URL must use https://");
+
 const envSchema = z.object({
-  NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_API_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SITE_URL: httpsUrl.optional(),
+  NEXT_PUBLIC_API_URL: httpsUrl.optional(),
   NEXT_PUBLIC_API_MODE: z.enum(["mock", "laravel"]).optional(),
-  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+  NEXT_PUBLIC_APP_URL: httpsUrl.optional(),
   NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional(),
   NEXT_PUBLIC_GA_ID: z.string().optional(),
 });

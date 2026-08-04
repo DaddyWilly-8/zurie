@@ -1,11 +1,11 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
-import { isMockMode } from "@/services/api/runtime";
+import { shouldUseMockForFeature } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
 
 export const mediaService = {
   listMedia(params: { page: number; pageSize: number; search?: string }) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("media")) {
       return mockBackend.media.list(params);
     }
 
@@ -15,7 +15,7 @@ export const mediaService = {
   },
 
   async upload(file: File, folder: string) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("media")) {
       return mockBackend.media.upload(file, folder);
     }
 
@@ -31,7 +31,7 @@ export const mediaService = {
   },
 
   remove(id: string) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("media")) {
       return mockBackend.media.remove(id);
     }
 

@@ -1,10 +1,10 @@
-import { isMockMode } from "@/services/api/runtime";
+import { shouldUseMockForFeature } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
 import { apiClient } from "@/services/api/client";
 
 export const activityService = {
   listActivity(page = 1, pageSize = 20) {
-    if (isMockMode()) {
+    if (shouldUseMockForFeature("activity")) {
       return mockBackend.activity.list(page, pageSize);
     }
 
