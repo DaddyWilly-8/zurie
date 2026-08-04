@@ -13,7 +13,24 @@ import { parseImageUrls } from "./product-utils";
 import type { ProductFieldsProps } from "./types";
 import { getCurrencySymbol } from "@/utils/currency";
 
-export const ProductFields = ({ state, onChange, categoryOptions }: ProductFieldsProps) => (
+export const ProductFields = ({ state, onChange, categoryOptions }: ProductFieldsProps) => {
+  const removeImage = (index: number) => {
+    const currentUrls = parseImageUrls(state.imageUrlsText);
+    if (index < 0 || index >= currentUrls.length) return;
+
+    const removedImageId = state.existingImageIds[index];
+    const nextUrls = currentUrls.filter((_, imageIndex) => imageIndex !== index);
+    const nextImageIds = state.existingImageIds.filter((_, imageIndex) => imageIndex !== index);
+
+    onChange("imageUrlsText", nextUrls.join("\n"));
+    onChange("existingImageIds", nextImageIds);
+
+    if (removedImageId) {
+      onChange("removedImageIds", [...state.removedImageIds, removedImageId]);
+    }
+  };
+
+  return (
   <Grid container spacing={2.5}>
     <Grid size={{ xs: 12, md: 6 }}>
       <AdminField label="Name" value={state.name} onChange={(value) => onChange("name", value)} required />
@@ -82,6 +99,7 @@ export const ProductFields = ({ state, onChange, categoryOptions }: ProductField
         label="Product Images"
         images={parseImageUrls(state.imageUrlsText)}
         onChange={(images) => onChange("imageUrlsText", images.join("\n"))}
+        onRemoveImage={removeImage}
       />
     </Grid>
     <Grid size={{ xs: 12, md: 6 }}>
@@ -142,7 +160,8 @@ export const ProductFields = ({ state, onChange, categoryOptions }: ProductField
       </Stack>
     </Grid>
   </Grid>
-);
+  );
+};
 
 type CurrencyInputProps = {
   label: string;

@@ -117,11 +117,20 @@ export const emptyFormState: ProductFormState = {
   inStock: true,
   stockCount: 1,
   imageUrlsText: "",
+  existingImageIds: [],
+  removedImageIds: [],
   colorsText: "Beige, Black, Tan",
   sizesText: "One Size",
 };
 
-export const toFormState = (product: AdminProduct): ProductFormState => ({
+export const toFormState = (product: AdminProduct): ProductFormState => {
+  const imageUrls = product.images?.map((item) => item.url)
+    ?? product.imageUrls
+    ?? product.product_images.map((item) => item.url);
+  const imageIds = product.images?.map((item) => item.id)
+    ?? product.product_images.map((item) => item.id);
+
+  return {
   name: product.name,
   slug: product.slug,
   description: product.description,
@@ -145,10 +154,13 @@ export const toFormState = (product: AdminProduct): ProductFormState => ({
   newArrival: product.new_arrival,
   inStock: (product.stock_status ?? (product.in_stock ? "IN_STOCK" : "OUT_OF_STOCK")) !== "OUT_OF_STOCK",
   stockCount: product.stock_count,
-  imageUrlsText: product.product_images.map((item) => item.url).join("\n"),
+  imageUrlsText: imageUrls.join("\n"),
+  existingImageIds: imageIds,
+  removedImageIds: [],
   colorsText: product.colors.map((item) => item.name).join(", "),
   sizesText: product.sizes.join(", "),
-});
+  };
+};
 
 const toBasePayload = (state: ProductFormState) => ({
   name: state.name.trim(),
@@ -171,7 +183,6 @@ const toBasePayload = (state: ProductFormState) => ({
   colors: parseColors(state.colorsText),
   sizes: parseList(state.sizesText),
   specifications: [state.material, state.dimensions, state.hardware, state.lining].map((item) => item.trim()),
-  imageUrls: parseImageUrls(state.imageUrlsText),
 });
 
 export const toCreatePayload = (state: ProductFormState) => ({

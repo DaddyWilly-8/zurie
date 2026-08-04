@@ -22,7 +22,6 @@ export const toCategoryPayload = (form: CategoryForm) => ({
   name: form.name,
   slug: form.slug,
   description: form.description,
-  imageUrl: form.imageUrl,
   visible: form.visible,
   sortOrder: form.sortOrder,
 });

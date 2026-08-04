@@ -20,7 +20,6 @@ export type AdminCategoryPayload = {
   name: string;
   slug: string;
   description?: string;
-  imageUrl?: string;
   visible?: boolean;
   sortOrder?: number;
 };
@@ -59,5 +58,28 @@ export const categoryService = {
     }
 
     return apiClient.delete<{ success: boolean }>(API_ENDPOINTS.categories.byId(id));
+  },
+
+  uploadCategoryImage(id: string, image: File) {
+    if (isMockMode()) {
+      return Promise.resolve({ success: true });
+    }
+
+    const formData = new FormData();
+    formData.append("image", image);
+
+    return apiClient.request<{ success: boolean; data: CategoryRecord }>(API_ENDPOINTS.categories.image(id), {
+      method: "POST",
+      body: formData,
+      headers: {},
+    });
+  },
+
+  removeCategoryImage(id: string) {
+    if (isMockMode()) {
+      return Promise.resolve({ success: true });
+    }
+
+    return apiClient.delete<{ success: boolean }>(API_ENDPOINTS.categories.image(id));
   },
 };

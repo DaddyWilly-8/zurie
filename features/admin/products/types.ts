@@ -21,6 +21,8 @@ export type AdminProduct = {
   in_stock: boolean;
   stock_count: number;
   stock_status?: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+  imageUrls?: string[];
+  images?: Array<{ id: string; url: string; sortOrder: number }>;
   colors: Array<{ name: string; hex: string }>;
   sizes: string[];
   specifications: string[];
@@ -57,6 +59,8 @@ export type ProductFormState = {
   inStock: boolean;
   stockCount: number;
   imageUrlsText: string;
+  existingImageIds: string[];
+  removedImageIds: string[];
   colorsText: string;
   sizesText: string;
 };

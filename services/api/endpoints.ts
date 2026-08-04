@@ -14,11 +14,14 @@ export const API_ENDPOINTS = {
     bySlug: (slug: string) => `/products/${slug}`,
     duplicate: (id: string) => `/products/${id}/duplicate`,
     inventory: (id: string) => `/products/${id}/inventory`,
+    images: (id: string) => `/products/${id}/images`,
+    imageById: (id: string, imageId: string) => `/products/${id}/images/${imageId}`,
   },
   categories: {
     list: "/categories",
     adminList: "/admin/categories",
     byId: (id: string) => `/categories/${id}`,
+    image: (id: string) => `/categories/${id}/image`,
   },
   orders: {
     list: "/orders",

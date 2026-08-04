@@ -24,7 +24,6 @@ export type AdminProductPayload = {
   colors: Array<{ name: string; hex: string }>;
   sizes: string[];
   specifications: string[];
-  imageUrls: string[];
 };
 
 export type AdminCreateProductPayload = AdminProductPayload & {
@@ -83,6 +82,7 @@ export const productService = {
         ...payload,
         category: payload.categoryId,
         buyingPrice: payload.buyingPrice,
+        imageUrls: [],
         inStock: (payload.quantity ?? 0) > 0,
         stockCount: payload.quantity ?? 0,
       });
@@ -100,6 +100,7 @@ export const productService = {
         ...payload,
         category: payload.categoryId,
         buyingPrice: payload.buyingPrice,
+        imageUrls: [],
         inStock: true,
         stockCount: 1,
       });
@@ -143,5 +144,28 @@ export const productService = {
     }
 
     return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.products.inventory(id), payload);
+  },
+
+  uploadProductImages(id: string, files: File[]) {
+    if (isMockMode()) {
+      return Promise.resolve({ success: true });
+    }
+
+    const formData = new FormData();
+    files.forEach((file) => formData.append("images[]", file));
+
+    return apiClient.request<{ success: boolean; data: unknown }>(API_ENDPOINTS.products.images(id), {
+      method: "POST",
+      body: formData,
+      headers: {},
+    });
+  },
+
+  deleteProductImage(id: string, imageId: string) {
+    if (isMockMode()) {
+      return Promise.resolve({ success: true });
+    }
+
+    return apiClient.delete<{ success: boolean }>(API_ENDPOINTS.products.imageById(id, imageId));
   },
 };

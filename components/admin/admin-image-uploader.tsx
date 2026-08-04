@@ -2,14 +2,15 @@
 
 import Image from "next/image";
 import { ChangeEvent } from "react";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpload } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faUpload } from "@fortawesome/free-solid-svg-icons";
 
 type AdminImageUploaderProps = {
   label?: string;
   images: string[];
   onChange: (images: string[]) => void;
+  onRemoveImage?: (index: number) => void;
   fallbackUrl?: string;
 };
 
@@ -25,9 +26,10 @@ export const AdminImageUploader = ({
   label = "Product Images",
   images,
   onChange,
+  onRemoveImage,
   fallbackUrl = "/images/products/fallback.png",
 }: AdminImageUploaderProps) => {
-  const preview = images[0] || fallbackUrl;
+  const previewImages = images.length ? images : [fallbackUrl];
 
   const handleFiles = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -54,25 +56,46 @@ export const AdminImageUploader = ({
         {label}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-        <Box
-          sx={{
-            width: 108,
-            height: 108,
-            border: "1px solid",
-            borderColor: "divider",
-            bgcolor: "background.paper",
-            overflow: "hidden",
-            flexShrink: 0,
-          }}
-        >
-          <Image
-            src={preview}
-            alt={label}
-            width={108}
-            height={108}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </Box>
+        {previewImages.map((preview, index) => (
+          <Box
+            key={`${preview}-${index}`}
+            sx={{
+              width: 108,
+              height: 108,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              overflow: "hidden",
+              flexShrink: 0,
+              position: "relative",
+            }}
+          >
+            <Image
+              src={preview}
+              alt={`${label} ${index + 1}`}
+              width={108}
+              height={108}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            {onRemoveImage && images.length > 0 ? (
+              <IconButton
+                size="small"
+                aria-label="Remove image"
+                onClick={() => onRemoveImage(index)}
+                sx={{
+                  position: "absolute",
+                  top: 4,
+                  right: 4,
+                  bgcolor: "rgba(0,0,0,0.55)",
+                  color: "common.white",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.75)" },
+                }}
+              >
+                <FontAwesomeIcon icon={faTrash} size="xs" />
+              </IconButton>
+            ) : null}
+          </Box>
+        ))}
         <Button
           component="label"
           variant="outlined"
