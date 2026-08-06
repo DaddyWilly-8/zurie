@@ -102,10 +102,8 @@ export const ProductsTable = ({
   return (
     <Box sx={{ width: '100%' }} mt={1}>
       {products.map((item) => {
-        const categoryKey = String(
-          (item as AdminProduct & { categoryId?: string }).categoryId ?? item.category_id ?? item.category ?? "",
-        );
-        const categoryLabel = categoryLabelByValue.get(categoryKey) ?? item.category ?? "Uncategorized";
+        const categoryKey = String((item as AdminProduct & { categoryId?: string }).categoryId ?? item.category_id ?? "");
+        const categoryLabel = categoryLabelByValue.get(categoryKey) ?? "Uncategorized";
         const imageUrls = getProductImageUrls(item);
         const imageEntries = getProductImageEntries(item);
         const productId = String(item.id);

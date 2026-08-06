@@ -1,7 +1,5 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
-import { shouldUseMockForFeature } from "@/services/api/runtime";
-import { mockBackend } from "@/services/mock/mock-backend";
 
 export type FAQ = {
   id: string;
@@ -39,10 +37,6 @@ const normalizeFaq = (faq: ApiFaq): FAQ => ({
 
 export const faqService = {
   listFaqs() {
-    if (shouldUseMockForFeature("faq")) {
-      return mockBackend.faq.list().then((rows) => rows.map(normalizeFaq));
-    }
-
     return apiClient.get<{ data?: ApiFaq[] } | ApiFaq[]>(API_ENDPOINTS.faq.list).then((response) => {
       const rows = Array.isArray(response) ? response : response.data ?? [];
       return rows.map(normalizeFaq);
@@ -50,15 +44,6 @@ export const faqService = {
   },
 
   createFaq(payload: { question: string; answer: string; sortOrder: number; visible: boolean }) {
-    if (shouldUseMockForFeature("faq")) {
-      return mockBackend.faq.create({
-        question: payload.question,
-        answer: payload.answer,
-        display_order: payload.sortOrder,
-        is_visible: payload.visible,
-      });
-    }
-
     return apiClient.post<{ success: boolean; id: string }>(API_ENDPOINTS.faq.list, {
       question: payload.question,
       answer: payload.answer,
@@ -68,15 +53,6 @@ export const faqService = {
   },
 
   updateFaq(id: string, payload: { question?: string; answer?: string; sortOrder?: number; visible?: boolean }) {
-    if (shouldUseMockForFeature("faq")) {
-      return mockBackend.faq.update(id, {
-        question: payload.question,
-        answer: payload.answer,
-        display_order: payload.sortOrder,
-        is_visible: payload.visible,
-      });
-    }
-
     return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.faq.byId(id), {
       question: payload.question,
       answer: payload.answer,
@@ -86,10 +62,6 @@ export const faqService = {
   },
 
   deleteFaq(id: string) {
-    if (shouldUseMockForFeature("faq")) {
-      return mockBackend.faq.delete(id);
-    }
-
     return apiClient.delete<{ success: boolean }>(API_ENDPOINTS.faq.byId(id));
   },
 };

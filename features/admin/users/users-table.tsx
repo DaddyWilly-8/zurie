@@ -13,10 +13,17 @@ import type { AdminUserRow, UserRole } from "./types";
 
 type Props = {
   rows: AdminUserRow[];
-  onRoleChange: (id: string, role: UserRole) => void;
+  roleOptions: UserRole[];
+  onRoleChange: (id: string, role: UserRole, roleIds?: number[]) => void;
 };
 
-export const UsersTable = ({ rows, onRoleChange }: Props) => {
+const formatRoleLabel = (role: UserRole) => {
+  if (role === "super_admin") return "Super Admin";
+  if (role === "admin") return "Admin";
+  return "Staff";
+};
+
+export const UsersTable = ({ rows, roleOptions, onRoleChange }: Props) => {
   return (
     <Card sx={{ overflowX: "auto", boxShadow: "none", border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
       <Table>
@@ -41,12 +48,12 @@ export const UsersTable = ({ rows, onRoleChange }: Props) => {
                   size="small"
                   select
                   value={row.role}
-                  onChange={(event) => onRoleChange(row.id, event.target.value as UserRole)}
+                  onChange={(event) => onRoleChange(row.id, event.target.value as UserRole, row.roleIds)}
                   sx={{ minWidth: 180, bgcolor: "background.paper" }}
                 >
-                  <MenuItem value="super_admin">Super Admin</MenuItem>
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="staff">Staff</MenuItem>
+                  {roleOptions.map((role) => (
+                    <MenuItem key={role} value={role}>{formatRoleLabel(role)}</MenuItem>
+                  ))}
                 </TextField>
               </TableCell>
               <TableCell>{new Date(row.created_at).toLocaleString()}</TableCell>

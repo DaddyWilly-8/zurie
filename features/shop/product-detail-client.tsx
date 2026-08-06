@@ -29,10 +29,10 @@ import {
   buildWhatsAppOrderMessage,
 } from "@/utils/whatsapp";
 import { SITE } from "@/constants/site";
-import { CATEGORY_OPTIONS } from "@/constants/categories";
 
-export const ProductDetailClient = ({ product }: { product: Product }) => {
-  const [activeImage, setActiveImage] = useState(product.images[0]?.url ?? "");
+export const ProductDetailClient = ({ product, categoryLabel }: { product: Product; categoryLabel: string }) => {
+  const productImages = product.images ?? [];
+  const [activeImage, setActiveImage] = useState(productImages[0]?.url ?? "");
   const [selectedColor, setSelectedColor] = useState(product.colors[0] ?? null);
   const [quantity, setQuantity] = useState(1);
   const addToCart = useShopStore((state) => state.addToCart);
@@ -43,9 +43,6 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
   const rates = useCurrencyStore((state) => state.rates);
 
   const inWishlist = wishlist.includes(product.id);
-  const categoryLabel =
-    CATEGORY_OPTIONS.find((item) => item.value === product.category)?.label ??
-    product.category;
   const specificationRows = [
     { label: "Material", value: product.specifications[0] ?? "Premium leather" },
     { label: "Construction", value: product.specifications[1] ?? "Structured silhouette" },
@@ -118,7 +115,7 @@ export const ProductDetailClient = ({ product }: { product: Product }) => {
           />
         </Box>
         <Stack direction="row" spacing={1.25} sx={{ overflowX: "auto", pb: 0.4 }}>
-          {product.images.map((image) => (
+          {productImages.map((image) => (
             <Button
               key={image.url}
               onClick={() => setActiveImage(image.url)}

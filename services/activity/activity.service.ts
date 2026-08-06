@@ -1,15 +1,13 @@
-import { shouldUseMockForFeature } from "@/services/api/runtime";
-import { mockBackend } from "@/services/mock/mock-backend";
 import { apiClient } from "@/services/api/client";
+import { API_ENDPOINTS } from "@/services/api/endpoints";
 
 export const activityService = {
   listActivity(page = 1, pageSize = 20) {
-    if (shouldUseMockForFeature("activity")) {
-      return mockBackend.activity.list(page, pageSize);
-    }
-
-    return apiClient.get<{ data: unknown[]; count: number }>("/activity", {
+    return apiClient.get<{ data?: unknown[]; count?: number; meta?: { count?: number } }>(API_ENDPOINTS.activity.list, {
       query: { page, pageSize },
-    });
+    }).then((response) => ({
+      data: response.data ?? [],
+      count: response.meta?.count ?? response.count ?? 0,
+    }));
   },
 };

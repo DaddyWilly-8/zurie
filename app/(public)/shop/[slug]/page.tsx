@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Stack } from "@mui/material";
 import { ProductDetailClient } from "@/features/shop/product-detail-client";
 import { buildMetadata } from "@/lib/metadata";
+import { getStorefrontCategories } from "@/services/categories/category.service";
 import { getProductBySlug } from "@/services/products";
 
 export async function generateMetadata({
@@ -33,13 +34,19 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const [product, categories] = await Promise.all([
+    getProductBySlug(slug),
+    getStorefrontCategories(),
+  ]);
 
   if (!product) notFound();
 
+  const categoryLabel =
+    categories.find((item) => item.slug === product.category)?.name ?? "Uncategorized";
+
   return (
     <Stack spacing={8}>
-      <ProductDetailClient product={product} />
+      <ProductDetailClient product={product} categoryLabel={categoryLabel} />
     </Stack>
   );
 }

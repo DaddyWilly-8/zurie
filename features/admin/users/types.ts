@@ -4,5 +4,6 @@ export type AdminUserRow = {
   id: string;
   full_name: string | null;
   role: UserRole;
+  roleIds?: number[];
   created_at: string;
 };

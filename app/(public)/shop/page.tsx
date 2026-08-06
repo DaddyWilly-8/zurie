@@ -1,7 +1,5 @@
-import { Box, Stack } from "@mui/material";
 import { buildMetadata } from "@/lib/metadata";
-import { getProducts } from "@/services/products";
-import { ShopGrid } from "@/features/shop/shop-grid";
+import { ShopPageClient } from "@/features/shop/shop-page-client";
 
 export const metadata = buildMetadata({
   title: "Zuriè",
@@ -10,22 +8,6 @@ export const metadata = buildMetadata({
   path: "/shop",
 });
 
-type ShopPageProps = {
-  searchParams?: Promise<{ category?: string }>;
-};
-
-export default async function ShopPage({ searchParams }: ShopPageProps) {
-  const params = (await searchParams) ?? {};
-  const products = await getProducts();
-
-  return (
-    <Stack spacing={{ xs: 2.4, md: 3.2 }} sx={{ pt: { xs: 1.5, md: 3 } }}>
-      <Box sx={{ pt: 0.8 }}>
-        <ShopGrid
-          products={products}
-          initialCategory={params.category ?? "all"}
-        />
-      </Box>
-    </Stack>
-  );
+export default function ShopPage() {
+  return <ShopPageClient />;
 }

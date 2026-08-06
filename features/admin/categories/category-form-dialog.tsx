@@ -13,7 +13,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { AdminField, AdminToggle } from "@/components/admin/admin-field";
-import { AdminImageUploader } from "@/components/admin/admin-image-uploader";
 import type { CategoryForm } from "./types";
 
 type CategoryFormDialogProps = {
@@ -109,18 +108,9 @@ export const CategoryFormDialog = ({
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <AdminField
-                label="Category Image URL"
-                value={form.imageUrl}
-                onChange={(value) => onChange("imageUrl", value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <AdminImageUploader
-                label="Category Image"
-                images={form.imageUrl ? [form.imageUrl] : []}
-                onChange={(images) => onChange("imageUrl", images[0] ?? "")}
-              />
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", pl: 1.5 }}>
+                Category image is managed from the category list after create/update.
+              </Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <AdminField

@@ -156,8 +156,8 @@ export const AdminProductsClient = () => {
     () =>
       products.filter((item) => {
         const categoryLabel =
-          categoryOptions.find((category) => category.value === String(item.category_id ?? item.category ?? ""))?.label ??
-          item.category;
+          categoryOptions.find((category) => category.value === String(item.categoryId ?? item.category_id ?? ""))?.label ??
+          "";
         const text = `${item.name} ${categoryLabel} ${item.slug}`.toLowerCase();
         return text.includes(query.trim().toLowerCase());
       }),

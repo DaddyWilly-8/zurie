@@ -47,9 +47,20 @@ export const API_ENDPOINTS = {
     byId: (id: string) => `/media/${id}`,
     upload: "/media/upload",
   },
+  users: {
+    create: "/users",
+    attachRole: (id: string) => `/users/${id}/roles`,
+  },
+  roles: {
+    create: "/roles",
+    attachPermission: (id: string) => `/roles/${id}/permissions`,
+  },
   adminUsers: {
     list: "/admin/users",
     byId: (id: string) => `/admin/users/${id}`,
+  },
+  activity: {
+    list: "/activity",
   },
   customers: {
     list: "/admin/customers",

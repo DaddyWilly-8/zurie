@@ -11,30 +11,6 @@ const dataUrlToFile = async (dataUrl: string, fallbackName: string) => {
 
 const isDataUrl = (value: string) => value.startsWith("data:image/");
 
-const readEntityId = (payload: unknown): string | null => {
-  if (!payload || typeof payload !== "object") return null;
-  const direct = (payload as { id?: string | number }).id;
-  if (typeof direct === "string" || typeof direct === "number") return String(direct);
-
-  const nested = (payload as { data?: { id?: string | number } }).data?.id;
-  if (typeof nested === "string" || typeof nested === "number") return String(nested);
-
-  return null;
-};
-
-const syncCategoryImage = async (categoryId: string, form: CategoryForm) => {
-  if (!form.imageUrl.trim()) {
-    await categoryService.removeCategoryImage(categoryId);
-    return;
-  }
-
-  if (!isDataUrl(form.imageUrl.trim())) {
-    return;
-  }
-
-  const file = await dataUrlToFile(form.imageUrl.trim(), `category-${categoryId}`);
-  await categoryService.uploadCategoryImage(categoryId, file);
-};
 
 export const categoryActions = {
   async list(): Promise<Category[]> {
@@ -44,19 +20,21 @@ export const categoryActions = {
 
   async create(form: CategoryForm) {
     const payload = await categoryService.createCategory(toCategoryPayload(form));
-    const categoryId = readEntityId(payload);
-
-    if (categoryId) {
-      await syncCategoryImage(categoryId, form);
-    }
-
     return payload;
   },
 
   async update(id: string, form: CategoryForm) {
-    const payload = await categoryService.updateCategory(id, toCategoryPayload(form));
-    await syncCategoryImage(id, form);
-    return payload;
+    return categoryService.updateCategory(id, toCategoryPayload(form));
+  },
+
+  async uploadImage(id: string, dataUrl: string) {
+    if (!isDataUrl(dataUrl.trim())) return null;
+    const file = await dataUrlToFile(dataUrl.trim(), `category-${id}`);
+    return categoryService.uploadCategoryImage(id, file);
+  },
+
+  async removeImage(id: string) {
+    return categoryService.removeCategoryImage(id);
   },
 
   async remove(id: string) {

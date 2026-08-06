@@ -12,13 +12,17 @@ import {
   Typography,
 } from "@mui/material";
 import { ProductCard } from "@/components/product-card";
-import { CATEGORY_OPTIONS } from "@/constants/categories";
 import type { Product } from "@/types/product";
 
 type SortKey = "featured" | "price-low" | "price-high" | "newest";
 
-const getCategoryMeta = (category: string) => {
-  const selectedCategory = CATEGORY_OPTIONS.find((item) => item.value === category);
+type ShopCategory = {
+  label: string;
+  value: string;
+};
+
+const getCategoryMeta = (category: string, categories: ShopCategory[]) => {
+  const selectedCategory = categories.find((item) => item.value === category);
   return {
     title: selectedCategory?.label ?? "All Pieces",
     subtitle: selectedCategory
@@ -45,36 +49,36 @@ const sortProducts = (products: Product[], sortBy: SortKey) => {
   }
 };
 
-const normalizeCategory = (value: string) => {
+const normalizeCategory = (value: string, categories: ShopCategory[]) => {
   if (value === "all") return "all";
   const candidate = value.toLowerCase();
-  return CATEGORY_OPTIONS.some((item) => item.value === candidate)
-    ? candidate
-    : "all";
+  return categories.some((item) => item.value === candidate) ? candidate : "all";
 };
 
 type ShopGridProps = {
   products: Product[];
+  categories: ShopCategory[];
   initialCategory?: string;
 };
 
 export const ShopGrid = ({
   products,
+  categories,
   initialCategory = "all",
 }: ShopGridProps) => {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>(
-    normalizeCategory(initialCategory),
+    normalizeCategory(initialCategory, categories),
   );
   const [sortBy, setSortBy] = useState<SortKey>("featured");
-  const categoryMeta = getCategoryMeta(category);
+  const categoryMeta = getCategoryMeta(category, categories);
 
   useEffect(() => {
-    setCategory(normalizeCategory(initialCategory));
-  }, [initialCategory]);
+    setCategory(normalizeCategory(initialCategory, categories));
+  }, [initialCategory, categories]);
 
   const updateCategory = (nextCategory: string) => {
-    const normalized = normalizeCategory(nextCategory);
+    const normalized = normalizeCategory(nextCategory, categories);
     setCategory(normalized);
 
     if (typeof window !== "undefined") {
@@ -170,7 +174,7 @@ export const ShopGrid = ({
               }}
             >
               <MenuItem value="all">All Pieces</MenuItem>
-              {CATEGORY_OPTIONS.map((item) => (
+              {categories.map((item) => (
                 <MenuItem key={item.value} value={item.value}>
                   {item.label}
                 </MenuItem>
@@ -190,7 +194,7 @@ export const ShopGrid = ({
             >
               All Pieces
             </Typography>
-            {CATEGORY_OPTIONS.map((item) => (
+            {categories.map((item) => (
               <Typography
                 key={item.value}
                 onClick={() => updateCategory(item.value)}

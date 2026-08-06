@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Stack } from "@mui/material";
-import { CATEGORY_OPTIONS } from "@/constants/categories";
+import { getStorefrontCategories } from "@/services/categories/category.service";
 import { getProductsByCategory } from "@/services/products";
 import { SectionHeading } from "@/components/section-heading";
 import { ShopGrid } from "@/features/shop/shop-grid";
@@ -11,7 +11,8 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const category = CATEGORY_OPTIONS.find((item) => item.value === slug);
+  const categories = await getStorefrontCategories();
+  const category = categories.find((item) => item.slug === slug);
 
   if (!category) {
     notFound();
@@ -21,8 +22,12 @@ export default async function CategoryPage({
 
   return (
     <Stack spacing={3}>
-      <SectionHeading eyebrow="Category" title={category.label} />
-      <ShopGrid products={products} />
+      <SectionHeading eyebrow="Category" title={category.name} />
+      <ShopGrid
+        products={products}
+        categories={categories.map((item) => ({ label: item.name, value: item.slug }))}
+        initialCategory={slug}
+      />
     </Stack>
   );
 }

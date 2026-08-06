@@ -78,7 +78,7 @@ export const SiteHeaderCartDrawer = ({
                 <Stack key={item.productId} direction="row" spacing={1.4}>
                   <Box
                     component="img"
-                    src={item.product.images[0]?.url ?? "/images/products/fallback.png"}
+                    src={item.product.images?.[0]?.url ?? "/images/products/fallback.png"}
                     alt={item.product.name}
                     sx={{
                       width: 66,

@@ -1,10 +1,4 @@
-export type ProductCategory =
-  | "handbags"
-  | "tote-bags"
-  | "shoulder-bags"
-  | "crossbody-bags"
-  | "backpacks"
-  | "wallets";
+export type ProductCategory = string;
 
 export type ProductColor = {
   name: string;
@@ -25,6 +19,9 @@ export type Product = {
   description: string;
   price: number;
   category: ProductCategory;
+  categoryLabel?: string;
+  categoryId?: string | number;
+  categorySlug?: string;
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;

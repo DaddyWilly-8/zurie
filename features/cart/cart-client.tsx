@@ -92,8 +92,8 @@ export const CartClient = () => {
                   }}
                 >
                   <Image
-                    src={item.product.images[0]?.url ?? "/images/products/fallback.png"}
-                    alt={item.product.images[0]?.alt ?? item.product.name}
+                    src={item.product.images?.[0]?.url ?? "/images/products/fallback.png"}
+                    alt={item.product.images?.[0]?.alt ?? item.product.name}
                     fill
                     sizes="(max-width: 600px) 88px, 104px"
                     style={{ objectFit: "cover" }}

@@ -36,10 +36,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
   const inWishlist = wishlist.includes(product.id);
-  const categoryLabel = product.category
-    .split("-")
-    .map((segment) => segment[0]?.toUpperCase() + segment.slice(1))
-    .join(" ");
+  const categoryLabel = product.categoryLabel ?? product.category ?? "Uncategorized";
 
   return (
     <MotionCard
@@ -60,8 +57,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       <Box sx={{ position: "relative", height: 345, overflow: "hidden" }}>
         <Link href={`/shop/${product.slug}`}>
           <Image
-            src={product.images[0]?.url ?? "/images/products/fallback.png"}
-            alt={product.images[0]?.alt ?? product.name}
+            src={product.images?.[0]?.url ?? "/images/products/fallback.png"}
+            alt={product.images?.[0]?.alt ?? product.name}
             fill
             sizes="(max-width: 768px) 100vw, 25vw"
             style={{ objectFit: "cover", transition: "transform 260ms ease" }}

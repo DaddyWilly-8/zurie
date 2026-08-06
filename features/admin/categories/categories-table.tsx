@@ -1,22 +1,33 @@
-import Image from "next/image";
 import {
   Box,
+  Button,
   Card,
+  Chip,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPencil, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faImage, faPencil, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import type { Category } from "./types";
 
 type CategoriesTableProps = {
   items: Category[];
   onEdit: (item: Category) => void;
   onDelete: (id: string) => void;
+  onUploadImage: (id: string, dataUrl: string) => Promise<void>;
+  onRemoveImage: (id: string) => Promise<void>;
 };
 
-export const CategoriesTable = ({ items, onEdit, onDelete }: CategoriesTableProps) => {
+const toDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+export const CategoriesTable = ({ items, onEdit, onDelete, onUploadImage, onRemoveImage }: CategoriesTableProps) => {
   return (
     <Box
       sx={{
@@ -53,8 +64,8 @@ export const CategoriesTable = ({ items, onEdit, onDelete }: CategoriesTableProp
                 flexShrink: 0,
               }}
             >
-              <Image
-                src={item.image_url || "/images/products/fallback.png"}
+              <img
+                src={item.imageUrl ?? item.image_url ?? "/images/products/fallback.png"}
                 alt={item.name}
                 width={68}
                 height={68}
@@ -88,8 +99,42 @@ export const CategoriesTable = ({ items, onEdit, onDelete }: CategoriesTableProp
                   fontSize: "0.72rem",
                 }}
               >
-                Order: {item.sort_order ?? 1}
+                Order: {item.sortOrder ?? item.sort_order ?? 1}
               </Typography>
+
+              <Stack direction="row" spacing={0.8} alignItems="center" flexWrap="wrap" sx={{ mt: 0.2 }}>
+                <Chip
+                  size="small"
+                  label={(item.visible ?? item.is_visible ?? true) ? "Visible" : "Hidden"}
+                  sx={{ fontSize: "0.65rem", height: 22 }}
+                />
+                <Button
+                  component="label"
+                  variant="outlined"
+                  size="small"
+                  sx={{ minWidth: 34, width: 34, height: 34, borderRadius: 0, p: 0 }}
+                  aria-label="Upload category image"
+                >
+                  <FontAwesomeIcon icon={faImage} size="sm" />
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      const dataUrl = await toDataUrl(file);
+                      await onUploadImage(item.id, dataUrl);
+                      event.target.value = "";
+                    }}
+                  />
+                </Button>
+                {(item.imageUrl ?? item.image_url) ? (
+                  <IconButton size="small" onClick={() => void onRemoveImage(item.id)} aria-label="Remove category image">
+                    <FontAwesomeIcon icon={faXmark} size="sm" />
+                  </IconButton>
+                ) : null}
+              </Stack>
 
               <Stack direction="row" spacing={0.5} sx={{ mt: 0.2 }}>
                 <IconButton size="small" onClick={() => onEdit(item)} aria-label="Edit category">

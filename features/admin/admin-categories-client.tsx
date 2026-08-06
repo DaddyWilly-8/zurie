@@ -85,6 +85,30 @@ export const AdminCategoriesClient = () => {
     }
   };
 
+  const uploadCategoryImage = async (id: string, dataUrl: string) => {
+    try {
+      await categoryActions.uploadImage(id, dataUrl);
+      setMessage("Category image updated successfully");
+      setMessageType("success");
+      await refetch();
+    } catch {
+      setMessage("Failed to update category image");
+      setMessageType("error");
+    }
+  };
+
+  const removeCategoryImage = async (id: string) => {
+    try {
+      await categoryActions.removeImage(id);
+      setMessage("Category image removed successfully");
+      setMessageType("success");
+      await refetch();
+    } catch {
+      setMessage("Failed to remove category image");
+      setMessageType("error");
+    }
+  };
+
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(items.length / CATEGORIES_PAGE_SIZE)),
     [items.length],
@@ -150,7 +174,13 @@ export const AdminCategoriesClient = () => {
         </Box>
       ) : (
         <>
-          <CategoriesTable items={paginatedItems} onEdit={openEdit} onDelete={removeCategory} />
+          <CategoriesTable
+            items={paginatedItems}
+            onEdit={openEdit}
+            onDelete={removeCategory}
+            onUploadImage={uploadCategoryImage}
+            onRemoveImage={removeCategoryImage}
+          />
           {items.length > CATEGORIES_PAGE_SIZE ? (
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
               <Pagination

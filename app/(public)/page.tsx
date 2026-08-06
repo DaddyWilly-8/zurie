@@ -8,8 +8,8 @@ import { ProductCard } from "@/components/product-card";
 import { TestimonialCards } from "@/components/testimonial-cards";
 import { getBrandContent, getHomepageContent } from "@/services/content";
 import { getProducts } from "@/services/products";
+import { getStorefrontCategories } from "@/services/categories/category.service";
 import { buildMetadata } from "@/lib/metadata";
-import { CATEGORY_OPTIONS } from "@/constants/categories";
 
 export const metadata = buildMetadata({
   title: "Zuriè | Modern Luxury Women's Handbags",
@@ -24,6 +24,7 @@ export default async function HomePage() {
     getBrandContent(),
     getHomepageContent(),
   ]);
+  const categories = await getStorefrontCategories();
 
   const homepageData = (homepage as Record<string, unknown> | null) ?? null;
   const heroTitle = "Zuriè";
@@ -56,12 +57,12 @@ export default async function HomePage() {
     wallets: "/images/products/serene-1.png",
     backpacks: "/images/products/nova-1.png",
   };
-  const categoryCards = CATEGORY_OPTIONS.slice(0, 4)
+  const categoryCards = categories.slice(0, 4)
     .map((category) => {
       return {
-        label: category.label,
-        href: `/shop?category=${encodeURIComponent(category.value)}`,
-        image: pickImage(categoryImageMap[category.value]),
+        label: category.name,
+        href: `/shop?category=${encodeURIComponent(category.slug)}`,
+        image: pickImage(categoryImageMap[category.slug]),
       };
     })
     .filter(Boolean) as Array<{ label: string; href: string; image: string }>;
@@ -69,7 +70,7 @@ export default async function HomePage() {
   const heroImage = pickImage(
     "/images/hero/zurie-hero.png",
     heroImageFromCms,
-    featured[0]?.images[0]?.url,
+    featured[0]?.images?.[0]?.url,
     brand.heroImage,
   );
 
