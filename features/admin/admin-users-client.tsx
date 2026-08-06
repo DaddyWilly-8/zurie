@@ -17,11 +17,10 @@ import {
 import {
   userActions,
   UsersTable,
-  type AdminUserRow,
   type UserRole,
 } from "@/features/admin/users";
 
-export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] }) => {
+export const AdminUsersClient = () => {
   const USERS_PAGE_SIZE = 10;
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
@@ -45,14 +44,13 @@ export const AdminUsersClient = ({ initialData }: { initialData: AdminUserRow[] 
   const [attachingPermission, setAttachingPermission] = useState(false);
 
   const {
-    data: rows = initialData,
+    data: rows = [],
     isLoading,
     isError,
     refetch,
   } = useQuery({
     queryKey: ["admin-users"],
     queryFn: userActions.list,
-    initialData: initialData.length > 0 ? initialData : undefined,
   });
 
   const updateRole = async (id: string, role: UserRole, roleIds?: number[]) => {

@@ -14,43 +14,27 @@ import {
   orderActions,
   OrdersFilters,
   OrdersTable,
-  type AdminOrderRow,
 } from "@/features/admin/orders";
 
-type Props = {
-  initialData: AdminOrderRow[];
-  initialCount: number;
-  initialPage: number;
-  initialSearch: string;
-  initialStatus: string;
-};
-
-export const AdminOrdersClient = ({
-  initialData,
-  initialCount,
-  initialPage,
-  initialSearch,
-  initialStatus,
-}: Props) => {
-  const [page, setPage] = useState(initialPage);
-  const [search, setSearch] = useState(initialSearch);
-  const [status, setStatus] = useState(initialStatus);
+export const AdminOrdersClient = () => {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
   const {
-    data: payload = { data: initialData, count: initialCount },
+    data: payload,
     isLoading,
     isError,
     refetch,
   } = useQuery({
     queryKey: ["admin-orders", page, search, status],
     queryFn: () => orderActions.list(page, search, status),
-    initialData: { data: initialData, count: initialCount },
   });
 
-  const rows = payload.data;
-  const count = payload.count;
+  const rows = payload?.data ?? [];
+  const count = payload?.count ?? 0;
   const totalPages = useMemo(() => Math.max(1, Math.ceil(count / orderActions.pageSize)), [count]);
 
   const updateStatus = async (id: string, nextStatus: string) => {

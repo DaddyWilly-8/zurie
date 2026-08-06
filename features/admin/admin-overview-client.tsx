@@ -94,7 +94,6 @@ export const AdminOverviewClient = () => {
   } = useQuery({
     queryKey: ["admin-overview"],
     queryFn: () => dashboardService.getOverview() as Promise<Overview>,
-    initialData: emptyOverview,
   });
 
   const stats = [

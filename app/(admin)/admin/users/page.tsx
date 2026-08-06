@@ -7,7 +7,7 @@ export default function AdminUsersPage() {
   return (
     <Stack spacing={3}>
       <Typography variant="h4">Admin Users & Roles</Typography>
-      <AdminUsersClient initialData={[]} />
+      <AdminUsersClient />
     </Stack>
   );
 }

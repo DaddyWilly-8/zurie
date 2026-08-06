@@ -8,15 +8,9 @@ import {
   enquiryActions,
   EnquiriesFilters,
   EnquiriesTable,
-  type AdminEnquiryRow,
 } from "@/features/admin/enquiries";
 
-type Props = {
-  initialData: AdminEnquiryRow[];
-  initialCount: number;
-};
-
-export const AdminEnquiriesClient = ({ initialData, initialCount }: Props) => {
+export const AdminEnquiriesClient = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -24,18 +18,17 @@ export const AdminEnquiriesClient = ({ initialData, initialCount }: Props) => {
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
   const {
-    data: payload = { data: initialData, count: initialCount },
+    data: payload,
     isLoading,
     isError,
     refetch,
   } = useQuery({
     queryKey: ["admin-enquiries", page, search, status],
     queryFn: () => enquiryActions.list(page, search, status),
-    initialData: { data: initialData, count: initialCount },
   });
 
-  const rows = payload.data;
-  const count = payload.count;
+  const rows = payload?.data ?? [];
+  const count = payload?.count ?? 0;
   const totalPages = useMemo(() => Math.max(1, Math.ceil(count / enquiryActions.pageSize)), [count]);
 
   const updateStatus = async (id: string, nextStatus: string) => {

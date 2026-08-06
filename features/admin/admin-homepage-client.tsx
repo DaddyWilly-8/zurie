@@ -51,24 +51,21 @@ const defaults: HomepagePayload = {
 };
 
 export const AdminHomepageClient = ({
-  initialData,
 }: {
-  initialData: HomepagePayload | null;
+  initialData?: HomepagePayload | null;
 }) => {
-  const [state, setState] = useState<HomepagePayload>(initialData ?? defaults);
+  const [state, setState] = useState<HomepagePayload>(defaults);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
   const {
-    data: homepage = initialData,
+    data: homepage,
     isLoading,
     isError,
     refetch,
   } = useQuery({
     queryKey: ["admin-homepage"],
     queryFn: contentService.getHomepageSettings,
-    enabled: !initialData,
-    initialData,
   });
 
   useEffect(() => {

@@ -14,15 +14,9 @@ import {
   mediaActions,
   MediaGrid,
   MediaToolbar,
-  type AdminMediaItem,
 } from "@/features/admin/media";
 
-type Props = {
-  initialData: AdminMediaItem[];
-  initialCount: number;
-};
-
-export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) => {
+export const AdminMediaLibraryClient = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [folder, setFolder] = useState("general");
@@ -31,18 +25,17 @@ export const AdminMediaLibraryClient = ({ initialData, initialCount }: Props) =>
   const [loading, setLoading] = useState(false);
 
   const {
-    data: payload = { data: initialData, count: initialCount },
+    data: payload,
     isLoading,
     isError,
     refetch,
   } = useQuery({
     queryKey: ["admin-media", page, search],
     queryFn: () => mediaActions.list(page, search),
-    initialData: { data: initialData, count: initialCount },
   });
 
-  const rows = payload.data;
-  const count = payload.count;
+  const rows = payload?.data ?? [];
+  const count = payload?.count ?? 0;
   const totalPages = useMemo(() => Math.max(1, Math.ceil(count / mediaActions.pageSize)), [count]);
 
   const upload = async (file: File) => {
