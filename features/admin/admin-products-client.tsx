@@ -266,13 +266,6 @@ export const AdminProductsClient = () => {
           </Box>
         ) : (
           <>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: { xs: "block", md: "none" }, mb: 1 }}
-            >
-              Swipe left/right to view full table.
-            </Typography>
             <ProductsTable
               products={paginatedProducts}
               categoryOptions={categoryOptions}
@@ -283,7 +276,7 @@ export const AdminProductsClient = () => {
               onDeleteImage={deleteProductImage}
             />
             {filteredProducts.length > PRODUCTS_PAGE_SIZE ? (
-              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+              <Stack direction="row" justifyContent="flex-end">
                 <Pagination
                   count={totalPages}
                   page={page}

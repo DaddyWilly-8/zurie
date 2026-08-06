@@ -100,7 +100,7 @@ export const ProductsTable = ({
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%' }} mt={1}>
       {products.map((item) => {
         const categoryKey = String(
           (item as AdminProduct & { categoryId?: string }).categoryId ?? item.category_id ?? item.category ?? "",
