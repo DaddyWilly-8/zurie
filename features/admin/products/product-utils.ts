@@ -80,7 +80,7 @@ const getColorHex = (name: string): string => {
   return colorMap[name] || "#CCCCCC";
 };
 
-const parseColors = (value: string) => {
+const parseColors = (value: string): Array<{ name: string; hex: string }> | undefined => {
   const colors = parseList(value)
     .map((name) => {
       if (!name) return null;
@@ -89,7 +89,16 @@ const parseColors = (value: string) => {
     })
     .filter((item): item is { name: string; hex: string } => item !== null);
 
-  return colors.length ? colors : [{ name: "Beige", hex: "#D4C4B7" }];
+  return colors.length ? colors : undefined;
+};
+
+const optionalText = (value: string) => {
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+const optionalStringList = (values: string[]) => {
+  return values.length ? values : undefined;
 };
 
 export const emptyFormState: ProductFormState = {
@@ -97,9 +106,9 @@ export const emptyFormState: ProductFormState = {
   slug: "",
   description: "",
   shortDescription: "",
-  price: 0,
-  buyingPrice: 0,
-  compareAt: 0,
+  price: null,
+  buyingPrice: null,
+  compareAt: null,
   sku: "",
   status: "draft",
   material: "",
@@ -115,75 +124,90 @@ export const emptyFormState: ProductFormState = {
   bestSeller: false,
   newArrival: false,
   inStock: true,
-  stockCount: 1,
+  stockCount: 0,
   imageUrlsText: "",
   existingImageIds: [],
   removedImageIds: [],
-  colorsText: "Beige, Black, Tan",
+  colorsText: "",
   sizesText: "One Size",
 };
 
 export const toFormState = (product: AdminProduct): ProductFormState => {
-  const imageUrls = product.images?.map((item) => item.url)
-    ?? product.imageUrls
-    ?? product.product_images.map((item) => item.url);
-  const imageIds = product.images?.map((item) => item.id)
-    ?? product.product_images.map((item) => item.id);
+  const imageUrls = [
+    ...(product.images ?? []).map((item) => item.url),
+    ...(product.imageUrls ?? []),
+    ...(product.product_images ?? []).map((item) => item.url),
+  ].filter((url): url is string => Boolean(url));
+
+  const imageIds = (product.images ?? []).map((item) => String(item.id));
+  const stockStatus = product.stockStatus ?? product.stock_status ?? (product.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
 
   return {
-  name: product.name,
-  slug: product.slug,
-  description: product.description,
-  shortDescription: product.short_description ?? "",
-  price: product.price,
-  buyingPrice: product.buying_price ?? product.price,
-  compareAt: product.sale_price ?? 0,
-  sku: product.sku ?? "",
-  status: product.status ?? "published",
-  material: product.material ?? "",
-  dimensions: product.specifications[1] ?? "",
-  hardware: product.specifications[2] ?? "",
-  lining: product.specifications[3] ?? "",
-  seoTitle: product.seo_title ?? "",
-  seoDescription: product.seo_description ?? "",
-  featuredImageUrl: product.featured_image_url ?? "",
-  categoryId: product.category_id ?? product.category ?? "",
-  category: product.category,
-  featured: product.featured,
-  bestSeller: product.best_seller,
-  newArrival: product.new_arrival,
-  inStock: (product.stock_status ?? (product.in_stock ? "IN_STOCK" : "OUT_OF_STOCK")) !== "OUT_OF_STOCK",
-  stockCount: product.stock_count,
-  imageUrlsText: imageUrls.join("\n"),
-  existingImageIds: imageIds,
-  removedImageIds: [],
-  colorsText: product.colors.map((item) => item.name).join(", "),
-  sizesText: product.sizes.join(", "),
+    name: product.name ?? "",
+    slug: product.slug ?? "",
+    description: product.description ?? "",
+    shortDescription: product.shortDescription ?? product.short_description ?? "",
+    price: product.price ?? null,
+    buyingPrice: product.buyingPrice ?? product.buying_price ?? product.price ?? null,
+    compareAt: product.salePrice ?? product.sale_price ?? null,
+    sku: product.sku ?? "",
+    status: product.status ?? "draft",
+    material: product.material ?? "",
+    dimensions: product.specifications?.[0] ?? "",
+    hardware: product.specifications?.[1] ?? "",
+    lining: product.specifications?.[2] ?? "",
+    seoTitle: product.seoTitle ?? product.seo_title ?? "",
+    seoDescription: product.seoDescription ?? product.seo_description ?? "",
+    featuredImageUrl: product.featuredImageUrl ?? product.featured_image_url ?? "",
+    categoryId: String(product.categoryId ?? product.category_id ?? product.category ?? ""),
+    category: product.category ?? "",
+    featured: Boolean(product.featured),
+    bestSeller: Boolean(product.bestSeller ?? product.best_seller),
+    newArrival: Boolean(product.newArrival ?? product.new_arrival),
+    inStock: stockStatus !== "OUT_OF_STOCK",
+    stockCount: product.stock_count ?? 0,
+    imageUrlsText: imageUrls.join("\n"),
+    existingImageIds: imageIds,
+    removedImageIds: [],
+    colorsText: (product.colors ?? []).map((item) => item.name).join(", "),
+    sizesText: (product.sizes ?? []).join(", "),
   };
 };
 
-const toBasePayload = (state: ProductFormState) => ({
-  name: state.name.trim(),
-  slug: state.slug.trim(),
-  description: state.description.trim(),
-  shortDescription: state.shortDescription.trim(),
-  price: Number(state.price),
-  buyingPrice: Number(state.buyingPrice),
-  salePrice: Number(state.compareAt) > 0 ? Number(state.compareAt) : null,
-  sku: state.sku.trim(),
-  status: state.status,
-  material: state.material.trim(),
-  seoTitle: state.seoTitle.trim(),
-  seoDescription: state.seoDescription.trim(),
-  featuredImageUrl: state.featuredImageUrl.trim() || undefined,
-  categoryId: state.categoryId.trim(),
-  featured: state.featured,
-  bestSeller: state.bestSeller,
-  newArrival: state.newArrival,
-  colors: parseColors(state.colorsText),
-  sizes: parseList(state.sizesText),
-  specifications: [state.material, state.dimensions, state.hardware, state.lining].map((item) => item.trim()),
-});
+const toBasePayload = (state: ProductFormState) => {
+  const description = optionalText(state.description);
+  const shortDescription = optionalText(state.shortDescription);
+  const sku = optionalText(state.sku);
+  const material = optionalText(state.material);
+  const seoTitle = optionalText(state.seoTitle);
+  const seoDescription = optionalText(state.seoDescription);
+  const colors = parseColors(state.colorsText);
+  const sizes = optionalStringList(parseList(state.sizesText));
+  const specifications = optionalStringList(
+    [state.dimensions, state.hardware, state.lining].map((item) => item.trim()).filter(Boolean),
+  );
+  return {
+    name: state.name.trim(),
+    slug: state.slug.trim(),
+    categoryId: String(state.categoryId ?? "").trim(),
+    buyingPrice: Number(state.buyingPrice ?? 0),
+    price: Number(state.price ?? 0),
+    status: state.status,
+    featured: Boolean(state.featured),
+    bestSeller: Boolean(state.bestSeller),
+    newArrival: Boolean(state.newArrival),
+    ...(description ? { description } : {}),
+    ...(shortDescription ? { shortDescription } : {}),
+    ...(sku ? { sku } : {}),
+    ...(state.compareAt !== null ? { salePrice: Number(state.compareAt) } : {}),
+    ...(material ? { material } : {}),
+    ...(colors ? { colors } : {}),
+    ...(sizes ? { sizes } : {}),
+    ...(specifications ? { specifications } : {}),
+    ...(seoTitle ? { seoTitle } : {}),
+    ...(seoDescription ? { seoDescription } : {}),
+  };
+};
 
 export const toCreatePayload = (state: ProductFormState) => ({
   ...toBasePayload(state),

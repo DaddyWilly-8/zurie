@@ -2,11 +2,12 @@ import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
 import { isMockMode } from "@/services/api/runtime";
 import { mockBackend } from "@/services/mock/mock-backend";
+import type { AdminProduct } from "@/features/admin/products";
 
 export type AdminProductPayload = {
   name: string;
   slug: string;
-  description: string;
+  description?: string;
   shortDescription?: string;
   price: number;
   buyingPrice: number;
@@ -16,14 +17,13 @@ export type AdminProductPayload = {
   material?: string;
   seoTitle?: string;
   seoDescription?: string;
-  featuredImageUrl?: string;
   categoryId: string;
-  featured: boolean;
-  bestSeller: boolean;
-  newArrival: boolean;
-  colors: Array<{ name: string; hex: string }>;
-  sizes: string[];
-  specifications: string[];
+  featured?: boolean;
+  bestSeller?: boolean;
+  newArrival?: boolean;
+  colors?: Array<{ name: string; hex: string }>;
+  sizes?: string[];
+  specifications?: string[];
 };
 
 export type AdminCreateProductPayload = AdminProductPayload & {
@@ -76,12 +76,29 @@ export const productService = {
     );
   },
 
+  async getAdminProductById(id: string) {
+    if (isMockMode()) {
+      const products = await mockBackend.products.listAdmin();
+      return (products.find((product: AdminProduct) => product.id === id) ?? null) as AdminProduct | null;
+    }
+
+    const response = await apiClient.get<{ data?: unknown }>(API_ENDPOINTS.products.adminById(id));
+    return (response.data ?? null) as AdminProduct | null;
+  },
+
   createProduct(payload: AdminCreateProductPayload) {
     if (isMockMode()) {
       return mockBackend.products.create({
         ...payload,
+        description: payload.description ?? "",
         category: payload.categoryId,
         buyingPrice: payload.buyingPrice,
+        featured: payload.featured ?? false,
+        bestSeller: payload.bestSeller ?? false,
+        newArrival: payload.newArrival ?? false,
+        colors: payload.colors ?? [],
+        sizes: payload.sizes ?? [],
+        specifications: payload.specifications ?? [],
         imageUrls: [],
         inStock: (payload.quantity ?? 0) > 0,
         stockCount: payload.quantity ?? 0,
@@ -98,8 +115,15 @@ export const productService = {
     if (isMockMode()) {
       return mockBackend.products.update(id, {
         ...payload,
+        description: payload.description ?? "",
         category: payload.categoryId,
         buyingPrice: payload.buyingPrice,
+        featured: payload.featured ?? false,
+        bestSeller: payload.bestSeller ?? false,
+        newArrival: payload.newArrival ?? false,
+        colors: payload.colors ?? [],
+        sizes: payload.sizes ?? [],
+        specifications: payload.specifications ?? [],
         imageUrls: [],
         inStock: true,
         stockCount: 1,

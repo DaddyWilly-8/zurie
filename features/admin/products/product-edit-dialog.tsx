@@ -1,6 +1,8 @@
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -10,30 +12,67 @@ import {
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { useEffect, useMemo, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductFields } from "./product-fields";
-import { emptyFormState } from "./product-utils";
-import type { ProductEdits, ProductFormState } from "./types";
+import { emptyFormState, toFormState } from "./product-utils";
+import { productFormSchema } from "./product-form.schema";
+import type { AdminProduct, ProductFormState } from "./types";
 
 type ProductEditDialogProps = {
-  editingId: string | null;
-  edits: ProductEdits;
+  product: AdminProduct | null;
   categoryOptions: Array<{ value: string; label: string }>;
   onClose: () => void;
-  onChange: <K extends keyof ProductFormState>(id: string, key: K, value: ProductFormState[K]) => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onSubmit: (productId: string, values: ProductFormState) => Promise<boolean>;
 };
 
 export const ProductEditDialog = ({
-  editingId,
-  edits,
+  product,
   categoryOptions,
   onClose,
-  onChange,
   onSubmit,
 }: ProductEditDialogProps) => {
+  const [submitError, setSubmitError] = useState("");
+  const form = useForm<ProductFormState>({
+    resolver: zodResolver(productFormSchema) as Resolver<ProductFormState>,
+    defaultValues: emptyFormState,
+    mode: "onSubmit",
+  });
+
+  useEffect(() => {
+    if (product) {
+      form.reset(toFormState(product));
+      setSubmitError("");
+    }
+  }, [product, form]);
+
+  const values = form.watch();
+  const isSubmitting = form.formState.isSubmitting;
+  const errors = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(form.formState.errors).map(([key, value]) => [key, value?.message ?? ""]),
+      ) as Partial<Record<keyof ProductFormState, string>>,
+    [form.formState.errors],
+  );
+
+  const changeField = <K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) => {
+    form.setValue(key as never, value as never, { shouldDirty: true, shouldValidate: true });
+  };
+
+  const submit = form.handleSubmit(async (payload) => {
+    if (!product) return;
+    setSubmitError("");
+    const saved = await onSubmit(String(product.id), payload);
+    if (!saved) {
+      setSubmitError("Failed to update product.");
+    }
+  });
+
   return (
     <Dialog
-      open={Boolean(editingId)}
+      open={Boolean(product)}
       onClose={onClose}
       fullWidth
       maxWidth="md"
@@ -53,8 +92,6 @@ export const ProductEditDialog = ({
       <DialogTitle
         component="div"
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
           justifyContent: "space-between",
           px: { xs: 2.5, md: 3.5 },
           pt: { xs: 2.5, md: 3 },
@@ -65,14 +102,11 @@ export const ProductEditDialog = ({
           flexShrink: 0,
         }}
       >
-        <Typography variant="h4" component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
+        <Typography variant="h4" textAlign={'center'} component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
           Edit Product
         </Typography>
-        <IconButton size="small" onClick={onClose} aria-label="Close edit dialog" sx={{ color: "text.secondary" }}>
-          <FontAwesomeIcon icon={faTimes} size="sm" />
-        </IconButton>
       </DialogTitle>
-      <Box component="form" onSubmit={onSubmit} sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
         <DialogContent
           dividers
           sx={{
@@ -98,11 +132,13 @@ export const ProductEditDialog = ({
             },
           }}
         >
-          {editingId ? (
+          {submitError ? <Alert severity="error" sx={{ mb: 2 }}>{submitError}</Alert> : null}
+          {product ? (
             <ProductFields
-              state={edits[editingId] ?? emptyFormState}
-              onChange={(key, value) => onChange(editingId, key, value)}
+              state={values}
+              onChange={changeField}
               categoryOptions={categoryOptions}
+              errors={errors}
             />
           ) : null}
         </DialogContent>
@@ -110,6 +146,7 @@ export const ProductEditDialog = ({
           <Button
             onClick={onClose}
             variant="outlined"
+            disabled={isSubmitting}
             sx={{
               borderRadius: 0,
               textTransform: "uppercase",
@@ -129,6 +166,8 @@ export const ProductEditDialog = ({
           <Button
             type="submit"
             variant="contained"
+            disabled={isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={14} color="inherit" /> : null}
             sx={{
               borderRadius: 0,
               textTransform: "uppercase",
@@ -139,7 +178,7 @@ export const ProductEditDialog = ({
               "&:hover": { bgcolor: "text.secondary" },
             }}
           >
-            Save Changes
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </DialogActions>
       </Box>

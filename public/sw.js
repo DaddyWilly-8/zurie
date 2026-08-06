@@ -1,4 +1,4 @@
-const CACHE_NAME = "zurie-pwa-v2";
+const CACHE_NAME = "zurie-pwa-v3";
 const APP_SHELL = [
   "/",
   "/offline.html",
@@ -34,6 +34,12 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (request.method !== "GET") return;
+
+  // Never cache Next.js generated assets or API traffic.
+  // These are versioned and should always come from the network to avoid stale chunks.
+  if (url.pathname.startsWith("/_next/") || url.pathname.startsWith("/api/") || url.pathname.startsWith("/sanctum/")) {
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(

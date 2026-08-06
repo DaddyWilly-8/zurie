@@ -31,12 +31,33 @@ export const AdminField = ({
   required = false,
   fullWidth = true,
 }: AdminFieldProps) => {
+  const displayValue = (() => {
+    if (type !== "number") return value;
+    if (value === "") return "";
+
+    const numeric = typeof value === "number" ? value : Number(String(value).replace(/,/g, ""));
+    if (!Number.isFinite(numeric)) return value;
+
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(numeric);
+  })();
+
+  const handleChange = (nextValue: string) => {
+    if (type !== "number") {
+      onChange(nextValue);
+      return;
+    }
+
+    const normalized = nextValue.replace(/,/g, "").replace(/[^\d.-]/g, "");
+    onChange(normalized);
+  };
+
   return (
     <TextField
       label={label}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      type={type}
+      value={displayValue}
+      onChange={(event) => handleChange(event.target.value)}
+      type={type === "number" ? "text" : type}
+      inputMode={type === "number" ? "decimal" : undefined}
       placeholder={placeholder}
       multiline={multiline}
       minRows={multiline ? minRows : undefined}

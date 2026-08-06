@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { ChangeEvent } from "react";
 import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -70,7 +69,7 @@ export const AdminImageUploader = ({
               position: "relative",
             }}
           >
-            <Image
+            <img
               src={preview}
               alt={`${label} ${index + 1}`}
               width={108}

@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   products: {
     list: "/products",
     adminList: "/admin/products",
+    adminById: (id: string) => `/admin/products/${id}`,
     byId: (id: string) => `/products/${id}`,
     bySlug: (slug: string) => `/products/${slug}`,
     duplicate: (id: string) => `/products/${id}/duplicate`,

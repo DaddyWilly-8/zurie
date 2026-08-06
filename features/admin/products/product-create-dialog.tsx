@@ -1,59 +1,83 @@
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   Typography,
 } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { useEffect, useMemo, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductFields } from "./product-fields";
+import { productFormSchema } from "./product-form.schema";
+import { emptyFormState } from "./product-utils";
 import type { ProductFormState } from "./types";
 
 type ProductCreateDialogProps = {
   open: boolean;
-  form: ProductFormState;
   categoryOptions: Array<{ value: string; label: string }>;
   onClose: () => void;
-  onChange: <K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onSubmit: (values: ProductFormState) => Promise<boolean>;
 };
 
 export const ProductCreateDialog = ({
   open,
-  form,
   categoryOptions,
   onClose,
-  onChange,
   onSubmit,
 }: ProductCreateDialogProps) => {
+  const [submitError, setSubmitError] = useState("");
+  const form = useForm<ProductFormState>({
+    resolver: zodResolver(productFormSchema) as Resolver<ProductFormState>,
+    defaultValues: emptyFormState,
+    mode: "onSubmit",
+  });
+
+  useEffect(() => {
+    if (open) {
+      form.reset(emptyFormState);
+      setSubmitError("");
+    }
+  }, [open, form]);
+
+  const values = form.watch();
+  const isSubmitting = form.formState.isSubmitting;
+  const errors = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(form.formState.errors).map(([key, value]) => [key, value?.message ?? ""]),
+      ) as Partial<Record<keyof ProductFormState, string>>,
+    [form.formState.errors],
+  );
+
+  const changeField = <K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) => {
+    form.setValue(key as never, value as never, { shouldDirty: true, shouldValidate: true });
+  };
+
+  const submit = form.handleSubmit(async (payload) => {
+    setSubmitError("");
+    const created = await onSubmit(payload);
+    if (created) {
+      form.reset(emptyFormState);
+    } else {
+      setSubmitError("Failed to create product.");
+    }
+  });
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{
-        sx: {
-          borderRadius: 0,
-          bgcolor: "background.paper",
-          border: "1px solid",
-          borderColor: "divider",
-          overflow: "hidden",
-          width: "min(860px, calc(100vw - 32px))",
-          maxHeight: "calc(100vh - 32px)",
-          position: "relative",
-        },
-      }}
     >
       <DialogTitle
         component="div"
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
           justifyContent: "space-between",
           px: { xs: 2.5, md: 3.5 },
           pt: { xs: 2.5, md: 3 },
@@ -64,14 +88,11 @@ export const ProductCreateDialog = ({
           flexShrink: 0,
         }}
       >
-        <Typography variant="h4" component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
+        <Typography variant="h4" textAlign="center" component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
           New Product
         </Typography>
-        <IconButton size="small" onClick={onClose} aria-label="Close add dialog" sx={{ color: "text.secondary" }}>
-          <FontAwesomeIcon icon={faTimes} size="sm" />
-        </IconButton>
-      </DialogTitle>
-      <Box component="form" onSubmit={onSubmit} sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+        </DialogTitle>
+      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
         <DialogContent
           dividers
           sx={{
@@ -97,12 +118,19 @@ export const ProductCreateDialog = ({
             },
           }}
         >
-          <ProductFields state={form} onChange={onChange} categoryOptions={categoryOptions} />
+          {submitError ? <Alert severity="error" sx={{ mb: 2 }}>{submitError}</Alert> : null}
+          <ProductFields
+            state={values}
+            onChange={changeField}
+            categoryOptions={categoryOptions}
+            errors={errors}
+          />
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2.5, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider", flexShrink: 0 }}>
           <Button
             onClick={onClose}
             variant="outlined"
+            disabled={isSubmitting}
             sx={{
               borderRadius: 0,
               textTransform: "uppercase",
@@ -122,6 +150,8 @@ export const ProductCreateDialog = ({
           <Button
             type="submit"
             variant="contained"
+            disabled={isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={14} color="inherit" /> : null}
             sx={{
               borderRadius: 0,
               textTransform: "uppercase",
@@ -132,7 +162,7 @@ export const ProductCreateDialog = ({
               "&:hover": { bgcolor: "text.secondary" },
             }}
           >
-            Create Product
+            {isSubmitting ? "Creating..." : "Create Product"}
           </Button>
         </DialogActions>
       </Box>

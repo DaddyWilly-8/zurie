@@ -10,7 +10,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { AdminField } from "@/components/admin";
+import { AdminField, AdminFeedbackSnackbar } from "@/components/admin";
 import type { ContactInfo } from "@/types/content";
 import { contentService } from "@/services/content/content.service";
 
@@ -28,6 +28,7 @@ export const AdminSettingsClient = ({
   const [tiktok, setTiktok] = useState(initial?.tiktok ?? "");
   const [mapEmbedUrl, setMapEmbedUrl] = useState(initial?.mapEmbedUrl ?? "");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
   const {
     data: settings = initial,
@@ -67,9 +68,11 @@ export const AdminSettingsClient = ({
         mapEmbedUrl,
       });
       setMessage("Settings updated");
+      setMessageType("success");
       await refetch();
     } catch {
       setMessage("Failed to update settings");
+      setMessageType("error");
     }
   };
 
@@ -95,6 +98,12 @@ export const AdminSettingsClient = ({
           <AdminField label="Instagram" value={instagram} onChange={setInstagram} />
           <AdminField label="Facebook" value={facebook} onChange={setFacebook} />
           <AdminField label="TikTok" value={tiktok} onChange={setTiktok} />
+          <AdminFeedbackSnackbar
+            open={Boolean(message)}
+            message={message}
+            severity={messageType}
+            onClose={() => setMessage("")}
+          />
           <Button
             variant="contained"
             onClick={saveSettings}
@@ -110,7 +119,6 @@ export const AdminSettingsClient = ({
           >
             Save Settings
           </Button>
-          {message ? <Alert severity="info">{message}</Alert> : null}
         </Stack>
       </CardContent>
     </Card>

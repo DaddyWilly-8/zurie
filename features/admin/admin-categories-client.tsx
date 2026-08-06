@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Box, IconButton, Pagination, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Pagination, Stack, Tooltip, Typography } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import { AdminFeedbackSnackbar } from "@/components/admin";
 import {
   categoryActions,
   CategoriesTable,
@@ -102,11 +103,12 @@ export const AdminCategoriesClient = () => {
 
   return (
     <Stack spacing={3.2}>
-      {message ? (
-        <Alert severity={messageType} onClose={() => setMessage("")} sx={{ borderRadius: 1.5 }}>
-          {message}
-        </Alert>
-      ) : null}
+      <AdminFeedbackSnackbar
+        open={Boolean(message)}
+        message={message}
+        severity={messageType}
+        onClose={() => setMessage("")}
+      />
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.2}>
         <Stack spacing={0.3}>
           <Typography sx={{ color: "text.primary", fontSize: { xs: "2rem", md: "2.2rem" } }}>

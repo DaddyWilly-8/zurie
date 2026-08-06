@@ -10,6 +10,7 @@ const triggerSkipWaiting = (registration: ServiceWorkerRegistration) => {
 
 export const PwaRegister = () => {
   useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
 
     let reloaded = false;

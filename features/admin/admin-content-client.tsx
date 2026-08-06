@@ -10,7 +10,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { AdminField, AdminImageUploader } from "@/components/admin";
+import { AdminField, AdminFeedbackSnackbar, AdminImageUploader } from "@/components/admin";
 import type { BrandContent } from "@/types/content";
 import { contentService } from "@/services/content/content.service";
 
@@ -27,6 +27,7 @@ export const AdminContentClient = ({
   );
   const [heroImage, setHeroImage] = useState(initial?.heroImage ?? "/images/hero/zurie-hero.png");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
   const {
     data: content = initial ?? null,
@@ -68,9 +69,11 @@ export const AdminContentClient = ({
     try {
       await contentService.updateBrandContent(payload.payload);
       setMessage("Content updated");
+      setMessageType("success");
       await refetch();
     } catch {
       setMessage("Failed to update content");
+      setMessageType("error");
     }
   };
 
@@ -104,6 +107,12 @@ export const AdminContentClient = ({
             images={heroImage ? [heroImage] : []}
             onChange={(images) => setHeroImage(images[0] ?? "")}
           />
+          <AdminFeedbackSnackbar
+            open={Boolean(message)}
+            message={message}
+            severity={messageType}
+            onClose={() => setMessage("")}
+          />
           <Button
             variant="contained"
             onClick={saveContent}
@@ -119,7 +128,6 @@ export const AdminContentClient = ({
           >
             Save Content
           </Button>
-          {message ? <Alert severity="info">{message}</Alert> : null}
         </Stack>
       </CardContent>
     </Card>

@@ -35,6 +35,18 @@ export const productActions = {
     return productList;
   },
 
+  async getById(id: string): Promise<AdminProduct | null> {
+    return productService.getAdminProductById(id) as Promise<AdminProduct | null>;
+  },
+
+  async uploadImages(id: string, files: File[]) {
+    return productService.uploadProductImages(id, files);
+  },
+
+  async deleteImage(id: string, imageId: string) {
+    return productService.deleteProductImage(id, imageId);
+  },
+
   async create(form: ProductFormState) {
     const payload = await productService.createProduct(toCreatePayload(form));
     const productId = readProductId(payload);

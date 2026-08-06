@@ -19,8 +19,20 @@ import {
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faEdit, faTimes, faGripVertical } from "@fortawesome/free-solid-svg-icons";
-import { AdminField, AdminToggle } from "@/components/admin";
+import { AdminFeedbackSnackbar, AdminField, AdminToggle } from "@/components/admin";
 import { faqService, type FAQ } from "@/services/faq/faq.service";
+
+const formatInteger = (value: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
+
+const parseInteger = (value: string) => {
+  const normalized = value.replace(/,/g, "").replace(/[^\d-]/g, "");
+  if (!normalized) return 0;
+
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) return 0;
+
+  return Math.max(0, Math.floor(parsed));
+};
 
 export const AdminFaqClient = () => {
   const FAQ_PAGE_SIZE = 8;
@@ -148,11 +160,12 @@ export const AdminFaqClient = () => {
 
   return (
     <Stack spacing={3}>
-      {message && (
-        <Alert severity={messageType} onClose={() => setMessage("")} sx={{ borderRadius: 1.5 }}>
-          {message}
-        </Alert>
-      )}
+      <AdminFeedbackSnackbar
+        open={Boolean(message)}
+        message={message}
+        severity={messageType}
+        onClose={() => setMessage("")}
+      />
 
       <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <CardContent sx={{ p: 3 }}>
@@ -206,9 +219,10 @@ export const AdminFaqClient = () => {
                 <Stack direction="row" spacing={2} alignItems="center">
                   <TextField
                     label="Display Order"
-                    type="number"
-                    value={newDisplayOrder}
-                    onChange={(e) => setNewDisplayOrder(Number(e.target.value))}
+                    type="text"
+                    inputMode="numeric"
+                    value={formatInteger(newDisplayOrder)}
+                    onChange={(e) => setNewDisplayOrder(parseInteger(e.target.value))}
                     sx={{ width: 180, bgcolor: "background.paper", "& .MuiOutlinedInput-root": { borderRadius: 0 } }}
                     InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
                   />
@@ -260,9 +274,10 @@ export const AdminFaqClient = () => {
                         <Stack direction="row" spacing={2} alignItems="center">
                           <TextField
                             label="Display Order"
-                            type="number"
-                            value={faq.sortOrder}
-                            onChange={(e) => handleEditChange(faq.id, "sortOrder", Number(e.target.value))}
+                            type="text"
+                            inputMode="numeric"
+                            value={formatInteger(faq.sortOrder)}
+                            onChange={(e) => handleEditChange(faq.id, "sortOrder", parseInteger(e.target.value))}
                             sx={{ width: 180, bgcolor: "background.paper", "& .MuiOutlinedInput-root": { borderRadius: 0 } }}
                             InputLabelProps={{ sx: { textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 } }}
                           />

@@ -11,7 +11,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { AdminField, AdminImageUploader, AdminToggle } from "@/components/admin";
+import { AdminField, AdminFeedbackSnackbar, AdminImageUploader, AdminToggle } from "@/components/admin";
 import { contentService } from "@/services/content/content.service";
 
 export type HomepagePayload = {
@@ -57,6 +57,7 @@ export const AdminHomepageClient = ({
 }) => {
   const [state, setState] = useState<HomepagePayload>(initialData ?? defaults);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
   const {
     data: homepage = initialData,
@@ -80,15 +81,22 @@ export const AdminHomepageClient = ({
     try {
       await contentService.updateHomepageSettings(state as Record<string, unknown>);
       setMessage("Homepage settings updated");
+      setMessageType("success");
       await refetch();
     } catch {
       setMessage("Update failed");
+      setMessageType("error");
     }
   };
 
   return (
     <Stack spacing={2.5}>
-      {message ? <Alert severity="info">{message}</Alert> : null}
+      <AdminFeedbackSnackbar
+        open={Boolean(message)}
+        message={message}
+        severity={messageType}
+        onClose={() => setMessage("")}
+      />
       {isError ? <Alert severity="error">Failed to load homepage settings.</Alert> : null}
       {isLoading ? <Typography color="text.secondary">Loading homepage settings...</Typography> : null}
       <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>

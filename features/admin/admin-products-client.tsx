@@ -17,25 +17,21 @@ import {
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import { categoryService } from "@/services/categories/category.service";
+import { AdminFeedbackSnackbar } from "@/components/admin";
 import {
-  emptyFormState,
   productActions,
   ProductCreateDialog,
   ProductEditDialog,
   ProductsTable,
-  toFormState,
   type AdminProduct,
-  type ProductEdits,
   type ProductFormState,
 } from "@/features/admin/products";
 
 const PRODUCTS_PAGE_SIZE = 10;
 
 export const AdminProductsClient = () => {
-  const [edits, setEdits] = useState<ProductEdits>({});
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
   const [message, setMessage] = useState("");
-  const [form, setForm] = useState<ProductFormState>(emptyFormState);
   const [isAdding, setIsAdding] = useState(false);
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -51,28 +47,27 @@ export const AdminProductsClient = () => {
     queryFn: productActions.list,
   });
 
+  const {
+    data: editingProductDetails,
+  } = useQuery({
+    queryKey: ["admin-product", editingId],
+    queryFn: () => productActions.getById(editingId!),
+    enabled: Boolean(editingId),
+  });
+
   const { data: categories = [] } = useQuery({
     queryKey: ["admin-product-categories"],
     queryFn: categoryService.listAdminCategories,
   });
 
   const categoryOptions = useMemo(
-    () => categories.map((item) => ({ value: item.id, label: item.name })),
+    () => categories.map((item) => ({ value: String(item.id), label: item.name })),
     [categories],
   );
 
-  useEffect(() => {
-    if (products.length > 0) {
-      setEdits(Object.fromEntries(products.map((item) => [item.id, toFormState(item)])));
-    }
-  }, [products]);
-
-  const createProduct = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const createProduct = async (values: ProductFormState) => {
     try {
-      await productActions.create(form);
-      setForm(emptyFormState);
+      await productActions.create(values);
       setMessageType("success");
       setMessage("Product created successfully.");
       await refetch();
@@ -98,12 +93,9 @@ export const AdminProductsClient = () => {
     }
   };
 
-  const saveProduct = async (id: string) => {
-    const edit = edits[id];
-    if (!edit) return false;
-
+  const saveProduct = async (id: string, values: ProductFormState) => {
     try {
-      await productActions.update(id, edit);
+      await productActions.update(id, values);
       setMessageType("success");
       setMessage("Product updated successfully.");
       await refetch();
@@ -127,21 +119,44 @@ export const AdminProductsClient = () => {
     }
   };
 
-  const updateEditField = <K extends keyof ProductFormState>(id: string, key: K, value: ProductFormState[K]) => {
-    setEdits((prev) => ({
-      ...prev,
-      [id]: {
-        ...(prev[id] ?? emptyFormState),
-        [key]: value,
-      },
-    }));
+  const uploadProductImages = async (id: string, files: File[]) => {
+    try {
+      await productActions.uploadImages(id, files);
+      setMessageType("success");
+      setMessage("Images uploaded successfully.");
+      await refetch();
+      return true;
+    } catch {
+      setMessageType("error");
+      setMessage("Failed to upload images.");
+      return false;
+    }
   };
+
+  const deleteProductImage = async (id: string, imageId: string) => {
+    try {
+      await productActions.deleteImage(id, imageId);
+      setMessageType("success");
+      setMessage("Image removed successfully.");
+      await refetch();
+      return true;
+    } catch {
+      setMessageType("error");
+      setMessage("Failed to remove image.");
+      return false;
+    }
+  };
+
+  const editingProduct = useMemo(
+    () => editingProductDetails ?? products.find((item) => item.id === editingId) ?? null,
+    [editingProductDetails, products, editingId],
+  );
 
   const filteredProducts = useMemo(
     () =>
       products.filter((item) => {
         const categoryLabel =
-          categoryOptions.find((category) => category.value === (item.category_id ?? item.category))?.label ??
+          categoryOptions.find((category) => category.value === String(item.category_id ?? item.category ?? ""))?.label ??
           item.category;
         const text = `${item.name} ${categoryLabel} ${item.slug}`.toLowerCase();
         return text.includes(query.trim().toLowerCase());
@@ -171,7 +186,12 @@ export const AdminProductsClient = () => {
 
   return (
     <Stack spacing={3}>
-      {message ? <Alert severity={messageType} onClose={() => setMessage("")}>{message}</Alert> : null}
+      <AdminFeedbackSnackbar
+        open={Boolean(message)}
+        message={message}
+        severity={messageType}
+        onClose={() => setMessage("")}
+      />
       <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 1.5, border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <Stack spacing={2.5}>
           <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1}>
@@ -222,15 +242,14 @@ export const AdminProductsClient = () => {
 
         <ProductCreateDialog
           open={isAdding}
-          form={form}
           categoryOptions={categoryOptions}
           onClose={() => setIsAdding(false)}
-          onChange={(key, value) => setForm((prev) => ({ ...prev, [key]: value }))}
-          onSubmit={async (event) => {
-            const created = await createProduct(event);
+          onSubmit={async (values) => {
+            const created = await createProduct(values);
             if (created) {
               setIsAdding(false);
             }
+            return created;
           }}
         />
 
@@ -260,6 +279,8 @@ export const AdminProductsClient = () => {
               onEdit={(id) => setEditingId((current) => (current === id ? null : id))}
               onDuplicate={duplicateProduct}
               onDelete={deleteProduct}
+              onUploadImages={uploadProductImages}
+              onDeleteImage={deleteProductImage}
             />
             {filteredProducts.length > PRODUCTS_PAGE_SIZE ? (
               <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
@@ -275,19 +296,15 @@ export const AdminProductsClient = () => {
         )}
 
         <ProductEditDialog
-          editingId={editingId}
-          edits={edits}
+          product={editingProduct}
           categoryOptions={categoryOptions}
           onClose={() => setEditingId(null)}
-          onChange={updateEditField}
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (!editingId) return;
-
-            const updated = await saveProduct(editingId);
+          onSubmit={async (productId, values) => {
+            const updated = await saveProduct(productId, values);
             if (updated) {
               setEditingId(null);
             }
+            return updated;
           }}
         />
       </Paper>

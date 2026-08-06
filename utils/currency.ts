@@ -1,6 +1,8 @@
 export type CurrencyCode = "USD" | "TZS" | "EUR" | "GBP" | "KES";
 export type CurrencyRateMap = Record<CurrencyCode, number>;
 
+export const BASE_CURRENCY: CurrencyCode = "TZS";
+
 export const CURRENCY_OPTIONS: Array<{ code: CurrencyCode; label: string }> = [
   { code: "USD", label: "US Dollar" },
   { code: "TZS", label: "Tanzanian Shilling" },
@@ -67,11 +69,41 @@ export const getCurrencySymbol = (currency: CurrencyCode): string => {
   return parts.find((part) => part.type === "currency")?.value ?? currency;
 };
 
+export const convertToBaseCurrency = (
+  amount: number,
+  sourceCurrency: CurrencyCode,
+  rates: Partial<CurrencyRateMap> = DEFAULT_USD_EXCHANGE_RATE,
+): number => {
+  if (sourceCurrency === BASE_CURRENCY) return amount;
+
+  const safeRates = normalizeExchangeRates(rates);
+  return amount * safeRates[BASE_CURRENCY] / safeRates[sourceCurrency];
+};
+
+export const convertFromBaseCurrency = (
+  amount: number,
+  targetCurrency: CurrencyCode,
+  rates: Partial<CurrencyRateMap> = DEFAULT_USD_EXCHANGE_RATE,
+): number => {
+  if (targetCurrency === BASE_CURRENCY) return amount;
+
+  const safeRates = normalizeExchangeRates(rates);
+  return amount * safeRates[targetCurrency] / safeRates[BASE_CURRENCY];
+};
+
 export const formatUsdPriceInCurrency = (
   amountInUsd: number,
   currency: CurrencyCode,
   rates: Partial<CurrencyRateMap> = DEFAULT_USD_EXCHANGE_RATE,
 ): string => {
   return formatCurrency(convertFromUsd(amountInUsd, currency, rates), currency);
+};
+
+export const formatBaseCurrencyInCurrency = (
+  amountInBaseCurrency: number,
+  currency: CurrencyCode,
+  rates: Partial<CurrencyRateMap> = DEFAULT_USD_EXCHANGE_RATE,
+): string => {
+  return formatCurrency(convertFromBaseCurrency(amountInBaseCurrency, currency, rates), currency);
 };
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, Card, CardContent, Pagination, Stack, Typography } from "@mui/material";
+import { AdminFeedbackSnackbar } from "@/components/admin";
 import {
   enquiryActions,
   EnquiriesFilters,
@@ -55,11 +56,12 @@ export const AdminEnquiriesClient = ({ initialData, initialCount }: Props) => {
 
   return (
     <Stack spacing={3}>
-      {message ? (
-        <Alert severity={messageType} onClose={() => setMessage("")} sx={{ borderRadius: 1.5 }}>
-          {message}
-        </Alert>
-      ) : null}
+      <AdminFeedbackSnackbar
+        open={Boolean(message)}
+        message={message}
+        severity={messageType}
+        onClose={() => setMessage("")}
+      />
 
       <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
         <CardContent sx={{ p: 3 }}>
