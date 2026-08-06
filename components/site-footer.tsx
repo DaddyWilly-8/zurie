@@ -10,8 +10,15 @@ import {
   Typography,
 } from "@mui/material";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { getStorefrontCategories } from "@/services/categories/category.service";
 
-export const SiteFooter = () => {
+export const SiteFooter = async () => {
+  const categories = await getStorefrontCategories();
+  const shopLinks = categories
+    .slice()
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name))
+    .map((item) => ({ label: item.name, href: `/shop?category=${encodeURIComponent(item.slug)}` }));
+
   return (
     <Box
       component="footer"
@@ -90,15 +97,11 @@ export const SiteFooter = () => {
               <ListItem disableGutters sx={{ py: 0.4 }}>
                 <Link href="/shop">All Products</Link>
               </ListItem>
-              <ListItem disableGutters sx={{ py: 0.4 }}>
-                <Link href="/shop?category=tote-bags">Tote Bags</Link>
-              </ListItem>
-              <ListItem disableGutters sx={{ py: 0.4 }}>
-                <Link href="/shop?category=shoulder-bags">Shoulder Bags</Link>
-              </ListItem>
-              <ListItem disableGutters sx={{ py: 0.4 }}>
-                <Link href="/shop?category=crossbody-bags">Crossbody</Link>
-              </ListItem>
+              {shopLinks.map((item) => (
+                <ListItem key={item.href} disableGutters sx={{ py: 0.4 }}>
+                  <Link href={item.href}>{item.label}</Link>
+                </ListItem>
+              ))}
             </List>
           </Grid>
           <Grid size={{ xs: 12, md: 2.5 }}>
