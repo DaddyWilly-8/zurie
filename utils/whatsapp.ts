@@ -1,7 +1,7 @@
 import type { CartItem } from "@/types/product";
 import {
   DEFAULT_USD_EXCHANGE_RATE,
-  formatUsdPriceInCurrency,
+  formatBaseCurrencyInCurrency,
   type CurrencyCode,
   type CurrencyRateMap,
 } from "@/utils/currency";
@@ -16,7 +16,7 @@ export const buildWhatsAppOrderMessage = (args: {
 }) => {
   const lines = args.items.map(
     (item, index) =>
-      `${index + 1}. ${item.product.name} x${item.quantity} - ${formatUsdPriceInCurrency(item.product.price * item.quantity, args.currency, args.rates ?? DEFAULT_USD_EXCHANGE_RATE)}`,
+      `${index + 1}. ${item.product.name} x${item.quantity} - ${formatBaseCurrencyInCurrency(item.product.price * item.quantity, args.currency, args.rates ?? DEFAULT_USD_EXCHANGE_RATE)}`,
   );
 
   return [
@@ -27,7 +27,7 @@ export const buildWhatsAppOrderMessage = (args: {
     "Items:",
     ...lines,
     "",
-    `Total: ${formatUsdPriceInCurrency(args.total, args.currency, args.rates ?? DEFAULT_USD_EXCHANGE_RATE)}`,
+    `Total: ${formatBaseCurrencyInCurrency(args.total, args.currency, args.rates ?? DEFAULT_USD_EXCHANGE_RATE)}`,
     "",
     "Please guide me on payment and delivery.",
   ]

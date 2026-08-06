@@ -19,8 +19,11 @@ export const metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [products, brand, homepage] = await Promise.all([
-    getProducts(),
+  const [products, featuredRows, bestSellerRows, newArrivalRows, brand, homepage] = await Promise.all([
+    getProducts({ page: 1, pageSize: 12 }),
+    getProducts({ featured: true, page: 1, pageSize: 3 }),
+    getProducts({ bestSeller: true, page: 1, pageSize: 3 }),
+    getProducts({ newArrival: true, page: 1, pageSize: 3 }),
     getBrandContent(),
     getHomepageContent(),
   ]);
@@ -46,9 +49,9 @@ export default async function HomePage() {
   const pickImage = (...sources: Array<string | undefined>) =>
     sources.find((source) => typeof source === "string" && source.trim().length > 0) ??
     "/images/products/fallback.png";
-  const featured = products.filter((p) => p.featured).slice(0, 3);
-  const bestSellers = products.filter((p) => p.bestSeller).slice(0, 3);
-  const newArrivals = products.filter((p) => p.newArrival).slice(0, 3);
+  const featured = featuredRows.length > 0 ? featuredRows.slice(0, 3) : products.slice(0, 3);
+  const bestSellers = bestSellerRows.length > 0 ? bestSellerRows.slice(0, 3) : products.slice(0, 3);
+  const newArrivals = newArrivalRows.length > 0 ? newArrivalRows.slice(0, 3) : products.slice(0, 3);
   const categoryImageMap: Record<string, string> = {
     handbags: "/images/products/aurelia-1.png",
     "tote-bags": "/images/products/serene-1.png",

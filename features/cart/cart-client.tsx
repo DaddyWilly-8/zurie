@@ -19,7 +19,7 @@ import { SITE } from "@/constants/site";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { useShopStore } from "@/hooks/use-shop-store";
 import {
-  convertFromUsd,
+  convertFromBaseCurrency,
   formatCurrency,
 } from "@/utils/currency";
 import {
@@ -184,7 +184,7 @@ export const CartClient = () => {
                 </Button>
                 <Typography sx={{ fontSize: "0.94rem", color: "text.primary", pt: { sm: 1.5 } }}>
                   {formatCurrency(
-                    convertFromUsd(item.product.price * item.quantity, currency, rates),
+                    convertFromBaseCurrency(item.product.price * item.quantity, currency, rates),
                     currency,
                   )}
                 </Typography>
@@ -236,7 +236,7 @@ export const CartClient = () => {
               Subtotal
             </Typography>
             <Typography sx={{ fontSize: "0.88rem", color: "text.primary" }}>
-              {formatCurrency(convertFromUsd(total, currency, rates), currency)}
+              {formatCurrency(convertFromBaseCurrency(total, currency, rates), currency)}
             </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between" spacing={2}>
@@ -269,7 +269,7 @@ export const CartClient = () => {
               lineHeight: 1,
             }}
           >
-            {formatCurrency(convertFromUsd(total, currency, rates), currency)}
+            {formatCurrency(convertFromBaseCurrency(total, currency, rates), currency)}
           </Typography>
         </Stack>
 

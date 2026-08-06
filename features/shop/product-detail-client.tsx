@@ -23,7 +23,7 @@ import {
 import { useShopStore } from "@/hooks/use-shop-store";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import type { Product } from "@/types/product";
-import { formatUsdPriceInCurrency } from "@/utils/currency";
+import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import {
   buildWhatsAppCheckoutLink,
   buildWhatsAppOrderMessage,
@@ -170,7 +170,7 @@ export const ProductDetailClient = ({ product, categoryLabel }: { product: Produ
             {product.name}
           </Typography>
           <Typography sx={{ fontSize: { xs: "1.55rem", md: "1.9rem" } }}>
-            {formatUsdPriceInCurrency(product.price, currency, rates)}
+            {formatBaseCurrencyInCurrency(product.price, currency, rates)}
           </Typography>
 
           <Typography

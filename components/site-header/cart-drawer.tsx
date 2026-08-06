@@ -17,7 +17,7 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import {
-  convertFromUsd,
+  convertFromBaseCurrency,
   formatCurrency,
   type CurrencyCode,
   type CurrencyRateMap,
@@ -96,7 +96,7 @@ export const SiteHeaderCartDrawer = ({
                     </Typography>
                     <Typography sx={{ fontSize: "0.86rem" }}>
                       {formatCurrency(
-                        convertFromUsd(item.product.price * item.quantity, currency, rates),
+                        convertFromBaseCurrency(item.product.price * item.quantity, currency, rates),
                         currency,
                       )}
                     </Typography>
@@ -133,7 +133,7 @@ export const SiteHeaderCartDrawer = ({
               SUBTOTAL
             </Typography>
             <Typography>
-              {formatCurrency(convertFromUsd(subtotal, currency, rates), currency)}
+              {formatCurrency(convertFromBaseCurrency(subtotal, currency, rates), currency)}
             </Typography>
           </Stack>
           <Button

@@ -20,7 +20,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import type { Product } from "@/types/product";
-import { formatUsdPriceInCurrency } from "@/utils/currency";
+import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import { useShopStore } from "@/hooks/use-shop-store";
 
 const MotionCard = motion(Card);
@@ -162,7 +162,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           {product.name}
         </Typography>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-          {formatUsdPriceInCurrency(product.price, currency, rates)}
+          {formatBaseCurrencyInCurrency(product.price, currency, rates)}
         </Typography>
         <Typography
           component={Link}

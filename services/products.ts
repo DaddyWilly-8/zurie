@@ -133,18 +133,6 @@ const matchesStorefrontQuery = (product: Product, query: StorefrontProductQuery)
     }
   }
 
-  if (query.featured !== undefined && product.featured !== query.featured) {
-    return false;
-  }
-
-  if (query.bestSeller !== undefined && product.bestSeller !== query.bestSeller) {
-    return false;
-  }
-
-  if (query.newArrival !== undefined && product.newArrival !== query.newArrival) {
-    return false;
-  }
-
   return true;
 };
 

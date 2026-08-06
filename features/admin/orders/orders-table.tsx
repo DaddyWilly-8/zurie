@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
-import { formatUsdPriceInCurrency } from "@/utils/currency";
+import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import type { AdminOrderRow } from "./types";
 
 type Props = {
@@ -47,7 +47,7 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
               </TableCell>
               <TableCell>{row.whatsapp_number}</TableCell>
               <TableCell>
-                {formatUsdPriceInCurrency(row.total_amount, currency, rates)}
+                {formatBaseCurrencyInCurrency(row.total_amount, currency, rates)}
               </TableCell>
               <TableCell>
                 <TextField
