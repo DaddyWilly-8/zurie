@@ -43,12 +43,9 @@ export const ProductDetailClient = ({ product, categoryLabel }: { product: Produ
   const rates = useCurrencyStore((state) => state.rates);
 
   const inWishlist = wishlist.includes(product.id);
-  const specificationRows = [
-    { label: "Material", value: product.specifications[0] ?? "Premium leather" },
-    { label: "Construction", value: product.specifications[1] ?? "Structured silhouette" },
-    { label: "Hardware", value: product.specifications[2] ?? "Refined metal finish" },
-    { label: "Lining", value: product.specifications[3] ?? "Soft suede lining" },
-  ];
+  const specificationRows = (product.specifications ?? [])
+    .map((value) => String(value ?? "").trim())
+    .filter(Boolean);
 
   const whatsappLink = useMemo(() => {
     const message = buildWhatsAppOrderMessage({
@@ -343,24 +340,19 @@ export const ProductDetailClient = ({ product, categoryLabel }: { product: Produ
               Specifications
             </Typography>
 
-            <Stack divider={<Divider sx={{ borderColor: "divider" }} />}> 
-              {specificationRows.map((item) => (
-                <Stack
-                  key={item.label}
-                  direction="row"
-                  justifyContent="space-between"
-                  spacing={2}
-                  sx={{ py: 1.05 }}
-                >
-                  <Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
-                    {item.label}
+            {specificationRows.length === 0 ? (
+              <Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
+                No specifications provided.
+              </Typography>
+            ) : (
+              <Stack divider={<Divider sx={{ borderColor: "divider" }} />}>
+                {specificationRows.map((value, index) => (
+                  <Typography key={`${index}-${value}`} sx={{ color: "text.primary", fontSize: "0.9rem", py: 1.05 }}>
+                    {value}
                   </Typography>
-                  <Typography sx={{ color: "text.primary", fontSize: "0.9rem", textAlign: "right" }}>
-                    {item.value}
-                  </Typography>
-                </Stack>
-              ))}
-            </Stack>
+                ))}
+              </Stack>
+            )}
           </Stack>
 
           <Grid container spacing={1.15} sx={{ pt: 1.2 }}>

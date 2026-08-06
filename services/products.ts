@@ -37,6 +37,8 @@ type RawStorefrontProduct = Partial<Product> & {
   featuredImageUrl?: string | null;
   imageUrl?: string | null;
   image_url?: string | null;
+  imageUrls?: string[];
+  image_urls?: string[];
   images?: Array<{ id?: string | number; url?: string; alt?: string; alt_text?: string; isPrimary?: boolean; is_primary?: boolean }>;
   product_images?: Array<{ id?: string | number; url?: string; alt?: string; alt_text?: string; isPrimary?: boolean; is_primary?: boolean }>;
   specifications?: string[];
@@ -74,12 +76,24 @@ const normalizeStorefrontProduct = (row: RawStorefrontProduct): Product => {
   const categoryId = row.categoryId ?? row.category_id;
   const rawCategorySlug = String(row.category ?? row.categorySlug ?? "").trim();
   const baseImageUrl = String(row.featuredImageUrl ?? row.imageUrl ?? row.image_url ?? "").trim();
+  const imageUrlList = (row.imageUrls ?? row.image_urls ?? [])
+    .map((url) => String(url ?? "").trim())
+    .filter(Boolean);
   const imageRows = (row.images ?? row.product_images ?? [])
     .map((image, index) => normalizeImageRow(image, index))
     .filter((image): image is NonNullable<typeof image> => Boolean(image));
 
+  const arrayImages = imageUrlList.map((url, index) => ({
+    id: undefined,
+    url,
+    alt: name || "Product image",
+    isPrimary: index === 0,
+  }));
+
   const images = imageRows.length > 0
     ? imageRows
+    : arrayImages.length > 0
+      ? arrayImages
     : baseImageUrl
       ? [{ id: undefined, url: baseImageUrl, alt: name || "Product image", isPrimary: true }]
       : [];
@@ -154,15 +168,32 @@ type StorefrontCategory = {
   slug: string;
 };
 
+const resolveCategoryQueryValue = (
+  requestedCategory: string | undefined,
+  categories: StorefrontCategory[],
+) => {
+  const raw = String(requestedCategory ?? "").trim();
+  if (!raw || raw.toLowerCase() === "all") return undefined;
+
+  const normalized = raw.toLowerCase();
+  const match = categories.find((category) => {
+    const categorySlug = String(category.slug ?? "").trim().toLowerCase();
+    const categoryId = String(category.id ?? "").trim().toLowerCase();
+    return categorySlug === normalized || categoryId === normalized;
+  });
+
+  return match ? String(match.id) : raw;
+};
+
 const enrichWithCategories = async <T extends Product & {
   category?: string;
   categoryId?: string | number;
   categoryLabel?: string;
   categorySlug?: string;
-}>(products: T[]): Promise<T[]> => {
-  const categories = (await getStorefrontCategories()) as StorefrontCategory[];
-  const categoriesById = new Map(categories.map((category) => [String(category.id), category]));
-  const categoriesBySlug = new Map(categories.map((category) => [category.slug, category]));
+}>(products: T[], categories?: StorefrontCategory[]): Promise<T[]> => {
+  const categoryRows = categories ?? ((await getStorefrontCategories()) as StorefrontCategory[]);
+  const categoriesById = new Map(categoryRows.map((category) => [String(category.id), category]));
+  const categoriesBySlug = new Map(categoryRows.map((category) => [category.slug, category]));
 
   return products.map((product) => {
     const productCategoryId = String(product.categoryId ?? "").trim();
@@ -182,9 +213,14 @@ const enrichWithCategories = async <T extends Product & {
 
 export const getProducts = async (query: StorefrontProductQuery = {}): Promise<Product[]> => {
   try {
-    const products = await productService.listStorefrontProducts(query);
+    const categories = (await getStorefrontCategories()) as StorefrontCategory[];
+    const resolvedCategory = resolveCategoryQueryValue(query.category, categories);
+    const products = await productService.listStorefrontProducts({
+      ...query,
+      category: resolvedCategory,
+    });
     const normalizedProducts = (products as RawStorefrontProduct[]).map(normalizeStorefrontProduct);
-    const enriched = await enrichWithCategories(normalizedProducts);
+    const enriched = await enrichWithCategories(normalizedProducts, categories);
     return applyStorefrontQuery(enriched, query);
   } catch {
     return [];

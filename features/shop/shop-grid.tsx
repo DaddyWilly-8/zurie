@@ -51,8 +51,9 @@ const sortProducts = (products: Product[], sortBy: SortKey) => {
 
 const normalizeCategory = (value: string, categories: ShopCategory[]) => {
   if (value === "all") return "all";
-  const candidate = value.toLowerCase();
-  return categories.some((item) => item.value === candidate) ? candidate : "all";
+  const candidate = value.trim().toLowerCase();
+  const matched = categories.find((item) => item.value.trim().toLowerCase() === candidate);
+  return matched?.value ?? "all";
 };
 
 type ShopGridProps = {
@@ -105,7 +106,10 @@ export const ShopGrid = ({
         product.name.toLowerCase().includes(normalized) ||
         product.description.toLowerCase().includes(normalized);
       const matchesCategory =
-        category === "all" || product.category === category;
+        category === "all" ||
+        String(product.category ?? "").trim().toLowerCase() === category.trim().toLowerCase() ||
+        String(product.categorySlug ?? "").trim().toLowerCase() === category.trim().toLowerCase() ||
+        String(product.categoryId ?? "").trim().toLowerCase() === category.trim().toLowerCase();
       return matchesQuery && matchesCategory;
     });
 
