@@ -36,7 +36,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
   const inWishlist = wishlist.includes(product.id);
-  const categoryLabel = product.categoryLabel ?? product.category ?? "Uncategorized";
+  const categoryLabel =
+    (typeof product.category === "object" && product.category && "name" in product.category
+      ? String(product.category.name ?? "")
+      : product.categoryLabel) || "Uncategorized";
 
   return (
     <MotionCard

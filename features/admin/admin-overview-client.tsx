@@ -169,15 +169,11 @@ export const AdminOverviewClient = () => {
         >
           <Button component={Link} href="/admin/products" variant="outlined" sx={actionButtonSx}>
             <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
-            Add Product
-          </Button>
-          <Button component={Link} href="/admin/products" variant="outlined" sx={actionButtonSx}>
-            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
             View Products
           </Button>
           <Button component={Link} href="/admin/categories" variant="outlined" sx={actionButtonSx}>
             <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
-            Add Category
+            View Categories
           </Button>
           <Button component={Link} href="/admin/homepage" variant="outlined" sx={actionButtonSx}>
             <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />

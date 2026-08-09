@@ -1,4 +1,18 @@
-export type ProductCategory = string;
+export type ProductCategory =
+  | string
+  | {
+      id?: string | number;
+      name?: string;
+      slug?: string;
+      description?: string | null;
+      imageUrl?: string | null;
+      image_url?: string | null;
+      visible?: boolean;
+      is_visible?: boolean;
+      sortOrder?: number;
+      sort_order?: number;
+      [key: string]: unknown;
+    };
 
 export type ProductColor = {
   name: string;

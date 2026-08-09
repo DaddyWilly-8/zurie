@@ -105,9 +105,13 @@ export const ShopGrid = ({
       const matchesQuery =
         product.name.toLowerCase().includes(normalized) ||
         product.description.toLowerCase().includes(normalized);
+      const categoryValue =
+        typeof product.category === "object" && product.category
+          ? String((product.category as { slug?: unknown }).slug ?? "")
+          : String(product.categorySlug ?? product.category ?? product.categoryId ?? "");
       const matchesCategory =
         category === "all" ||
-        String(product.category ?? "").trim().toLowerCase() === category.trim().toLowerCase() ||
+        categoryValue.trim().toLowerCase() === category.trim().toLowerCase() ||
         String(product.categorySlug ?? "").trim().toLowerCase() === category.trim().toLowerCase() ||
         String(product.categoryId ?? "").trim().toLowerCase() === category.trim().toLowerCase();
       return matchesQuery && matchesCategory;

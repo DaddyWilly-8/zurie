@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   CardContent,
+  CircularProgress,
   Container,
   Stack,
   TextField,
@@ -21,21 +22,25 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
     setError("");
+    setIsSubmitting(true);
 
     try {
       await authService.login(email, password);
+      const target = new URLSearchParams(window.location.search).get("next") ?? "/admin";
+      router.push(target);
+      router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Login failed.");
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const target = new URLSearchParams(window.location.search).get("next") ?? "/admin";
-    router.push(target);
-    router.refresh();
   };
 
   return (
@@ -61,8 +66,8 @@ export default function AdminLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <Button type="submit" variant="contained">
-                Sign In
+              <Button type="submit" variant="contained" disabled={isSubmitting} startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}>
+                {isSubmitting ? "Signing In..." : "Sign In"}
               </Button>
               <Button component={Link} href="/admin/forgot-password" variant="text">
                 Forgot password?

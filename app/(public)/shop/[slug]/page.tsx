@@ -42,7 +42,10 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const categoryLabel =
-    categories.find((item) => item.slug === product.category)?.name ?? "Uncategorized";
+    (typeof product.category === "object" && product.category && "name" in product.category
+      ? String(product.category.name ?? "")
+      : categories.find((item) => item.slug === product.categorySlug || item.slug === product.category)?.name) ??
+    "Uncategorized";
 
   return (
     <Stack spacing={8}>
