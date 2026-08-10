@@ -31,6 +31,8 @@ export type AdminProduct = {
   new_arrival?: boolean;
   in_stock?: boolean;
   stock_count?: number;
+  stockCount?: number;
+  quantity?: number;
   stockStatus?: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
   stock_status?: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
   imageUrls?: string[];

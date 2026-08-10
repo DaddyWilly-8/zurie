@@ -56,17 +56,21 @@ export const ProductsTable = ({
   const categoryLabelByValue = new Map(categoryOptions.map((item) => [item.value, item.label]));
 
   const getStockLabel = (item: AdminProduct) => {
-    const status = item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
+    const status = item.stockStatus ?? item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
     if (status === "LOW_STOCK") return "Low Stock";
     if (status === "OUT_OF_STOCK") return "Out of Stock";
     return "In Stock";
   };
 
   const getStockColor = (item: AdminProduct) => {
-    const status = item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
+    const status = item.stockStatus ?? item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
     if (status === "LOW_STOCK") return "warning";
     if (status === "OUT_OF_STOCK") return "error";
     return "success";
+  };
+
+  const getStockQuantity = (item: AdminProduct) => {
+    return item.quantity ?? item.stockCount ?? item.stock_count ?? 0;
   };
 
   const getProductImageUrls = (item: AdminProduct) => {
@@ -267,7 +271,7 @@ export const ProductsTable = ({
                         sx={{ fontSize: '0.5rem', height: 18, fontWeight: 500 }}
                       />
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem' }}>
-                        Qty: {item.stock_count}
+                        Qty: {getStockQuantity(item)}
                       </Typography>
                     </Stack>
                   </Tooltip>

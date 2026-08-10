@@ -165,7 +165,7 @@ export const toFormState = (product: AdminProduct): ProductFormState => {
     bestSeller: Boolean(product.bestSeller ?? product.best_seller),
     newArrival: Boolean(product.newArrival ?? product.new_arrival),
     inStock: stockStatus !== "OUT_OF_STOCK",
-    stockCount: product.stock_count ?? 0,
+    stockCount: product.quantity ?? product.stockCount ?? product.stock_count ?? 0,
     imageUrlsText: imageUrls.join("\n"),
     existingImageIds: imageIds,
     removedImageIds: [],
