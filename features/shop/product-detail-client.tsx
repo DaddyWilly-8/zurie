@@ -30,8 +30,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Paper,
   InputAdornment,
+  useTheme,
 } from "@mui/material";
 import { useShopStore } from "@/hooks/use-shop-store";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
@@ -52,6 +52,9 @@ export const ProductDetailClient = ({
   product: Product;
   categoryLabel: string;
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
   const productImages = product.images ?? [];
   const [activeImage, setActiveImage] = useState(productImages[0]?.url ?? "");
   const [selectedColor, setSelectedColor] = useState(product.colors[0] ?? null);
@@ -75,6 +78,20 @@ export const ProductDetailClient = ({
   const specificationRows = (product.specifications ?? [])
     .map((value) => String(value ?? "").trim())
     .filter(Boolean);
+
+  // Dynamic styles based on dark mode
+  const getBorderColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.12)" : "divider";
+  const getBackgroundColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.05)" : "#f8f6f2";
+  const getHoverBackgroundColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.08)" : "#f5f0ea";
+  const getTextColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.7)" : "text.secondary";
+  const getPrimaryTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getPaperBackground = () =>
+    isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper";
+  const getIconColor = () => (isDarkMode ? "rgba(255,255,255,0.5)" : "#999");
 
   const handleContactMethodChange = (
     _: React.MouseEvent<HTMLElement>,
@@ -278,9 +295,10 @@ export const ProductDetailClient = ({
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               boxShadow: "none",
-              bgcolor: "#171512",
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
               "&:hover": {
-                bgcolor: "#2d2a26",
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
                 boxShadow: "none",
               },
             }}
@@ -302,9 +320,10 @@ export const ProductDetailClient = ({
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               boxShadow: "none",
-              bgcolor: "#171512",
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
               "&:hover": {
-                bgcolor: "#2d2a26",
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
                 boxShadow: "none",
               },
             }}
@@ -339,7 +358,16 @@ export const ProductDetailClient = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 1,
-                bgcolor: "#f8f6f2",
+                bgcolor: getBackgroundColor(),
+                "&:hover": {
+                  bgcolor: getHoverBackgroundColor(),
+                },
+              },
+              "& .MuiInputBase-input": {
+                color: isDarkMode ? "#ffffff" : "inherit",
+              },
+              "& .MuiInputLabel-root": {
+                color: isDarkMode ? "rgba(255,255,255,0.7)" : "inherit",
               },
             }}
           />
@@ -358,14 +386,25 @@ export const ProductDetailClient = ({
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <EmailIcon sx={{ color: "#171512" }} />
+                  <EmailIcon
+                    sx={{ color: isDarkMode ? "#ffffff" : "#171512" }}
+                  />
                 </InputAdornment>
               ),
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 1,
-                bgcolor: "#f8f6f2",
+                bgcolor: getBackgroundColor(),
+                "&:hover": {
+                  bgcolor: getHoverBackgroundColor(),
+                },
+              },
+              "& .MuiInputBase-input": {
+                color: isDarkMode ? "#ffffff" : "inherit",
+              },
+              "& .MuiInputLabel-root": {
+                color: isDarkMode ? "rgba(255,255,255,0.7)" : "inherit",
               },
             }}
           />
@@ -383,14 +422,25 @@ export const ProductDetailClient = ({
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <PhoneIcon sx={{ color: "#171512" }} />
+                  <PhoneIcon
+                    sx={{ color: isDarkMode ? "#ffffff" : "#171512" }}
+                  />
                 </InputAdornment>
               ),
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 1,
-                bgcolor: "#f8f6f2",
+                bgcolor: getBackgroundColor(),
+                "&:hover": {
+                  bgcolor: getHoverBackgroundColor(),
+                },
+              },
+              "& .MuiInputBase-input": {
+                color: isDarkMode ? "#ffffff" : "inherit",
+              },
+              "& .MuiInputLabel-root": {
+                color: isDarkMode ? "rgba(255,255,255,0.7)" : "inherit",
               },
             }}
           />
@@ -414,7 +464,7 @@ export const ProductDetailClient = ({
         <Typography
           component="div"
           sx={{
-            color: "text.secondary",
+            color: isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary",
             fontSize: "0.76rem",
             display: "flex",
             gap: 0.8,
@@ -445,7 +495,12 @@ export const ProductDetailClient = ({
             Shop
           </Typography>
           /
-          <Typography sx={{ color: "text.primary", fontSize: "inherit" }}>
+          <Typography
+            sx={{
+              color: isDarkMode ? "#ffffff" : "text.primary",
+              fontSize: "inherit",
+            }}
+          >
             {product.name}
           </Typography>
         </Typography>
@@ -457,8 +512,9 @@ export const ProductDetailClient = ({
                 position: "relative",
                 height: { xs: 380, sm: 520, md: 760 },
                 overflow: "hidden",
-                bgcolor: "background.paper",
+                bgcolor: getPaperBackground(),
                 mb: 1.6,
+                borderRadius: 1,
               }}
             >
               <Image
@@ -481,10 +537,12 @@ export const ProductDetailClient = ({
                   sx={{
                     p: 0,
                     minWidth: 0,
-                    border:
-                      activeImage === image.url ? "1px solid" : "1px solid",
+                    border: "1px solid",
                     borderColor:
-                      activeImage === image.url ? "text.primary" : "divider",
+                      activeImage === image.url
+                        ? getPrimaryTextColor()
+                        : getBorderColor(),
+                    borderRadius: 1,
                   }}
                 >
                   <Box
@@ -514,7 +572,7 @@ export const ProductDetailClient = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.28em",
                   fontSize: "0.66rem",
-                  color: "#b89a73",
+                  color: isDarkMode ? "#b89a73" : "#b89a73",
                 }}
               >
                 {categoryLabel}
@@ -524,17 +582,27 @@ export const ProductDetailClient = ({
                   fontFamily: "var(--font-playfair), serif",
                   fontSize: { xs: "2.3rem", md: "3.4rem" },
                   lineHeight: 0.98,
+                  color: isDarkMode ? "#ffffff" : "inherit",
                 }}
               >
                 {product.name}
               </Typography>
-              <Typography sx={{ fontSize: { xs: "1.55rem", md: "1.9rem" } }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: "1.55rem", md: "1.9rem" },
+                  color: isDarkMode ? "#ffffff" : "inherit",
+                }}
+              >
                 {formatBaseCurrencyInCurrency(product.price, currency, rates)}
               </Typography>
 
               <Typography
                 sx={{
-                  color: product.inStock ? "#9c835d" : "error.main",
+                  color: product.inStock
+                    ? isDarkMode
+                      ? "#a8c99e"
+                      : "#9c835d"
+                    : "error.main",
                   fontSize: "0.9rem",
                   display: "inline-flex",
                   alignItems: "center",
@@ -546,8 +614,13 @@ export const ProductDetailClient = ({
               </Typography>
 
               <Typography
-                color="text.secondary"
-                sx={{ maxWidth: 560, lineHeight: 1.7 }}
+                sx={{
+                  color: isDarkMode
+                    ? "rgba(255,255,255,0.7)"
+                    : "text.secondary",
+                  maxWidth: 560,
+                  lineHeight: 1.7,
+                }}
               >
                 {product.description}
               </Typography>
@@ -558,7 +631,9 @@ export const ProductDetailClient = ({
                     textTransform: "uppercase",
                     letterSpacing: "0.32em",
                     fontSize: "0.65rem",
-                    color: "text.secondary",
+                    color: isDarkMode
+                      ? "rgba(255,255,255,0.6)"
+                      : "text.secondary",
                   }}
                 >
                   Colour: {selectedColor?.name ?? "Classic"}
@@ -577,11 +652,13 @@ export const ProductDetailClient = ({
                           py: 0.75,
                           borderRadius: 0,
                           border: "1px solid",
-                          borderColor: isActive ? "primary.main" : "divider",
+                          borderColor: isActive
+                            ? "primary.main"
+                            : getBorderColor(),
                           bgcolor: isActive
                             ? "action.selected"
                             : "background.paper",
-                          color: "text.primary",
+                          color: isDarkMode ? "#ffffff" : "text.primary",
                           fontSize: "0.75rem",
                           fontWeight: 400,
                         }}
@@ -599,7 +676,9 @@ export const ProductDetailClient = ({
                     textTransform: "uppercase",
                     letterSpacing: "0.32em",
                     fontSize: "0.65rem",
-                    color: "text.secondary",
+                    color: isDarkMode
+                      ? "rgba(255,255,255,0.6)"
+                      : "text.secondary",
                   }}
                 >
                   Quantity
@@ -614,8 +693,9 @@ export const ProductDetailClient = ({
                       width: 34,
                       height: 34,
                       border: "1px solid",
-                      borderColor: "divider",
+                      borderColor: getBorderColor(),
                       borderRadius: 0,
+                      color: isDarkMode ? "#ffffff" : "inherit",
                     }}
                   >
                     <RemoveIcon sx={{ fontSize: 16 }} />
@@ -626,10 +706,11 @@ export const ProductDetailClient = ({
                       height: 34,
                       borderTop: "1px solid",
                       borderBottom: "1px solid",
-                      borderColor: "divider",
+                      borderColor: getBorderColor(),
                       display: "grid",
                       placeItems: "center",
                       fontSize: "0.9rem",
+                      color: isDarkMode ? "#ffffff" : "inherit",
                     }}
                   >
                     {quantity}
@@ -640,8 +721,9 @@ export const ProductDetailClient = ({
                       width: 34,
                       height: 34,
                       border: "1px solid",
-                      borderColor: "divider",
+                      borderColor: getBorderColor(),
                       borderRadius: 0,
+                      color: isDarkMode ? "#ffffff" : "inherit",
                     }}
                   >
                     <AddIcon sx={{ fontSize: 16 }} />
@@ -664,13 +746,19 @@ export const ProductDetailClient = ({
                   sx={{
                     flex: 1,
                     borderRadius: 0,
-                    bgcolor: "text.primary",
+                    bgcolor: isDarkMode ? "#ffffff" : "text.primary",
+                    color: isDarkMode ? "#171512" : "#ffffff",
                     py: 1.35,
                     fontSize: "0.68rem",
                     letterSpacing: "0.3em",
                     textTransform: "uppercase",
                     boxShadow: "none",
-                    "&:hover": { bgcolor: "text.secondary" },
+                    "&:hover": {
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.9)"
+                        : "text.secondary",
+                      boxShadow: "none",
+                    },
                   }}
                 >
                   Add to Bag
@@ -686,14 +774,25 @@ export const ProductDetailClient = ({
                     fontSize: "0.68rem",
                     letterSpacing: "0.5em",
                     textTransform: "uppercase",
-                    borderColor: "divider",
+                    borderColor: getBorderColor(),
                     gap: 0.5,
+                    color: isDarkMode ? "#ffffff" : "inherit",
                   }}
                   endIcon={
                     <Stack direction="row" spacing={0.5} alignItems="center">
-                      <WhatsAppIcon sx={{ fontSize: 16 }} />
-                      <EmailIcon sx={{ fontSize: 16 }} />
-                      <PhoneIcon sx={{ fontSize: 16 }} />
+                      <WhatsAppIcon sx={{ fontSize: 16, color: "#25D366" }} />
+                      <EmailIcon
+                        sx={{
+                          fontSize: 16,
+                          color: isDarkMode ? "#ffffff" : "#171512",
+                        }}
+                      />
+                      <PhoneIcon
+                        sx={{
+                          fontSize: 16,
+                          color: isDarkMode ? "#ffffff" : "#171512",
+                        }}
+                      />
                     </Stack>
                   }
                 >
@@ -706,16 +805,20 @@ export const ProductDetailClient = ({
                     width: 48,
                     height: 48,
                     border: "1px solid",
-                    borderColor: "divider",
+                    borderColor: getBorderColor(),
                     borderRadius: 0,
-                    color: inWishlist ? "#b58a57" : "text.primary",
+                    color: inWishlist
+                      ? "#b58a57"
+                      : isDarkMode
+                        ? "#ffffff"
+                        : "text.primary",
                   }}
                 >
                   <FavoriteBorderIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Stack>
 
-              <Divider sx={{ borderColor: "divider", my: 2 }} />
+              <Divider sx={{ borderColor: getBorderColor(), my: 2 }} />
 
               <Stack spacing={1.4}>
                 <Typography
@@ -723,7 +826,9 @@ export const ProductDetailClient = ({
                     textTransform: "uppercase",
                     letterSpacing: "0.32em",
                     fontSize: "0.66rem",
-                    color: "text.secondary",
+                    color: isDarkMode
+                      ? "rgba(255,255,255,0.6)"
+                      : "text.secondary",
                   }}
                 >
                   Specifications
@@ -731,17 +836,24 @@ export const ProductDetailClient = ({
 
                 {specificationRows.length === 0 ? (
                   <Typography
-                    sx={{ color: "text.secondary", fontSize: "0.9rem" }}
+                    sx={{
+                      color: isDarkMode
+                        ? "rgba(255,255,255,0.5)"
+                        : "text.secondary",
+                      fontSize: "0.9rem",
+                    }}
                   >
                     No specifications provided.
                   </Typography>
                 ) : (
-                  <Stack divider={<Divider sx={{ borderColor: "divider" }} />}>
+                  <Stack
+                    divider={<Divider sx={{ borderColor: getBorderColor() }} />}
+                  >
                     {specificationRows.map((value, index) => (
                       <Typography
                         key={`${index}-${value}`}
                         sx={{
-                          color: "text.primary",
+                          color: isDarkMode ? "#ffffff" : "text.primary",
                           fontSize: "0.9rem",
                           py: 1.05,
                         }}
@@ -788,9 +900,10 @@ export const ProductDetailClient = ({
                       sx={{
                         minHeight: 82,
                         border: "1px solid",
-                        borderColor: "divider",
+                        borderColor: getBorderColor(),
                         textAlign: "center",
                         px: 1.2,
+                        borderRadius: 1,
                       }}
                     >
                       {item.icon}
@@ -799,7 +912,9 @@ export const ProductDetailClient = ({
                           textTransform: "uppercase",
                           letterSpacing: "0.18em",
                           fontSize: "0.6rem",
-                          color: "text.secondary",
+                          color: isDarkMode
+                            ? "rgba(255,255,255,0.6)"
+                            : "text.secondary",
                         }}
                       >
                         {item.label}
@@ -811,7 +926,9 @@ export const ProductDetailClient = ({
 
               <Typography
                 sx={{
-                  color: "text.secondary",
+                  color: isDarkMode
+                    ? "rgba(255,255,255,0.5)"
+                    : "text.secondary",
                   fontSize: "0.78rem",
                   lineHeight: 1.5,
                 }}
@@ -824,7 +941,7 @@ export const ProductDetailClient = ({
         </Grid>
       </Stack>
 
-      {/* Contact Dialog - Improved UI */}
+      {/* Contact Dialog */}
       <Dialog
         open={openContactDialog}
         onClose={() => setOpenContactDialog(false)}
@@ -834,6 +951,7 @@ export const ProductDetailClient = ({
           sx: {
             borderRadius: 2,
             p: 0,
+            bgcolor: isDarkMode ? "#1a1a1a" : "#ffffff",
           },
         }}
       >
@@ -847,11 +965,18 @@ export const ProductDetailClient = ({
               <Typography
                 variant="h6"
                 fontWeight={600}
-                sx={{ color: "#171512" }}
+                sx={{ color: isDarkMode ? "#ffffff" : "#171512" }}
               >
                 Place Order
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: isDarkMode
+                    ? "rgba(255,255,255,0.6)"
+                    : "text.secondary",
+                }}
+              >
                 {product.name} × {quantity} —{" "}
                 {formatBaseCurrencyInCurrency(
                   product.price * quantity,
@@ -864,9 +989,10 @@ export const ProductDetailClient = ({
               size="small"
               onClick={() => setOpenContactDialog(false)}
               sx={{
-                border: "1px solid #e9e2d8",
+                border: `1px solid ${getBorderColor()}`,
                 borderRadius: 1,
                 p: 0.5,
+                color: isDarkMode ? "#ffffff" : "inherit",
               }}
             >
               <CloseIcon sx={{ fontSize: 18 }} />
@@ -876,7 +1002,6 @@ export const ProductDetailClient = ({
 
         <DialogContent sx={{ p: 3, pt: 2 }}>
           <Stack spacing={2.5} paddingTop={1}>
-            {/* Name Field */}
             <TextField
               label="Your Name"
               placeholder="Enter your full name"
@@ -888,19 +1013,29 @@ export const ProductDetailClient = ({
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 1,
-                  bgcolor: "#f8f6f2",
+                  bgcolor: getBackgroundColor(),
+                  "&:hover": {
+                    bgcolor: getHoverBackgroundColor(),
+                  },
+                },
+                "& .MuiInputBase-input": {
+                  color: isDarkMode ? "#ffffff" : "inherit",
+                },
+                "& .MuiInputLabel-root": {
+                  color: isDarkMode ? "rgba(255,255,255,0.7)" : "inherit",
                 },
               }}
             />
 
-            {/* Contact Method Selection */}
             <Box>
               <Typography
                 sx={{
                   fontSize: "0.7rem",
                   letterSpacing: "0.28em",
                   textTransform: "uppercase",
-                  color: "text.secondary",
+                  color: isDarkMode
+                    ? "rgba(255,255,255,0.5)"
+                    : "text.secondary",
                   mb: 1.5,
                 }}
               >
@@ -916,21 +1051,27 @@ export const ProductDetailClient = ({
                   "& .MuiToggleButtonGroup-grouped": {
                     flex: 1,
                     borderRadius: 1,
-                    borderColor: "#e9e2d8",
+                    borderColor: getBorderColor(),
                     py: 1.2,
                     px: 1,
+                    color: isDarkMode ? "rgba(255,255,255,0.7)" : "#171512",
                     "&.Mui-selected": {
-                      bgcolor: "#171512",
-                      color: "white",
+                      bgcolor: isDarkMode ? "#ffffff" : "#171512",
+                      color: isDarkMode ? "#171512" : "#ffffff",
                       "&:hover": {
-                        bgcolor: "#2d2a26",
+                        bgcolor: isDarkMode
+                          ? "rgba(255,255,255,0.9)"
+                          : "#2d2a26",
                       },
                     },
                     "&:not(.Mui-selected)": {
-                      bgcolor: "background.paper",
-                      color: "#171512",
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.03)"
+                        : "background.paper",
                       "&:hover": {
-                        bgcolor: "#f8f6f2",
+                        bgcolor: isDarkMode
+                          ? "rgba(255,255,255,0.06)"
+                          : "#f8f6f2",
                       },
                     },
                   },
@@ -938,7 +1079,7 @@ export const ProductDetailClient = ({
               >
                 <ToggleButton value="whatsapp" aria-label="WhatsApp">
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    <WhatsAppIcon sx={{ fontSize: 20 }} />
+                    <WhatsAppIcon sx={{ fontSize: 20, color: "#25D366" }} />
                     <Typography variant="body2" fontWeight={500}>
                       WhatsApp
                     </Typography>
@@ -963,14 +1104,15 @@ export const ProductDetailClient = ({
               </ToggleButtonGroup>
             </Box>
 
-            {/* Contact Field - Always Visible */}
             <Box>
               <Typography
                 sx={{
                   fontSize: "0.7rem",
                   letterSpacing: "0.28em",
                   textTransform: "uppercase",
-                  color: "text.secondary",
+                  color: isDarkMode
+                    ? "rgba(255,255,255,0.5)"
+                    : "text.secondary",
                   mb: 1,
                 }}
               >
@@ -981,11 +1123,10 @@ export const ProductDetailClient = ({
               {getContactField()}
             </Box>
 
-            {/* Helper Text */}
             <Typography
               sx={{
                 fontSize: "0.7rem",
-                color: "text.secondary",
+                color: isDarkMode ? "rgba(255,255,255,0.4)" : "text.secondary",
                 textAlign: "center",
                 fontStyle: "italic",
               }}

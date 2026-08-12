@@ -1,33 +1,138 @@
+// services/orders/order.service.ts
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
 
+export type OrderItem = {
+  productId: number | string;
+  quantity: number;
+};
+
+export type CreateOrderPayload = {
+  customerName: string;
+  customerPhone?: string;
+  whatsappNumber?: string;
+  customerEmail?: string | null;
+  items: OrderItem[];
+};
+
+export type OrderResponse = {
+  id: number;
+  orderNumber: string;
+  status:
+    | "new"
+    | "confirmed"
+    | "processing"
+    | "ready_for_delivery"
+    | "delivered"
+    | "cancelled";
+  customerName: string;
+  customerPhone: string;
+  whatsappNumber: string;
+  customerEmail: string | null;
+  totalAmount: number;
+  notes: string | null;
+  items: Array<{
+    productId: number;
+    productName: string;
+    quantity: number;
+    unitSellingPrice: number;
+    lineTotal: number;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OrderListItem = {
+  id: number;
+  orderNumber: string;
+  status: string;
+  customerName: string;
+  totalAmount: number;
+  createdAt: string;
+};
+
+export type OrderListResponse = {
+  success: boolean;
+  data: OrderListItem[];
+  meta: {
+    count: number;
+    page: number;
+    pageSize: number;
+  };
+};
+
+export type OrderDetailResponse = {
+  success: boolean;
+  data: OrderResponse;
+};
+
+export type OrderActionResponse = {
+  success: boolean;
+  data: OrderResponse;
+};
+
 export const orderService = {
-  listOrders(params: { page: number; pageSize: number; search?: string; status?: string }) {
-    return apiClient.get<{
-      data?: unknown[];
-      count?: number;
-      page?: number;
-      pageSize?: number;
-      meta?: { count?: number; page?: number; pageSize?: number };
-    }>(API_ENDPOINTS.orders.list, { query: params }).then((response) => ({
-      data: response.data ?? [],
-      count: response.meta?.count ?? response.count ?? 0,
-      page: response.meta?.page ?? response.page ?? params.page,
-      pageSize: response.meta?.pageSize ?? response.pageSize ?? params.pageSize,
-    }));
+  /**
+   * Create a new order (public checkout)
+   * POST /orders
+   */
+  createOrder(payload: CreateOrderPayload): Promise<OrderActionResponse> {
+    return apiClient.post<OrderActionResponse>(
+      API_ENDPOINTS.orders.list,
+      payload,
+    );
   },
 
-  updateOrderStatus(id: string, status: string, notes?: string) {
-    return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.orders.byId(id), { status, notes });
+  /**
+   * List orders (admin only)
+   * GET /admin/orders?page=&pageSize=&search=&status=
+   */
+  listOrders(params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    status?: string;
+  }): Promise<OrderListResponse> {
+    return apiClient.get<OrderListResponse>(API_ENDPOINTS.orders.adminList, {
+      query: params,
+    });
   },
 
-  createOrderFromCheckout(payload: {
-    customerName: string;
-    customerPhone?: string;
-    whatsappNumber: string;
-    customerEmail?: string | null;
-    items: Array<{ productId: string; quantity: number }>;
-  }) {
-    return apiClient.post<{ success: boolean; id: string }>(API_ENDPOINTS.orders.list, payload);
+  /**
+   * Get order by order number (admin only)
+   * GET /admin/orders/{orderNumber}
+   */
+  getOrder(orderNumber: string): Promise<OrderDetailResponse> {
+    return apiClient.get<OrderDetailResponse>(
+      API_ENDPOINTS.orders.adminByOrderNumber(orderNumber),
+    );
+  },
+
+  /**
+   * Update order status (admin only)
+   * PATCH /admin/orders/{orderNumber}
+   * Valid statuses: new, confirmed, processing, ready_for_delivery, delivered
+   * NOT cancelled - use cancelOrder() instead
+   */
+  updateOrderStatus(
+    orderNumber: string,
+    status: string,
+    notes?: string,
+  ): Promise<OrderActionResponse> {
+    return apiClient.patch<OrderActionResponse>(
+      API_ENDPOINTS.orders.adminByOrderNumber(orderNumber),
+      { status, notes },
+    );
+  },
+
+  /**
+   * Cancel order (admin only)
+   * POST /admin/orders/{orderNumber}/cancel
+   * Only callable from: new, confirmed, processing, ready_for_delivery
+   */
+  cancelOrder(orderNumber: string): Promise<OrderActionResponse> {
+    return apiClient.post<OrderActionResponse>(
+      API_ENDPOINTS.orders.adminCancel(orderNumber),
+    );
   },
 };

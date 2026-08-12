@@ -37,6 +37,10 @@ import {
   buildWhatsAppCheckoutLink,
   buildWhatsAppOrderMessage,
 } from "@/utils/whatsapp";
+import {
+  orderService,
+  type CreateOrderPayload,
+} from "@/services/orders/order.service";
 
 type ContactMethod = "whatsapp" | "email" | "phone";
 
@@ -45,8 +49,12 @@ export const CartClient = () => {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [contactMethod, setContactMethod] = useState<ContactMethod>("whatsapp");
-  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info"
+  >("info");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cart = useShopStore((state) => state.cart);
   const removeFromCart = useShopStore((state) => state.removeFromCart);
@@ -71,55 +79,45 @@ export const CartClient = () => {
     }
   };
 
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info",
+  ) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
   const validateForm = () => {
+    // Name is always required
     if (!customerName.trim()) {
-      setSnackbarMessage("Please enter your name");
-      setShowSnackbar(true);
+      showSnackbar("Please enter your name", "error");
       return false;
     }
 
-    if (contactMethod === "whatsapp") {
-      if (!customerPhone.trim()) {
-        setSnackbarMessage("Please enter your WhatsApp number");
-        setShowSnackbar(true);
-        return false;
-      }
-      const phoneDigits = customerPhone.replace(/\D/g, "");
-      if (phoneDigits.length < 10) {
-        setSnackbarMessage(
-          "Please enter a valid phone number (at least 10 digits)",
-        );
-        setShowSnackbar(true);
-        return false;
-      }
+    // Phone is always required (for delivery)
+    if (!customerPhone.trim()) {
+      showSnackbar("Please enter your phone number", "error");
+      return false;
+    }
+    const phoneDigits = customerPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      showSnackbar(
+        "Please enter a valid phone number (at least 10 digits)",
+        "error",
+      );
+      return false;
     }
 
+    // Email is required only if email method is selected
     if (contactMethod === "email") {
       if (!customerEmail.trim()) {
-        setSnackbarMessage("Please enter your email address");
-        setShowSnackbar(true);
+        showSnackbar("Please enter your email address", "error");
         return false;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(customerEmail)) {
-        setSnackbarMessage("Please enter a valid email address");
-        setShowSnackbar(true);
-        return false;
-      }
-    }
-
-    if (contactMethod === "phone") {
-      if (!customerPhone.trim()) {
-        setSnackbarMessage("Please enter your phone number");
-        setShowSnackbar(true);
-        return false;
-      }
-      const phoneDigits = customerPhone.replace(/\D/g, "");
-      if (phoneDigits.length < 10) {
-        setSnackbarMessage(
-          "Please enter a valid phone number (at least 10 digits)",
-        );
-        setShowSnackbar(true);
+        showSnackbar("Please enter a valid email address", "error");
         return false;
       }
     }
@@ -127,12 +125,58 @@ export const CartClient = () => {
     return true;
   };
 
-  const handleWhatsAppCheckout = () => {
+  // Submit order to backend
+  const submitOrderToBackend = async (): Promise<boolean> => {
+    try {
+      setIsSubmitting(true);
+
+      const orderPayload: CreateOrderPayload = {
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        whatsappNumber: customerPhone.trim(),
+        customerEmail: customerEmail.trim() || null,
+        items: cart.map((item) => ({
+          productId: parseInt(item.productId, 10) || item.productId,
+          quantity: item.quantity,
+        })),
+      };
+
+      const response = await orderService.createOrder(orderPayload);
+
+      if (response && response.success) {
+        showSnackbar("Order submitted successfully!", "success");
+        return true;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to submit order:", error);
+
+      let errorMessage = "Failed to submit order. Please try again.";
+      if (error instanceof Error) {
+        if (error.message.includes("Insufficient stock")) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+
+      showSnackbar(errorMessage, "error");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleWhatsAppCheckout = async () => {
     if (!validateForm()) return;
+
+    const submitted = await submitOrderToBackend();
+    if (!submitted) return;
 
     const orderMessage = buildWhatsAppOrderMessage({
       customerName: customerName.trim(),
-      customerPhone: customerPhone.trim() || undefined,
+      customerPhone: customerPhone.trim(),
       customerEmail: customerEmail.trim() || undefined,
       items: cart,
       total,
@@ -147,14 +191,18 @@ export const CartClient = () => {
     );
 
     window.open(checkoutLink, "_blank", "noopener,noreferrer");
+    clearCart();
   };
 
-  const handleEmailOrder = () => {
+  const handleEmailOrder = async () => {
     if (!validateForm()) return;
+
+    const submitted = await submitOrderToBackend();
+    if (!submitted) return;
 
     const orderMessage = buildWhatsAppOrderMessage({
       customerName: customerName.trim(),
-      customerPhone: customerPhone.trim() || undefined,
+      customerPhone: customerPhone.trim(),
       customerEmail: customerEmail.trim() || undefined,
       items: cart,
       total,
@@ -169,14 +217,18 @@ export const CartClient = () => {
     const body = encodeURIComponent(orderMessage);
     const mailtoLink = `mailto:${SITE.contactEmail}?subject=${subject}&body=${body}`;
     window.open(mailtoLink, "_blank");
+    clearCart();
   };
 
-  const handlePhoneOrder = () => {
+  const handlePhoneOrder = async () => {
     if (!validateForm()) return;
+
+    const submitted = await submitOrderToBackend();
+    if (!submitted) return;
 
     const orderMessage = buildWhatsAppOrderMessage({
       customerName: customerName.trim(),
-      customerPhone: customerPhone.trim() || undefined,
+      customerPhone: customerPhone.trim(),
       customerEmail: customerEmail.trim() || undefined,
       items: cart,
       total,
@@ -188,6 +240,7 @@ export const CartClient = () => {
     const storePhone = SITE.contactPhone.replace(/\D/g, "");
     const smsLink = `sms:${storePhone}?body=${encodeURIComponent(orderMessage)}`;
     window.open(smsLink, "_blank");
+    clearCart();
   };
 
   if (cart.length === 0) {
@@ -206,7 +259,9 @@ export const CartClient = () => {
             onClick={handleWhatsAppCheckout}
             variant="contained"
             color="success"
-            disabled={!customerName.trim() || !customerPhone.trim()}
+            disabled={
+              !customerName.trim() || !customerPhone.trim() || isSubmitting
+            }
             startIcon={<FontAwesomeIcon icon={faWhatsapp} />}
             sx={{
               mt: 1,
@@ -221,7 +276,7 @@ export const CartClient = () => {
               },
             }}
           >
-            Complete via WhatsApp
+            {isSubmitting ? "Processing..." : "Complete via WhatsApp"}
           </Button>
         );
       case "email":
@@ -230,7 +285,12 @@ export const CartClient = () => {
             onClick={handleEmailOrder}
             variant="contained"
             color="primary"
-            disabled={!customerName.trim() || !customerEmail.trim()}
+            disabled={
+              !customerName.trim() ||
+              !customerPhone.trim() ||
+              !customerEmail.trim() ||
+              isSubmitting
+            }
             startIcon={<FontAwesomeIcon icon={faEnvelope} />}
             sx={{
               mt: 1,
@@ -247,7 +307,7 @@ export const CartClient = () => {
               },
             }}
           >
-            Send via Email
+            {isSubmitting ? "Processing..." : "Send via Email"}
           </Button>
         );
       case "phone":
@@ -256,7 +316,9 @@ export const CartClient = () => {
             onClick={handlePhoneOrder}
             variant="contained"
             color="primary"
-            disabled={!customerName.trim() || !customerPhone.trim()}
+            disabled={
+              !customerName.trim() || !customerPhone.trim() || isSubmitting
+            }
             startIcon={<FontAwesomeIcon icon={faPhone} />}
             sx={{
               mt: 1,
@@ -273,7 +335,7 @@ export const CartClient = () => {
               },
             }}
           >
-            Send via SMS
+            {isSubmitting ? "Processing..." : "Send via SMS"}
           </Button>
         );
       default:
@@ -282,37 +344,54 @@ export const CartClient = () => {
   };
 
   const getContactFields = () => {
+    // Phone is always shown and required
+    const phoneField = (
+      <Box key="phone-field">
+        <Typography
+          sx={{
+            fontSize: "0.66rem",
+            letterSpacing: "0.28em",
+            textTransform: "uppercase",
+            color: "text.secondary",
+            mt: 0.4,
+          }}
+        >
+          Phone Number *
+        </Typography>
+        <TextField
+          placeholder="+255 *** *** ***"
+          value={customerPhone}
+          onChange={(event) => setCustomerPhone(event.target.value)}
+          size="small"
+          required
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 0,
+              backgroundColor: "background.default",
+            },
+            "& .MuiOutlinedInput-input::placeholder": {
+              opacity: 0.72,
+            },
+          }}
+        />
+        <Typography
+          sx={{
+            fontSize: "0.65rem",
+            color: "text.secondary",
+            mt: 0.5,
+            fontStyle: "italic",
+          }}
+        >
+          We need your phone number for delivery coordination
+        </Typography>
+      </Box>
+    );
+
     switch (contactMethod) {
       case "whatsapp":
         return (
           <>
-            <Typography
-              sx={{
-                fontSize: "0.66rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: "text.secondary",
-                mt: 0.4,
-              }}
-            >
-              WhatsApp Number *
-            </Typography>
-            <TextField
-              placeholder="+255 *** *** ***"
-              value={customerPhone}
-              onChange={(event) => setCustomerPhone(event.target.value)}
-              size="small"
-              required
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  backgroundColor: "background.default",
-                },
-                "& .MuiOutlinedInput-input::placeholder": {
-                  opacity: 0.72,
-                },
-              }}
-            />
+            {phoneField}
             <Typography
               sx={{
                 fontSize: "0.65rem",
@@ -321,13 +400,14 @@ export const CartClient = () => {
                 fontStyle: "italic",
               }}
             >
-              We&apos;ll contact you via WhatsApp to confirm your order
+              We&apos;ll also contact you via WhatsApp to confirm your order
             </Typography>
           </>
         );
       case "email":
         return (
           <>
+            {phoneField}
             <Typography
               sx={{
                 fontSize: "0.66rem",
@@ -370,33 +450,7 @@ export const CartClient = () => {
       case "phone":
         return (
           <>
-            <Typography
-              sx={{
-                fontSize: "0.66rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: "text.secondary",
-                mt: 0.4,
-              }}
-            >
-              Phone Number *
-            </Typography>
-            <TextField
-              placeholder="+255 *** *** ***"
-              value={customerPhone}
-              onChange={(event) => setCustomerPhone(event.target.value)}
-              size="small"
-              required
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  backgroundColor: "background.default",
-                },
-                "& .MuiOutlinedInput-input::placeholder": {
-                  opacity: 0.72,
-                },
-              }}
-            />
+            {phoneField}
             <Typography
               sx={{
                 fontSize: "0.65rem",
@@ -417,12 +471,19 @@ export const CartClient = () => {
   return (
     <>
       <Snackbar
-        open={showSnackbar}
-        autoHideDuration={4000}
-        onClose={() => setShowSnackbar(false)}
-        message={snackbarMessage}
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      />
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
 
       <Stack
         direction={{ xs: "column", lg: "row" }}

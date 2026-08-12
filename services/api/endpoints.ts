@@ -27,25 +27,40 @@ export const API_ENDPOINTS = {
     image: (id: string) => `/categories/${id}/image`,
   },
   orders: {
+    // Public checkout
     list: "/orders",
+
+    // Admin routes with /admin/ prefix
+    adminList: "/admin/orders",
+    adminByOrderNumber: (orderNumber: string) => `/admin/orders/${orderNumber}`,
+    adminCancel: (orderNumber: string) => `/admin/orders/${orderNumber}/cancel`,
+
+    // Backward compatibility (deprecated - use adminByOrderNumber)
     byId: (id: string) => `/orders/${id}`,
+    byOrderNumber: (orderNumber: string) => `/orders/${orderNumber}`,
+    cancel: (orderNumber: string) => `/orders/${orderNumber}/cancel`,
   },
   enquiries: {
     list: "/enquiries",
+    adminList: "/admin/enquiries",
     byId: (id: string) => `/enquiries/${id}`,
+    adminById: (id: string) => `/admin/enquiries/${id}`,
   },
   faq: {
     list: "/faq",
+    adminList: "/admin/faq",
     byId: (id: string) => `/faq/${id}`,
+    adminById: (id: string) => `/admin/faq/${id}`,
   },
   settings: {
-    brand: "/settings/brand-content",
-    contact: "/settings/contact-info",
-    homepage: "/settings/homepage",
-    dashboardOverview: "/settings/dashboard-overview",
+    brand: "/admin/settings/brand-content",
+    contact: "/admin/settings/contact-info",
+    homepage: "/admin/settings/homepage",
+    dashboardOverview: "/admin/dashboard-overview",
   },
   media: {
     list: "/media",
+    adminList: "/admin/media",
     byId: (id: string) => `/media/${id}`,
     upload: "/media/upload",
   },
@@ -62,7 +77,7 @@ export const API_ENDPOINTS = {
     byId: (id: string) => `/admin/users/${id}`,
   },
   activity: {
-    list: "/activity",
+    list: "/admin/activity",
   },
   customers: {
     list: "/admin/customers",
