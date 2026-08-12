@@ -1,5 +1,6 @@
+// features/admin/users/user-actions.ts
 import { userService } from "@/services/users/user.service";
-import type { AdminUserRow, UserRole } from "./types";
+import type { AdminUserRow, UserRole, Role } from "./types";
 
 export const userActions = {
   async list(): Promise<AdminUserRow[]> {
@@ -7,11 +8,21 @@ export const userActions = {
     return payload as AdminUserRow[];
   },
 
+  async listRoles(): Promise<Role[]> {
+    const payload = await userService.listRoles();
+    return payload as Role[];
+  },
+
   updateRole(id: string, role: UserRole, roleIds?: number[]) {
     return userService.updateRole(id, role, roleIds);
   },
 
-  createUser(payload: { name: string; email: string; password: string }) {
+  createUser(payload: {
+    name: string;
+    email: string;
+    password: string;
+    role?: string;
+  }) {
     return userService.createUser(payload);
   },
 

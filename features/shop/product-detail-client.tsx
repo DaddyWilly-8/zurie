@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
@@ -11,6 +11,9 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import ReplayOutlinedIcon from "@mui/icons-material/ReplayOutlined";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneIcon from "@mui/icons-material/Phone";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
   Button,
@@ -19,6 +22,16 @@ import {
   IconButton,
   Stack,
   Typography,
+  ToggleButton,
+  ToggleButtonGroup,
+  Snackbar,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Paper,
+  InputAdornment,
 } from "@mui/material";
 import { useShopStore } from "@/hooks/use-shop-store";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
@@ -30,11 +43,27 @@ import {
 } from "@/utils/whatsapp";
 import { SITE } from "@/constants/site";
 
-export const ProductDetailClient = ({ product, categoryLabel }: { product: Product; categoryLabel: string }) => {
+type ContactMethod = "whatsapp" | "email" | "phone";
+
+export const ProductDetailClient = ({
+  product,
+  categoryLabel,
+}: {
+  product: Product;
+  categoryLabel: string;
+}) => {
   const productImages = product.images ?? [];
   const [activeImage, setActiveImage] = useState(productImages[0]?.url ?? "");
   const [selectedColor, setSelectedColor] = useState(product.colors[0] ?? null);
   const [quantity, setQuantity] = useState(1);
+  const [contactMethod, setContactMethod] = useState<ContactMethod>("whatsapp");
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [openContactDialog, setOpenContactDialog] = useState(false);
+
   const addToCart = useShopStore((state) => state.addToCart);
   const toggleWishlist = useShopStore((state) => state.toggleWishlist);
   const addRecentlyViewed = useShopStore((state) => state.addRecentlyViewed);
@@ -47,9 +76,78 @@ export const ProductDetailClient = ({ product, categoryLabel }: { product: Produ
     .map((value) => String(value ?? "").trim())
     .filter(Boolean);
 
-  const whatsappLink = useMemo(() => {
-    const message = buildWhatsAppOrderMessage({
-      customerName: "Website Customer",
+  const handleContactMethodChange = (
+    _: React.MouseEvent<HTMLElement>,
+    newMethod: ContactMethod | null,
+  ) => {
+    if (newMethod !== null) {
+      setContactMethod(newMethod);
+    }
+  };
+
+  const validateForm = () => {
+    if (!customerName.trim()) {
+      setSnackbarMessage("Please enter your name");
+      setShowSnackbar(true);
+      return false;
+    }
+
+    if (contactMethod === "whatsapp") {
+      if (!customerPhone.trim()) {
+        setSnackbarMessage("Please enter your WhatsApp number");
+        setShowSnackbar(true);
+        return false;
+      }
+      const phoneDigits = customerPhone.replace(/\D/g, "");
+      if (phoneDigits.length < 10) {
+        setSnackbarMessage(
+          "Please enter a valid phone number (at least 10 digits)",
+        );
+        setShowSnackbar(true);
+        return false;
+      }
+    }
+
+    if (contactMethod === "email") {
+      if (!customerEmail.trim()) {
+        setSnackbarMessage("Please enter your email address");
+        setShowSnackbar(true);
+        return false;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerEmail)) {
+        setSnackbarMessage("Please enter a valid email address");
+        setShowSnackbar(true);
+        return false;
+      }
+    }
+
+    if (contactMethod === "phone") {
+      if (!customerPhone.trim()) {
+        setSnackbarMessage("Please enter your phone number");
+        setShowSnackbar(true);
+        return false;
+      }
+      const phoneDigits = customerPhone.replace(/\D/g, "");
+      if (phoneDigits.length < 10) {
+        setSnackbarMessage(
+          "Please enter a valid phone number (at least 10 digits)",
+        );
+        setShowSnackbar(true);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleWhatsAppCheckout = () => {
+    if (!validateForm()) return;
+
+    const orderMessage = buildWhatsAppOrderMessage({
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim() || undefined,
+      customerEmail: customerEmail.trim() || undefined,
       items: [
         {
           productId: product.id,
@@ -63,340 +161,849 @@ export const ProductDetailClient = ({ product, categoryLabel }: { product: Produ
       total: product.price * quantity,
       currency,
       rates,
+      contactMethod,
     });
-    return buildWhatsAppCheckoutLink(SITE.whatsappNumber, message);
-  }, [currency, product, quantity, rates, selectedColor]);
+
+    const checkoutLink = buildWhatsAppCheckoutLink(
+      SITE.whatsappNumber,
+      orderMessage,
+    );
+
+    window.open(checkoutLink, "_blank", "noopener,noreferrer");
+    setOpenContactDialog(false);
+  };
+
+  const handleEmailOrder = () => {
+    if (!validateForm()) return;
+
+    const orderMessage = buildWhatsAppOrderMessage({
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim() || undefined,
+      customerEmail: customerEmail.trim() || undefined,
+      items: [
+        {
+          productId: product.id,
+          quantity,
+          product: {
+            ...product,
+            name: `${product.name}${selectedColor ? ` - ${selectedColor.name}` : ""}`,
+          },
+        },
+      ],
+      total: product.price * quantity,
+      currency,
+      rates,
+      contactMethod: "email",
+    });
+
+    const subject = encodeURIComponent(
+      `New Order from ${customerName.trim()} - Zuriè`,
+    );
+    const body = encodeURIComponent(orderMessage);
+    const mailtoLink = `mailto:${SITE.contactEmail}?subject=${subject}&body=${body}`;
+    window.open(mailtoLink, "_blank");
+    setOpenContactDialog(false);
+  };
+
+  const handlePhoneOrder = () => {
+    if (!validateForm()) return;
+
+    const orderMessage = buildWhatsAppOrderMessage({
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim() || undefined,
+      customerEmail: customerEmail.trim() || undefined,
+      items: [
+        {
+          productId: product.id,
+          quantity,
+          product: {
+            ...product,
+            name: `${product.name}${selectedColor ? ` - ${selectedColor.name}` : ""}`,
+          },
+        },
+      ],
+      total: product.price * quantity,
+      currency,
+      rates,
+      contactMethod: "phone",
+    });
+
+    const storePhone = SITE.contactPhone.replace(/\D/g, "");
+    const smsLink = `sms:${storePhone}?body=${encodeURIComponent(orderMessage)}`;
+    window.open(smsLink, "_blank");
+    setOpenContactDialog(false);
+  };
+
+  const handleOpenContactDialog = () => {
+    setOpenContactDialog(true);
+  };
+
+  const getCheckoutButton = () => {
+    switch (contactMethod) {
+      case "whatsapp":
+        return (
+          <Button
+            onClick={handleWhatsAppCheckout}
+            variant="contained"
+            fullWidth
+            startIcon={<WhatsAppIcon />}
+            sx={{
+              borderRadius: 0,
+              py: 1.2,
+              fontSize: "0.68rem",
+              letterSpacing: "0.28em",
+              textTransform: "uppercase",
+              boxShadow: "none",
+              bgcolor: "#25D366",
+              "&:hover": {
+                bgcolor: "#128C7E",
+                boxShadow: "none",
+              },
+            }}
+          >
+            Complete via WhatsApp
+          </Button>
+        );
+      case "email":
+        return (
+          <Button
+            onClick={handleEmailOrder}
+            variant="contained"
+            fullWidth
+            startIcon={<EmailIcon />}
+            sx={{
+              borderRadius: 0,
+              py: 1.2,
+              fontSize: "0.68rem",
+              letterSpacing: "0.28em",
+              textTransform: "uppercase",
+              boxShadow: "none",
+              bgcolor: "#171512",
+              "&:hover": {
+                bgcolor: "#2d2a26",
+                boxShadow: "none",
+              },
+            }}
+          >
+            Send via Email
+          </Button>
+        );
+      case "phone":
+        return (
+          <Button
+            onClick={handlePhoneOrder}
+            variant="contained"
+            fullWidth
+            startIcon={<PhoneIcon />}
+            sx={{
+              borderRadius: 0,
+              py: 1.2,
+              fontSize: "0.68rem",
+              letterSpacing: "0.28em",
+              textTransform: "uppercase",
+              boxShadow: "none",
+              bgcolor: "#171512",
+              "&:hover": {
+                bgcolor: "#2d2a26",
+                boxShadow: "none",
+              },
+            }}
+          >
+            Send via SMS
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getContactField = () => {
+    switch (contactMethod) {
+      case "whatsapp":
+        return (
+          <TextField
+            label="WhatsApp Number *"
+            placeholder="+255 123 456 789"
+            value={customerPhone}
+            onChange={(event) => setCustomerPhone(event.target.value)}
+            fullWidth
+            size="medium"
+            required
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <WhatsAppIcon sx={{ color: "#25D366" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 1,
+                bgcolor: "#f8f6f2",
+              },
+            }}
+          />
+        );
+      case "email":
+        return (
+          <TextField
+            label="Email Address *"
+            placeholder="you@example.com"
+            value={customerEmail}
+            onChange={(event) => setCustomerEmail(event.target.value)}
+            fullWidth
+            size="medium"
+            required
+            type="email"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailIcon sx={{ color: "#171512" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 1,
+                bgcolor: "#f8f6f2",
+              },
+            }}
+          />
+        );
+      case "phone":
+        return (
+          <TextField
+            label="Phone Number *"
+            placeholder="+255 123 456 789"
+            value={customerPhone}
+            onChange={(event) => setCustomerPhone(event.target.value)}
+            fullWidth
+            size="medium"
+            required
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PhoneIcon sx={{ color: "#171512" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 1,
+                bgcolor: "#f8f6f2",
+              },
+            }}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <Stack spacing={{ xs: 4, md: 5.5 }}>
-      <Typography
-        component="div"
-        sx={{
-          color: "text.secondary",
-          fontSize: "0.76rem",
-          display: "flex",
-          gap: 0.8,
-          flexWrap: "wrap",
-        }}
-      >
-        <Typography component={Link} href="/" sx={{ color: "inherit", textDecoration: "none", fontSize: "inherit" }}>
-          Home
-        </Typography>
-        /
-        <Typography component={Link} href="/shop" sx={{ color: "inherit", textDecoration: "none", fontSize: "inherit" }}>
-          Shop
-        </Typography>
-        /
-        <Typography sx={{ color: "text.primary", fontSize: "inherit" }}>
-          {product.name}
-        </Typography>
-      </Typography>
+    <>
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={4000}
+        onClose={() => setShowSnackbar(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      />
 
-      <Grid container spacing={{ xs: 3.2, md: 5.2 }}>
-        <Grid size={{ xs: 12, md: 6.2 }}>
-        <Box
+      <Stack spacing={{ xs: 4, md: 5.5 }}>
+        <Typography
+          component="div"
           sx={{
-            position: "relative",
-            height: { xs: 380, sm: 520, md: 760 },
-            overflow: "hidden",
-            bgcolor: "background.paper",
-            mb: 1.6,
+            color: "text.secondary",
+            fontSize: "0.76rem",
+            display: "flex",
+            gap: 0.8,
+            flexWrap: "wrap",
           }}
         >
-          <Image
-            src={activeImage || "/images/products/fallback.png"}
-            alt={product.name}
-            fill
-            sizes="(max-width: 900px) 100vw, 55vw"
-            style={{ objectFit: "cover" }}
-          />
-        </Box>
-        <Stack direction="row" spacing={1.25} sx={{ overflowX: "auto", pb: 0.4 }}>
-          {productImages.map((image) => (
-            <Button
-              key={image.url}
-              onClick={() => setActiveImage(image.url)}
-              sx={{
-                p: 0,
-                minWidth: 0,
-                border:
-                  activeImage === image.url ? "1px solid" : "1px solid",
-                borderColor:
-                  activeImage === image.url ? "text.primary" : "divider",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "relative",
-                  width: 74,
-                  height: 92,
-                  overflow: "hidden",
-                }}
-              >
-                <Image
-                  src={image.url}
-                  alt={image.alt}
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-              </Box>
-            </Button>
-          ))}
-        </Stack>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 5.8 }}>
-        <Stack spacing={2.15}>
           <Typography
+            component={Link}
+            href="/"
             sx={{
-              textTransform: "uppercase",
-              letterSpacing: "0.28em",
-              fontSize: "0.66rem",
-              color: "#b89a73",
+              color: "inherit",
+              textDecoration: "none",
+              fontSize: "inherit",
             }}
           >
-            {categoryLabel}
+            Home
           </Typography>
+          /
           <Typography
+            component={Link}
+            href="/shop"
             sx={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: { xs: "2.3rem", md: "3.4rem" },
-              lineHeight: 0.98,
+              color: "inherit",
+              textDecoration: "none",
+              fontSize: "inherit",
             }}
           >
+            Shop
+          </Typography>
+          /
+          <Typography sx={{ color: "text.primary", fontSize: "inherit" }}>
             {product.name}
           </Typography>
-          <Typography sx={{ fontSize: { xs: "1.55rem", md: "1.9rem" } }}>
-            {formatBaseCurrencyInCurrency(product.price, currency, rates)}
-          </Typography>
+        </Typography>
 
-          <Typography
-            sx={{
-              color: product.inStock ? "#9c835d" : "error.main",
-              fontSize: "0.9rem",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 0.6,
-            }}
-          >
-            {product.inStock ? <CheckIcon sx={{ fontSize: 14 }} /> : null}
-            {product.inStock ? "In Stock" : "Out of Stock"}
-          </Typography>
-
-          <Typography color="text.secondary" sx={{ maxWidth: 560, lineHeight: 1.7 }}>
-            {product.description}
-          </Typography>
-
-          <Stack spacing={1.1} sx={{ pt: 1.1 }}>
-            <Typography
+        <Grid container spacing={{ xs: 3.2, md: 5.2 }}>
+          <Grid size={{ xs: 12, md: 6.2 }}>
+            <Box
               sx={{
-                textTransform: "uppercase",
-                letterSpacing: "0.32em",
-                fontSize: "0.65rem",
-                color: "text.secondary",
+                position: "relative",
+                height: { xs: 380, sm: 520, md: 760 },
+                overflow: "hidden",
+                bgcolor: "background.paper",
+                mb: 1.6,
               }}
             >
-              Colour: {selectedColor?.name ?? "Classic"}
-            </Typography>
-
-            <Stack direction="row" spacing={0.9} flexWrap="wrap" useFlexGap>
-              {product.colors.map((color) => {
-                const isActive = selectedColor?.name === color.name;
-                return (
-                  <Button
-                    key={color.name}
-                    onClick={() => setSelectedColor(color)}
-                    sx={{
-                      minWidth: 44,
-                      px: 1.35,
-                      py: 0.75,
-                      borderRadius: 0,
-                      border: "1px solid",
-                      borderColor: isActive ? "primary.main" : "divider",
-                      bgcolor: isActive ? "action.selected" : "background.paper",
-                      color: "text.primary",
-                      fontSize: "0.75rem",
-                      fontWeight: 400,
-                    }}
-                  >
-                    {color.name}
-                  </Button>
-                );
-              })}
-            </Stack>
-          </Stack>
-
-          <Stack spacing={1.05} sx={{ pt: 0.8 }}>
-            <Typography
-              sx={{
-                textTransform: "uppercase",
-                letterSpacing: "0.32em",
-                fontSize: "0.65rem",
-                color: "text.secondary",
-              }}
+              <Image
+                src={activeImage || "/images/products/fallback.png"}
+                alt={product.name}
+                fill
+                sizes="(max-width: 900px) 100vw, 55vw"
+                style={{ objectFit: "cover" }}
+              />
+            </Box>
+            <Stack
+              direction="row"
+              spacing={1.25}
+              sx={{ overflowX: "auto", pb: 0.4 }}
             >
-              Quantity
-            </Typography>
-
-            <Stack direction="row" spacing={0} alignItems="center">
-              <IconButton
-                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                sx={{ width: 34, height: 34, border: "1px solid", borderColor: "divider", borderRadius: 0 }}
-              >
-                <RemoveIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-              <Box
-                sx={{
-                  width: 44,
-                  height: 34,
-                  borderTop: "1px solid",
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
-                  display: "grid",
-                  placeItems: "center",
-                  fontSize: "0.9rem",
-                }}
-              >
-                {quantity}
-              </Box>
-              <IconButton
-                onClick={() => setQuantity((current) => current + 1)}
-                sx={{ width: 34, height: 34, border: "1px solid", borderColor: "divider", borderRadius: 0 }}
-              >
-                <AddIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Stack>
-          </Stack>
-
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ pt: 0.5 }}>
-            <Button
-              variant="contained"
-              disabled={!product.inStock}
-              onClick={() => {
-                addToCart(product, quantity);
-                addRecentlyViewed(product.id);
-              }}
-              sx={{
-                flex: 1,
-                borderRadius: 0,
-                bgcolor: "text.primary",
-                py: 1.35,
-                fontSize: "0.68rem",
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                boxShadow: "none",
-                "&:hover": { bgcolor: "text.secondary" },
-              }}
-            >
-              Add to Bag
-            </Button>
-            <Button
-              component="a"
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="outlined"
-              color="inherit"
-              sx={{
-                flex: 1,
-                borderRadius: 0,
-                py: 1.35,
-                fontSize: "0.68rem",
-                letterSpacing: "0.26em",
-                textTransform: "uppercase",
-                borderColor: "divider",
-              }}
-              startIcon={<WhatsAppIcon sx={{ fontSize: 16 }} />}
-            >
-              Buy via WhatsApp
-            </Button>
-            <IconButton
-              aria-label="Add to wishlist"
-              onClick={() => toggleWishlist(product.id)}
-              sx={{
-                width: 48,
-                height: 48,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 0,
-                color: inWishlist ? "#b58a57" : "text.primary",
-              }}
-            >
-              <FavoriteBorderIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Stack>
-
-          <Divider sx={{ borderColor: "divider", my: 2 }} />
-
-          <Stack spacing={1.4}>
-            <Typography
-              sx={{
-                textTransform: "uppercase",
-                letterSpacing: "0.32em",
-                fontSize: "0.66rem",
-                color: "text.secondary",
-              }}
-            >
-              Specifications
-            </Typography>
-
-            {specificationRows.length === 0 ? (
-              <Typography sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
-                No specifications provided.
-              </Typography>
-            ) : (
-              <Stack divider={<Divider sx={{ borderColor: "divider" }} />}>
-                {specificationRows.map((value, index) => (
-                  <Typography key={`${index}-${value}`} sx={{ color: "text.primary", fontSize: "0.9rem", py: 1.05 }}>
-                    {value}
-                  </Typography>
-                ))}
-              </Stack>
-            )}
-          </Stack>
-
-          <Grid container spacing={1.15} sx={{ pt: 1.2 }}>
-            {[
-              { icon: <LocalShippingOutlinedIcon sx={{ fontSize: 16, color: "primary.main" }} />, label: "Free Delivery" },
-              { icon: <ShieldOutlinedIcon sx={{ fontSize: 16, color: "primary.main" }} />, label: "Authenticity Guaranteed" },
-              { icon: <ReplayOutlinedIcon sx={{ fontSize: 16, color: "primary.main" }} />, label: "14-Day Returns" },
-            ].map((item) => (
-              <Grid key={item.label} size={{ xs: 12, sm: 4 }}>
-                <Stack
-                  spacing={0.7}
-                  alignItems="center"
-                  justifyContent="center"
+              {productImages.map((image) => (
+                <Button
+                  key={image.url}
+                  onClick={() => setActiveImage(image.url)}
                   sx={{
-                    minHeight: 82,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    textAlign: "center",
-                    px: 1.2,
+                    p: 0,
+                    minWidth: 0,
+                    border:
+                      activeImage === image.url ? "1px solid" : "1px solid",
+                    borderColor:
+                      activeImage === image.url ? "text.primary" : "divider",
                   }}
                 >
-                  {item.icon}
-                  <Typography
+                  <Box
                     sx={{
-                      textTransform: "uppercase",
-                      letterSpacing: "0.18em",
-                      fontSize: "0.6rem",
-                      color: "text.secondary",
+                      position: "relative",
+                      width: 74,
+                      height: 92,
+                      overflow: "hidden",
                     }}
                   >
-                    {item.label}
-                  </Typography>
-                </Stack>
-              </Grid>
-            ))}
+                    <Image
+                      src={image.url}
+                      alt={image.alt}
+                      fill
+                      style={{ objectFit: "cover" }}
+                    />
+                  </Box>
+                </Button>
+              ))}
+            </Stack>
           </Grid>
 
-          <Typography sx={{ color: "text.secondary", fontSize: "0.78rem", lineHeight: 1.5 }}>
-            Orders are completed manually through WhatsApp concierge for delivery
-            confirmation and payment guidance.
-          </Typography>
-        </Stack>
+          <Grid size={{ xs: 12, md: 5.8 }}>
+            <Stack spacing={2.15}>
+              <Typography
+                sx={{
+                  textTransform: "uppercase",
+                  letterSpacing: "0.28em",
+                  fontSize: "0.66rem",
+                  color: "#b89a73",
+                }}
+              >
+                {categoryLabel}
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: "var(--font-playfair), serif",
+                  fontSize: { xs: "2.3rem", md: "3.4rem" },
+                  lineHeight: 0.98,
+                }}
+              >
+                {product.name}
+              </Typography>
+              <Typography sx={{ fontSize: { xs: "1.55rem", md: "1.9rem" } }}>
+                {formatBaseCurrencyInCurrency(product.price, currency, rates)}
+              </Typography>
+
+              <Typography
+                sx={{
+                  color: product.inStock ? "#9c835d" : "error.main",
+                  fontSize: "0.9rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 0.6,
+                }}
+              >
+                {product.inStock ? <CheckIcon sx={{ fontSize: 14 }} /> : null}
+                {product.inStock ? "In Stock" : "Out of Stock"}
+              </Typography>
+
+              <Typography
+                color="text.secondary"
+                sx={{ maxWidth: 560, lineHeight: 1.7 }}
+              >
+                {product.description}
+              </Typography>
+
+              <Stack spacing={1.1} sx={{ pt: 1.1 }}>
+                <Typography
+                  sx={{
+                    textTransform: "uppercase",
+                    letterSpacing: "0.32em",
+                    fontSize: "0.65rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  Colour: {selectedColor?.name ?? "Classic"}
+                </Typography>
+
+                <Stack direction="row" spacing={0.9} flexWrap="wrap" useFlexGap>
+                  {product.colors.map((color) => {
+                    const isActive = selectedColor?.name === color.name;
+                    return (
+                      <Button
+                        key={color.name}
+                        onClick={() => setSelectedColor(color)}
+                        sx={{
+                          minWidth: 44,
+                          px: 1.35,
+                          py: 0.75,
+                          borderRadius: 0,
+                          border: "1px solid",
+                          borderColor: isActive ? "primary.main" : "divider",
+                          bgcolor: isActive
+                            ? "action.selected"
+                            : "background.paper",
+                          color: "text.primary",
+                          fontSize: "0.75rem",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {color.name}
+                      </Button>
+                    );
+                  })}
+                </Stack>
+              </Stack>
+
+              <Stack spacing={1.05} sx={{ pt: 0.8 }}>
+                <Typography
+                  sx={{
+                    textTransform: "uppercase",
+                    letterSpacing: "0.32em",
+                    fontSize: "0.65rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  Quantity
+                </Typography>
+
+                <Stack direction="row" spacing={0} alignItems="center">
+                  <IconButton
+                    onClick={() =>
+                      setQuantity((current) => Math.max(1, current - 1))
+                    }
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 0,
+                    }}
+                  >
+                    <RemoveIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 34,
+                      borderTop: "1px solid",
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      display: "grid",
+                      placeItems: "center",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {quantity}
+                  </Box>
+                  <IconButton
+                    onClick={() => setQuantity((current) => current + 1)}
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 0,
+                    }}
+                  >
+                    <AddIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Stack>
+              </Stack>
+
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.25}
+                sx={{ pt: 0.5 }}
+              >
+                <Button
+                  variant="contained"
+                  disabled={!product.inStock}
+                  onClick={() => {
+                    addToCart(product, quantity);
+                    addRecentlyViewed(product.id);
+                  }}
+                  sx={{
+                    flex: 1,
+                    borderRadius: 0,
+                    bgcolor: "text.primary",
+                    py: 1.35,
+                    fontSize: "0.68rem",
+                    letterSpacing: "0.3em",
+                    textTransform: "uppercase",
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: "text.secondary" },
+                  }}
+                >
+                  Add to Bag
+                </Button>
+                <Button
+                  onClick={handleOpenContactDialog}
+                  variant="outlined"
+                  color="inherit"
+                  sx={{
+                    flex: 1,
+                    borderRadius: 0,
+                    py: 1.35,
+                    fontSize: "0.68rem",
+                    letterSpacing: "0.5em",
+                    textTransform: "uppercase",
+                    borderColor: "divider",
+                    gap: 0.5,
+                  }}
+                  endIcon={
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <WhatsAppIcon sx={{ fontSize: 16 }} />
+                      <EmailIcon sx={{ fontSize: 16 }} />
+                      <PhoneIcon sx={{ fontSize: 16 }} />
+                    </Stack>
+                  }
+                >
+                  Buy
+                </Button>
+                <IconButton
+                  aria-label="Add to wishlist"
+                  onClick={() => toggleWishlist(product.id)}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 0,
+                    color: inWishlist ? "#b58a57" : "text.primary",
+                  }}
+                >
+                  <FavoriteBorderIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Stack>
+
+              <Divider sx={{ borderColor: "divider", my: 2 }} />
+
+              <Stack spacing={1.4}>
+                <Typography
+                  sx={{
+                    textTransform: "uppercase",
+                    letterSpacing: "0.32em",
+                    fontSize: "0.66rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  Specifications
+                </Typography>
+
+                {specificationRows.length === 0 ? (
+                  <Typography
+                    sx={{ color: "text.secondary", fontSize: "0.9rem" }}
+                  >
+                    No specifications provided.
+                  </Typography>
+                ) : (
+                  <Stack divider={<Divider sx={{ borderColor: "divider" }} />}>
+                    {specificationRows.map((value, index) => (
+                      <Typography
+                        key={`${index}-${value}`}
+                        sx={{
+                          color: "text.primary",
+                          fontSize: "0.9rem",
+                          py: 1.05,
+                        }}
+                      >
+                        {value}
+                      </Typography>
+                    ))}
+                  </Stack>
+                )}
+              </Stack>
+
+              <Grid container spacing={1.15} sx={{ pt: 1.2 }}>
+                {[
+                  {
+                    icon: (
+                      <LocalShippingOutlinedIcon
+                        sx={{ fontSize: 16, color: "primary.main" }}
+                      />
+                    ),
+                    label: "Free Delivery",
+                  },
+                  {
+                    icon: (
+                      <ShieldOutlinedIcon
+                        sx={{ fontSize: 16, color: "primary.main" }}
+                      />
+                    ),
+                    label: "Authenticity Guaranteed",
+                  },
+                  {
+                    icon: (
+                      <ReplayOutlinedIcon
+                        sx={{ fontSize: 16, color: "primary.main" }}
+                      />
+                    ),
+                    label: "14-Day Returns",
+                  },
+                ].map((item) => (
+                  <Grid key={item.label} size={{ xs: 12, sm: 4 }}>
+                    <Stack
+                      spacing={0.7}
+                      alignItems="center"
+                      justifyContent="center"
+                      sx={{
+                        minHeight: 82,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        textAlign: "center",
+                        px: 1.2,
+                      }}
+                    >
+                      {item.icon}
+                      <Typography
+                        sx={{
+                          textTransform: "uppercase",
+                          letterSpacing: "0.18em",
+                          fontSize: "0.6rem",
+                          color: "text.secondary",
+                        }}
+                      >
+                        {item.label}
+                      </Typography>
+                    </Stack>
+                  </Grid>
+                ))}
+              </Grid>
+
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.78rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                Orders are completed manually through WhatsApp concierge for
+                delivery confirmation and payment guidance.
+              </Typography>
+            </Stack>
+          </Grid>
         </Grid>
-      </Grid>
-    </Stack>
+      </Stack>
+
+      {/* Contact Dialog - Improved UI */}
+      <Dialog
+        open={openContactDialog}
+        onClose={() => setOpenContactDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            p: 0,
+          },
+        }}
+      >
+        <DialogTitle sx={{ p: 3, pb: 1 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Stack spacing={0.5}>
+              <Typography
+                variant="h6"
+                fontWeight={600}
+                sx={{ color: "#171512" }}
+              >
+                Place Order
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {product.name} × {quantity} —{" "}
+                {formatBaseCurrencyInCurrency(
+                  product.price * quantity,
+                  currency,
+                  rates,
+                )}
+              </Typography>
+            </Stack>
+            <IconButton
+              size="small"
+              onClick={() => setOpenContactDialog(false)}
+              sx={{
+                border: "1px solid #e9e2d8",
+                borderRadius: 1,
+                p: 0.5,
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 3, pt: 2 }}>
+          <Stack spacing={2.5} paddingTop={1}>
+            {/* Name Field */}
+            <TextField
+              label="Your Name"
+              placeholder="Enter your full name"
+              value={customerName}
+              onChange={(event) => setCustomerName(event.target.value)}
+              fullWidth
+              size="medium"
+              required
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1,
+                  bgcolor: "#f8f6f2",
+                },
+              }}
+            />
+
+            {/* Contact Method Selection */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  mb: 1.5,
+                }}
+              >
+                Contact Method *
+              </Typography>
+              <ToggleButtonGroup
+                value={contactMethod}
+                exclusive
+                onChange={handleContactMethodChange}
+                aria-label="contact method"
+                sx={{
+                  width: "100%",
+                  "& .MuiToggleButtonGroup-grouped": {
+                    flex: 1,
+                    borderRadius: 1,
+                    borderColor: "#e9e2d8",
+                    py: 1.2,
+                    px: 1,
+                    "&.Mui-selected": {
+                      bgcolor: "#171512",
+                      color: "white",
+                      "&:hover": {
+                        bgcolor: "#2d2a26",
+                      },
+                    },
+                    "&:not(.Mui-selected)": {
+                      bgcolor: "background.paper",
+                      color: "#171512",
+                      "&:hover": {
+                        bgcolor: "#f8f6f2",
+                      },
+                    },
+                  },
+                }}
+              >
+                <ToggleButton value="whatsapp" aria-label="WhatsApp">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <WhatsAppIcon sx={{ fontSize: 20 }} />
+                    <Typography variant="body2" fontWeight={500}>
+                      WhatsApp
+                    </Typography>
+                  </Stack>
+                </ToggleButton>
+                <ToggleButton value="email" aria-label="Email">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <EmailIcon sx={{ fontSize: 20 }} />
+                    <Typography variant="body2" fontWeight={500}>
+                      Email
+                    </Typography>
+                  </Stack>
+                </ToggleButton>
+                <ToggleButton value="phone" aria-label="Phone">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <PhoneIcon sx={{ fontSize: 20 }} />
+                    <Typography variant="body2" fontWeight={500}>
+                      Phone
+                    </Typography>
+                  </Stack>
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
+            {/* Contact Field - Always Visible */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  mb: 1,
+                }}
+              >
+                {contactMethod === "whatsapp" && "WhatsApp Number *"}
+                {contactMethod === "email" && "Email Address *"}
+                {contactMethod === "phone" && "Phone Number *"}
+              </Typography>
+              {getContactField()}
+            </Box>
+
+            {/* Helper Text */}
+            <Typography
+              sx={{
+                fontSize: "0.7rem",
+                color: "text.secondary",
+                textAlign: "center",
+                fontStyle: "italic",
+              }}
+            >
+              {contactMethod === "whatsapp" &&
+                "We'll contact you via WhatsApp to confirm your order"}
+              {contactMethod === "email" &&
+                "We'll send your order confirmation to your email"}
+              {contactMethod === "phone" &&
+                "We'll call or SMS you to confirm your order"}
+            </Typography>
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          {getCheckoutButton()}
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };

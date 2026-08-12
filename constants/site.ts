@@ -9,11 +9,14 @@ export const SITE = {
   locale: "en_US",
   currency: "USD",
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "255718752434",
+  contactEmail:
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "willbardbeatus2001@gmail.com",
+  contactPhone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "+255 718 752 434",
 };
 
 export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop" },
   { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" }, 
+  { label: "Contact", href: "/contact" },
 ];

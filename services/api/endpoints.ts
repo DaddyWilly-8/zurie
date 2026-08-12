@@ -1,3 +1,4 @@
+// services/api/endpoints.ts
 export const API_ENDPOINTS = {
   auth: {
     csrfCookie: "/sanctum/csrf-cookie",
@@ -16,7 +17,8 @@ export const API_ENDPOINTS = {
     duplicate: (id: string) => `/products/${id}/duplicate`,
     inventory: (id: string) => `/products/${id}/inventory`,
     images: (id: string) => `/products/${id}/images`,
-    imageById: (id: string, imageId: string) => `/products/${id}/images/${imageId}`,
+    imageById: (id: string, imageId: string) =>
+      `/products/${id}/images/${imageId}`,
   },
   categories: {
     list: "/categories",

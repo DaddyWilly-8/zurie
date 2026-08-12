@@ -1,3 +1,4 @@
+// utils/whatsapp.ts
 import type { CartItem } from "@/types/product";
 import {
   DEFAULT_USD_EXCHANGE_RATE,
@@ -6,26 +7,36 @@ import {
   type CurrencyRateMap,
 } from "@/utils/currency";
 
-export const buildWhatsAppOrderMessage = (args: {
+type BuildWhatsAppOrderMessageArgs = {
   customerName: string;
   customerPhone?: string;
+  customerEmail?: string;
   items: CartItem[];
   total: number;
   currency: CurrencyCode;
   rates?: Partial<CurrencyRateMap>;
-}) => {
-  const lines = args.items.map(
+  contactMethod?: "whatsapp" | "email" | "phone";
+};
+
+export const buildWhatsAppOrderMessage = (
+  args: BuildWhatsAppOrderMessageArgs,
+) => {
+  const itemsList = args.items.map(
     (item, index) =>
       `${index + 1}. ${item.product.name} x${item.quantity} - ${formatBaseCurrencyInCurrency(item.product.price * item.quantity, args.currency, args.rates ?? DEFAULT_USD_EXCHANGE_RATE)}`,
   );
 
-  return [
+  const lines = [
     "Hello Zuriè, I'd like to place an order:",
     `Customer: ${args.customerName}`,
     args.customerPhone ? `Phone: ${args.customerPhone}` : null,
+    args.customerEmail ? `Email: ${args.customerEmail}` : null,
+    args.contactMethod
+      ? `Contact Method: ${args.contactMethod.charAt(0).toUpperCase() + args.contactMethod.slice(1)}`
+      : null,
     "",
     "Items:",
-    ...lines,
+    ...itemsList,
     "",
     `Total: ${formatBaseCurrencyInCurrency(args.total, args.currency, args.rates ?? DEFAULT_USD_EXCHANGE_RATE)}`,
     "",
@@ -33,6 +44,8 @@ export const buildWhatsAppOrderMessage = (args: {
   ]
     .filter(Boolean)
     .join("\n");
+
+  return lines;
 };
 
 export const buildWhatsAppCheckoutLink = (number: string, message: string) => {
