@@ -212,12 +212,12 @@ export const AdminOverviewClient = () => {
           </Button>
           <Button
             component={Link}
-            href="/admin/enquiries"
+            href="/admin/orders"
             variant="outlined"
             sx={actionButtonSx}
           >
             <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
-            View Enquiries
+            View Orders
           </Button>
         </Box>
       </Stack>

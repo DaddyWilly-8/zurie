@@ -21,7 +21,9 @@ export const AdminOrdersClient = () => {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
+    "info",
+  );
 
   const {
     data: payload,
@@ -35,7 +37,10 @@ export const AdminOrdersClient = () => {
 
   const rows = payload?.data ?? [];
   const count = payload?.count ?? 0;
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(count / orderActions.pageSize)), [count]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(count / orderActions.pageSize)),
+    [count],
+  );
 
   const updateStatus = async (id: string, nextStatus: string) => {
     try {
@@ -62,48 +67,52 @@ export const AdminOrdersClient = () => {
         onClose={() => setMessage("")}
       />
 
-      <Card sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "background.paper" }}>
+      <Card
+        sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          boxShadow: "none",
+          bgcolor: "background.paper",
+        }}
+      >
         <CardContent sx={{ p: 3 }}>
-        <Stack spacing={0.5} sx={{ mb: 3 }}>
-          <Typography variant="overline" sx={{ letterSpacing: "0.24em", color: "primary.main" }}>
-            Orders
-          </Typography>
-          <Typography variant="h6" sx={{ color: "text.primary" }}>
-            Customer Orders
-          </Typography>
-        </Stack>
+          <Stack spacing={0.5} sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ color: "text.primary" }}>
+              Customer Orders
+            </Typography>
+          </Stack>
 
-        <OrdersFilters
-          search={search}
-          status={status}
-          onSearchChange={setSearch}
-          onStatusChange={setStatus}
-          onApply={() => {
-            setPage(1);
-          }}
-        />
-
-        {isError ? (
-          <Typography color="error.main" sx={{ py: 2 }}>
-            Failed to load orders.
-          </Typography>
-        ) : isLoading ? (
-          <Typography color="text.secondary" sx={{ py: 2 }}>
-            Loading orders...
-          </Typography>
-        ) : (
-          <OrdersTable rows={rows} onStatusChange={updateStatus} />
-        )}
-
-        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
+          <OrdersFilters
+            search={search}
+            status={status}
+            onSearchChange={setSearch}
+            onStatusChange={setStatus}
+            onApply={() => {
+              setPage(1);
+            }}
           />
-        </Stack>
-      </CardContent>
+
+          {isError ? (
+            <Typography color="error.main" sx={{ py: 2 }}>
+              Failed to load orders.
+            </Typography>
+          ) : isLoading ? (
+            <Typography color="text.secondary" sx={{ py: 2 }}>
+              Loading orders...
+            </Typography>
+          ) : (
+            <OrdersTable rows={rows} onStatusChange={updateStatus} />
+          )}
+
+          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              color="primary"
+            />
+          </Stack>
+        </CardContent>
       </Card>
     </Stack>
   );
