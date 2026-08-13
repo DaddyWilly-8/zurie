@@ -162,16 +162,13 @@ export type BrandContent = {
 
 export type DashboardOverview = {
   totalProducts: number;
-  activeProducts: number;
-  outOfStockProducts: number;
+  productsInStock: number;
+  productsOutOfStock: number;
   totalCategories: number;
-  pendingOrders: number;
   completedOrders: number;
-  enquiries: number;
-  lowStockProducts: Array<Pick<Product, "id" | "name" | "stockCount">>;
-  recentProducts: Array<Pick<Product, "id" | "name" | "stockCount">>;
-  recentOrders: Array<Pick<Order, "id" | "orderNumber" | "status">>;
-  recentEnquiries: Array<Pick<Enquiry, "id" | "name" | "status">>;
+  newOrders: number;
+  lowStockProducts: Array<{ id: string; name: string; stock_count: number }>;
+  recentProducts: Array<{ id: string; name: string; stock_count: number }>;
 };
 
 export type AuthUser = {
