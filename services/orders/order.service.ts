@@ -49,6 +49,8 @@ export type OrderListItem = {
   customerName: string;
   totalAmount: number;
   createdAt: string;
+  customer_phone: string;
+  whatsapp_number: string;
 };
 
 export type OrderListResponse = {

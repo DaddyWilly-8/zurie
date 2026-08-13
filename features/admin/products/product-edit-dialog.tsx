@@ -7,11 +7,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   Typography,
 } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useMemo, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,13 +49,22 @@ export const ProductEditDialog = ({
   const errors = useMemo(
     () =>
       Object.fromEntries(
-        Object.entries(form.formState.errors).map(([key, value]) => [key, value?.message ?? ""]),
+        Object.entries(form.formState.errors).map(([key, value]) => [
+          key,
+          value?.message ?? "",
+        ]),
       ) as Partial<Record<keyof ProductFormState, string>>,
     [form.formState.errors],
   );
 
-  const changeField = <K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) => {
-    form.setValue(key as never, value as never, { shouldDirty: true, shouldValidate: true });
+  const changeField = <K extends keyof ProductFormState>(
+    key: K,
+    value: ProductFormState[K],
+  ) => {
+    form.setValue(key as never, value as never, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   const submit = form.handleSubmit(async (payload) => {
@@ -102,11 +108,29 @@ export const ProductEditDialog = ({
           flexShrink: 0,
         }}
       >
-        <Typography variant="h4" textAlign={'center'} component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
+        <Typography
+          variant="h4"
+          textAlign={"center"}
+          component="div"
+          sx={{
+            color: "text.primary",
+            fontFamily: "var(--font-playfair), serif",
+            lineHeight: 1,
+          }}
+        >
           Edit Product
         </Typography>
       </DialogTitle>
-      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <Box
+        component="form"
+        onSubmit={submit}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          overflow: "hidden",
+        }}
+      >
         <DialogContent
           dividers
           sx={{
@@ -132,7 +156,11 @@ export const ProductEditDialog = ({
             },
           }}
         >
-          {submitError ? <Alert severity="error" sx={{ mb: 2 }}>{submitError}</Alert> : null}
+          {submitError ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {submitError}
+            </Alert>
+          ) : null}
           {product ? (
             <ProductFields
               state={values}
@@ -142,7 +170,16 @@ export const ProductEditDialog = ({
             />
           ) : null}
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2.5, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider", flexShrink: 0 }}>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2.5,
+            bgcolor: "background.paper",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            flexShrink: 0,
+          }}
+        >
           <Button
             onClick={onClose}
             variant="outlined"
@@ -167,7 +204,11 @@ export const ProductEditDialog = ({
             type="submit"
             variant="contained"
             disabled={isSubmitting}
-            startIcon={isSubmitting ? <CircularProgress size={14} color="inherit" /> : null}
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : null
+            }
             sx={{
               borderRadius: 0,
               textTransform: "uppercase",

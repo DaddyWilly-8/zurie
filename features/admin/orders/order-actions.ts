@@ -28,8 +28,8 @@ export const orderActions = {
       total_amount: item.totalAmount,
       created_at: item.createdAt,
       // Add default values for fields that don't exist in list view
-      customer_phone: "",
-      whatsapp_number: "",
+      customer_phone: item.customer_phone,
+      whatsapp_number: item.whatsapp_number,
       notes: null,
       items: [],
     }));

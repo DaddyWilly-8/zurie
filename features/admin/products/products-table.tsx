@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Accordion,
@@ -12,23 +12,25 @@ import {
   Typography,
   Box,
   Button,
-} from '@mui/material';
-import React, { useState } from 'react';
-import RemoveIcon from '@mui/icons-material/Remove';
-import AddIcon from '@mui/icons-material/Add';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faClone, 
-  faImage, 
-  faPencil, 
+  useTheme,
+} from "@mui/material";
+import React, { useState } from "react";
+import Image from "next/image";
+import RemoveIcon from "@mui/icons-material/Remove";
+import AddIcon from "@mui/icons-material/Add";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faClone,
+  faImage,
+  faPencil,
   faTrash,
   faStar,
   faFire,
   faCircle,
-} from '@fortawesome/free-solid-svg-icons';
-import { useCurrencyStore } from '@/hooks/use-currency-store';
-import { formatBaseCurrencyInCurrency } from '@/utils/currency';
-import type { AdminProduct } from './types';
+} from "@fortawesome/free-solid-svg-icons";
+import { useCurrencyStore } from "@/hooks/use-currency-store";
+import { formatBaseCurrencyInCurrency } from "@/utils/currency";
+import type { AdminProduct } from "./types";
 
 type ProductsTableProps = {
   products: AdminProduct[];
@@ -40,30 +42,58 @@ type ProductsTableProps = {
   onDeleteImage: (id: string, imageId: string) => Promise<boolean>;
 };
 
-export const ProductsTable = ({ 
-  products, 
-  categoryOptions, 
-  onEdit, 
-  onDuplicate, 
-  onDelete, 
-  onUploadImages, 
-  onDeleteImage 
+export const ProductsTable = ({
+  products,
+  categoryOptions,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onUploadImages,
+  onDeleteImage,
 }: ProductsTableProps) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
-  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(
+    null,
+  );
 
-  const categoryLabelByValue = new Map(categoryOptions.map((item) => [item.value, item.label]));
+  const categoryLabelByValue = new Map(
+    categoryOptions.map((item) => [item.value, item.label]),
+  );
+
+  // Dynamic styles based on dark mode
+  const getBorderColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
+  const getBackgroundColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.03)" : "#f8f6f2";
+  const getTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getSecondaryTextColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
+  const getChipBackgroundColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.08)" : "#f0ebe3";
+  const getChipTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getIconColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
+  const getHoverIconColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getPriceColor = () => (isDarkMode ? "#ffffff" : "inherit");
 
   const getStockLabel = (item: AdminProduct) => {
-    const status = item.stockStatus ?? item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
+    const status =
+      item.stockStatus ??
+      item.stock_status ??
+      (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
     if (status === "LOW_STOCK") return "Low Stock";
     if (status === "OUT_OF_STOCK") return "Out of Stock";
     return "In Stock";
   };
 
   const getStockColor = (item: AdminProduct) => {
-    const status = item.stockStatus ?? item.stock_status ?? (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
+    const status =
+      item.stockStatus ??
+      item.stock_status ??
+      (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
     if (status === "LOW_STOCK") return "warning";
     if (status === "OUT_OF_STOCK") return "error";
     return "success";
@@ -81,7 +111,9 @@ export const ProductsTable = ({
     ].filter((url): url is string => Boolean(url));
 
     if (urls.length) return urls;
-    return [item.featuredImageUrl ?? item.featured_image_url].filter((url): url is string => Boolean(url));
+    return [item.featuredImageUrl ?? item.featured_image_url].filter(
+      (url): url is string => Boolean(url),
+    );
   };
 
   const getProductImageEntries = (item: AdminProduct) => {
@@ -96,18 +128,27 @@ export const ProductsTable = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "published": return "success";
-      case "draft": return "warning";
-      case "archived": return "error";
-      default: return "default";
+      case "published":
+        return "success";
+      case "draft":
+        return "warning";
+      case "archived":
+        return "error";
+      default:
+        return "default";
     }
   };
 
   return (
-    <Box sx={{ width: '100%' }} mt={1}>
+    <Box sx={{ width: "100%" }} mt={1}>
       {products.map((item) => {
-        const categoryKey = String((item as AdminProduct & { categoryId?: string }).categoryId ?? item.category_id ?? "");
-        const categoryLabel = categoryLabelByValue.get(categoryKey) ?? "Uncategorized";
+        const categoryKey = String(
+          (item as AdminProduct & { categoryId?: string }).categoryId ??
+            item.category_id ??
+            "",
+        );
+        const categoryLabel =
+          categoryLabelByValue.get(categoryKey) ?? "Uncategorized";
         const imageUrls = getProductImageUrls(item);
         const imageEntries = getProductImageEntries(item);
         const productId = String(item.id);
@@ -118,81 +159,99 @@ export const ProductsTable = ({
             key={item.id}
             expanded={isExpanded}
             square
-            sx={{ 
-              borderRadius: 2, 
+            sx={{
+              borderRadius: 2,
               borderTop: 2,
-              borderColor: 'divider',
+              borderColor: getBorderColor(),
               mb: 1.5,
-              '&:hover': {
-                bgcolor: 'action.hover',
+              bgcolor: isDarkMode
+                ? "rgba(255,255,255,0.03)"
+                : "background.paper",
+              transition: "all 0.3s ease",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.06)" : "action.hover",
               },
-              '&.Mui-expanded': {
-                bgcolor: 'background.paper',
+              "&.Mui-expanded": {
+                bgcolor: isDarkMode
+                  ? "rgba(255,255,255,0.05)"
+                  : "background.paper",
               },
             }}
-            onChange={() => setExpandedProductId((current) => (current === productId ? null : productId))}
+            onChange={() =>
+              setExpandedProductId((current) =>
+                current === productId ? null : productId,
+              )
+            }
           >
             <AccordionSummary
               expandIcon={isExpanded ? <RemoveIcon /> : <AddIcon />}
               sx={{
                 px: 3,
                 py: 1,
-                flexDirection: 'row-reverse',
-                '.MuiAccordionSummary-content': {
-                  alignItems: 'center',
-                  '&.Mui-expanded': {
-                    margin: '12px 0',
-                  }
+                flexDirection: "row-reverse",
+                ".MuiAccordionSummary-content": {
+                  alignItems: "center",
+                  "&.Mui-expanded": {
+                    margin: "12px 0",
+                  },
                 },
-                '.MuiAccordionSummary-expandIconWrapper': {
+                ".MuiAccordionSummary-expandIconWrapper": {
                   borderRadius: 1,
                   border: 1,
-                  color: 'text.secondary',  
-                  transform: 'none',
+                  borderColor: getBorderColor(),
+                  color: isDarkMode
+                    ? "rgba(255,255,255,0.6)"
+                    : "text.secondary",
+                  transform: "none",
                   mr: 1,
-                  '&.Mui-expanded': {
-                    transform: 'none',
-                    color: 'primary.main',
-                    borderColor: 'primary.main',
+                  transition: "all 0.3s ease",
+                  "&.Mui-expanded": {
+                    transform: "none",
+                    color: isDarkMode ? "#ffffff" : "primary.main",
+                    borderColor: isDarkMode ? "#ffffff" : "primary.main",
                   },
-                  '& svg': {
-                    fontSize: '1.25rem',
+                  "& svg": {
+                    fontSize: "1.25rem",
                   },
                 },
               }}
             >
-              <Grid 
-                container 
-                alignItems="center" 
+              <Grid
+                container
+                alignItems="center"
                 spacing={1}
                 sx={{
-                  cursor: 'pointer',
-                  width: '100%',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  }
+                  cursor: "pointer",
+                  width: "100%",
+                  "&:hover": {
+                    bgcolor: isDarkMode
+                      ? "rgba(255,255,255,0.03)"
+                      : "action.hover",
+                  },
                 }}
                 paddingLeft={2}
                 paddingRight={2}
               >
                 {/* Product Image */}
                 <Grid size={{ xs: 4, md: 1.5 }}>
-                  <Box 
-                    sx={{ 
-                      width: 48, 
-                      height: 48, 
-                      borderRadius: 1.5, 
-                      overflow: "hidden", 
-                      bgcolor: "#f8f6f2", 
-                      border: "1px solid #e9e2d8",
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1.5,
+                      overflow: "hidden",
+                      bgcolor: getBackgroundColor(),
+                      border: `1px solid ${getBorderColor()}`,
+                      position: "relative",
                     }}
                   >
-                    <img
+                    <Image
                       src={imageUrls[0] ?? "/images/products/fallback.png"}
                       alt={item.name}
-                      width={48}
-                      height={48}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      fill
+                      sizes="48px"
+                      style={{ objectFit: "cover" }}
+                      priority={false}
                     />
                   </Box>
                 </Grid>
@@ -200,19 +259,41 @@ export const ProductsTable = ({
                 {/* Product Name */}
                 <Grid size={{ xs: 8, md: 2.5 }}>
                   <Tooltip title="Product Name">
-                    <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap fontWeight={600}>
+                    <Typography
+                      variant="h5"
+                      fontSize={14}
+                      lineHeight={1.25}
+                      mb={0}
+                      noWrap
+                      fontWeight={600}
+                      color={getTextColor()}
+                    >
                       {item.name}
                     </Typography>
                   </Tooltip>
-                  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.3 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem' }}>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    alignItems="center"
+                    sx={{ mt: 0.3 }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color={getSecondaryTextColor()}
+                      sx={{ fontSize: "0.6rem" }}
+                    >
                       {item.slug}
                     </Typography>
                     <Chip
                       label={item.status ?? "draft"}
                       size="small"
                       color={getStatusColor(item.status ?? "draft")}
-                      sx={{ fontSize: '0.5rem', height: 16, fontWeight: 500 }}
+                      sx={{
+                        fontSize: "0.5rem",
+                        height: 16,
+                        fontWeight: 500,
+                        color: isDarkMode ? "#ffffff" : "inherit",
+                      }}
                     />
                   </Stack>
                 </Grid>
@@ -220,16 +301,16 @@ export const ProductsTable = ({
                 {/* Category */}
                 <Grid size={{ xs: 6, md: 2 }}>
                   <Tooltip title="Category">
-                    <Chip 
-                      label={categoryLabel} 
-                      size="small" 
-                      sx={{ 
-                        fontSize: '0.6rem', 
-                        bgcolor: "#f0ebe3", 
-                        color: "#171512",
+                    <Chip
+                      label={categoryLabel}
+                      size="small"
+                      sx={{
+                        fontSize: "0.6rem",
+                        bgcolor: getChipBackgroundColor(),
+                        color: getChipTextColor(),
                         fontWeight: 500,
                         height: 22,
-                      }} 
+                      }}
                     />
                   </Tooltip>
                 </Grid>
@@ -237,22 +318,36 @@ export const ProductsTable = ({
                 {/* Price */}
                 <Grid size={{ xs: 6, md: 2 }}>
                   <Tooltip title="Price">
-                    <Typography fontWeight={600} sx={{ fontSize: '0.85rem' }}>
-                      {formatBaseCurrencyInCurrency(item.price, currency, rates)}
+                    <Typography
+                      fontWeight={600}
+                      sx={{ fontSize: "0.85rem", color: getPriceColor() }}
+                    >
+                      {formatBaseCurrencyInCurrency(
+                        item.price,
+                        currency,
+                        rates,
+                      )}
                     </Typography>
                   </Tooltip>
-                  {(item.salePrice ?? item.sale_price ?? item.compareAtPrice ?? item.compare_at_price) && (
-                    <Typography 
-                      component="span" 
-                      sx={{ 
-                        ml: 0.5, 
-                        fontSize: '0.6rem', 
-                        color: "text.secondary",
+                  {(item.salePrice ??
+                    item.sale_price ??
+                    item.compareAtPrice ??
+                    item.compare_at_price) && (
+                    <Typography
+                      component="span"
+                      sx={{
+                        ml: 0.5,
+                        fontSize: "0.6rem",
+                        color: getSecondaryTextColor(),
                         textDecoration: "line-through",
                       }}
                     >
                       {formatBaseCurrencyInCurrency(
-                        (item.salePrice ?? item.sale_price ?? item.compareAtPrice ?? item.compare_at_price) ?? 0,
+                        item.salePrice ??
+                          item.sale_price ??
+                          item.compareAtPrice ??
+                          item.compare_at_price ??
+                          0,
                         currency,
                         rates,
                       )}
@@ -268,9 +363,18 @@ export const ProductsTable = ({
                         label={getStockLabel(item)}
                         size="small"
                         color={getStockColor(item)}
-                        sx={{ fontSize: '0.5rem', height: 18, fontWeight: 500 }}
+                        sx={{
+                          fontSize: "0.5rem",
+                          height: 18,
+                          fontWeight: 500,
+                          color: isDarkMode ? "#ffffff" : "inherit",
+                        }}
                       />
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem' }}>
+                      <Typography
+                        variant="caption"
+                        color={getSecondaryTextColor()}
+                        sx={{ fontSize: "0.6rem" }}
+                      >
                         Qty: {getStockQuantity(item)}
                       </Typography>
                     </Stack>
@@ -285,7 +389,15 @@ export const ProductsTable = ({
                         icon={<FontAwesomeIcon icon={faStar} size="xs" />}
                         label="Featured"
                         size="small"
-                        sx={{ fontSize: '0.45rem', height: 18, bgcolor: "#fff3e0", color: "#e65100", fontWeight: 500 }}
+                        sx={{
+                          fontSize: "0.45rem",
+                          height: 18,
+                          bgcolor: isDarkMode
+                            ? "rgba(255,152,0,0.2)"
+                            : "#fff3e0",
+                          color: isDarkMode ? "#ffb74d" : "#e65100",
+                          fontWeight: 500,
+                        }}
                       />
                     )}
                     {item.best_seller && (
@@ -293,7 +405,15 @@ export const ProductsTable = ({
                         icon={<FontAwesomeIcon icon={faFire} size="xs" />}
                         label="Best Seller"
                         size="small"
-                        sx={{ fontSize: '0.45rem', height: 18, bgcolor: "#fce4ec", color: "#c62828", fontWeight: 500 }}
+                        sx={{
+                          fontSize: "0.45rem",
+                          height: 18,
+                          bgcolor: isDarkMode
+                            ? "rgba(244,67,54,0.2)"
+                            : "#fce4ec",
+                          color: isDarkMode ? "#ef9a9a" : "#c62828",
+                          fontWeight: 500,
+                        }}
                       />
                     )}
                     {item.new_arrival && (
@@ -301,19 +421,29 @@ export const ProductsTable = ({
                         icon={<FontAwesomeIcon icon={faCircle} size="xs" />}
                         label="New"
                         size="small"
-                        sx={{ fontSize: '0.45rem', height: 18, bgcolor: "#e8f5e9", color: "#2e7d32", fontWeight: 500 }}
+                        sx={{
+                          fontSize: "0.45rem",
+                          height: 18,
+                          bgcolor: isDarkMode
+                            ? "rgba(76,175,80,0.2)"
+                            : "#e8f5e9",
+                          color: isDarkMode ? "#81c784" : "#2e7d32",
+                          fontWeight: 500,
+                        }}
                       />
                     )}
                   </Stack>
                 </Grid>
               </Grid>
-              <Divider />
+              <Divider sx={{ borderColor: getBorderColor() }} />
             </AccordionSummary>
 
             {/* Expanded Section - Actions and Images */}
             <AccordionDetails
-              sx={{ 
-                backgroundColor: 'background.paper',
+              sx={{
+                backgroundColor: isDarkMode
+                  ? "rgba(255,255,255,0.02)"
+                  : "background.paper",
                 marginBottom: 3,
                 px: 3,
                 py: 2,
@@ -322,10 +452,10 @@ export const ProductsTable = ({
               <Grid container spacing={2}>
                 {/* Actions Row - Top Right */}
                 <Grid size={{ xs: 12 }}>
-                  <Stack 
-                    direction="row" 
-                    justifyContent="flex-end" 
-                    alignItems="center" 
+                  <Stack
+                    direction="row"
+                    justifyContent="flex-end"
+                    alignItems="center"
                     spacing={1.5}
                     sx={{ mb: 2 }}
                   >
@@ -336,21 +466,23 @@ export const ProductsTable = ({
                           e.stopPropagation();
                           onEdit(productId);
                         }}
-                        sx={{ 
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           width: 36,
                           height: 36,
                           borderRadius: 1.5,
-                          color: 'text.secondary',
-                          cursor: 'pointer',
-                          border: '1px solid #e9e2d8',
-                          transition: 'all 0.2s ease',
-                          '&:hover': { 
-                            bgcolor: '#f0ebe3', 
-                            color: '#171512',
-                            borderColor: '#171512',
+                          color: getIconColor(),
+                          cursor: "pointer",
+                          border: `1px solid ${getBorderColor()}`,
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            bgcolor: isDarkMode
+                              ? "rgba(255,255,255,0.08)"
+                              : "#f0ebe3",
+                            color: getHoverIconColor(),
+                            borderColor: getHoverIconColor(),
                           },
                         }}
                       >
@@ -364,21 +496,23 @@ export const ProductsTable = ({
                           e.stopPropagation();
                           onDuplicate(productId);
                         }}
-                        sx={{ 
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           width: 36,
                           height: 36,
                           borderRadius: 1.5,
-                          color: 'text.secondary',
-                          cursor: 'pointer',
-                          border: '1px solid #e9e2d8',
-                          transition: 'all 0.2s ease',
-                          '&:hover': { 
-                            bgcolor: '#f0ebe3', 
-                            color: '#171512',
-                            borderColor: '#171512',
+                          color: getIconColor(),
+                          cursor: "pointer",
+                          border: `1px solid ${getBorderColor()}`,
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            bgcolor: isDarkMode
+                              ? "rgba(255,255,255,0.08)"
+                              : "#f0ebe3",
+                            color: getHoverIconColor(),
+                            borderColor: getHoverIconColor(),
                           },
                         }}
                       >
@@ -392,21 +526,23 @@ export const ProductsTable = ({
                           e.stopPropagation();
                           onDelete(productId);
                         }}
-                        sx={{ 
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           width: 36,
                           height: 36,
                           borderRadius: 1.5,
-                          color: 'text.secondary',
-                          cursor: 'pointer',
-                          border: '1px solid #e9e2d8',
-                          transition: 'all 0.2s ease',
-                          '&:hover': { 
-                            bgcolor: '#fce4ec', 
-                            color: '#d32f2f',
-                            borderColor: '#d32f2f',
+                          color: getIconColor(),
+                          cursor: "pointer",
+                          border: `1px solid ${getBorderColor()}`,
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            bgcolor: isDarkMode
+                              ? "rgba(244,67,54,0.15)"
+                              : "#fce4ec",
+                            color: "#d32f2f",
+                            borderColor: "#d32f2f",
                           },
                         }}
                       >
@@ -418,15 +554,28 @@ export const ProductsTable = ({
 
                 {/* Images Section */}
                 <Grid size={{ xs: 12 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ mb: 2 }}
+                  >
                     <Stack direction="row" spacing={2} alignItems="center">
-                      <Typography variant="subtitle2" fontWeight={600} sx={{ color: "#171512" }}>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        sx={{ color: getTextColor() }}
+                      >
                         Images
                       </Typography>
-                      <Chip 
-                        label={`${imageEntries.length} images`} 
+                      <Chip
+                        label={`${imageEntries.length} images`}
                         size="small"
-                        sx={{ bgcolor: "#e9e2d8", color: "#171512", fontSize: "0.6rem" }}
+                        sx={{
+                          bgcolor: getChipBackgroundColor(),
+                          color: getChipTextColor(),
+                          fontSize: "0.6rem",
+                        }}
                       />
                     </Stack>
                     <Button
@@ -437,11 +586,13 @@ export const ProductsTable = ({
                       sx={{
                         borderRadius: 2,
                         textTransform: "none",
-                        borderColor: "#e9e2d8",
-                        color: "#171512",
-                        "&:hover": { 
-                          bgcolor: "#f0ebe3", 
-                          borderColor: "#171512",
+                        borderColor: getBorderColor(),
+                        color: getTextColor(),
+                        "&:hover": {
+                          bgcolor: isDarkMode
+                            ? "rgba(255,255,255,0.05)"
+                            : "#f0ebe3",
+                          borderColor: getTextColor(),
                         },
                       }}
                     >
@@ -466,45 +617,54 @@ export const ProductsTable = ({
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
                     {imageEntries.length ? (
                       imageEntries.map((imageEntry, index) => (
-                        <Box 
-                          key={`${imageEntry.id || imageEntry.url}-${index}`} 
-                          sx={{ 
-                            width: 100, 
-                            height: 100, 
-                            borderRadius: 1.5, 
-                            overflow: "hidden", 
-                            border: "1px solid #e9e2d8",
+                        <Box
+                          key={`${imageEntry.id || imageEntry.url}-${index}`}
+                          sx={{
+                            width: 100,
+                            height: 100,
+                            borderRadius: 1.5,
+                            overflow: "hidden",
+                            border: `1px solid ${getBorderColor()}`,
                             position: "relative",
-                            bgcolor: "#ffffff",
+                            bgcolor: isDarkMode
+                              ? "rgba(255,255,255,0.05)"
+                              : "#ffffff",
                           }}
                         >
-                          <img 
-                            src={imageEntry.url} 
-                            alt={`${item.name} image ${index + 1}`} 
-                            width={100} 
-                            height={100} 
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                          <Image
+                            src={imageEntry.url}
+                            alt={`${item.name} image ${index + 1}`}
+                            fill
+                            sizes="100px"
+                            style={{ objectFit: "cover" }}
+                            priority={false}
                           />
                           {imageEntry.id && (
                             <Tooltip title="Remove Image">
                               <Box
                                 component="span"
-                                onClick={() => void onDeleteImage(productId, imageEntry.id)}
-                                sx={{ 
-                                  position: "absolute", 
-                                  top: 4, 
-                                  right: 4, 
-                                  bgcolor: "rgba(0,0,0,0.55)", 
+                                onClick={() =>
+                                  void onDeleteImage(productId, imageEntry.id)
+                                }
+                                sx={{
+                                  position: "absolute",
+                                  top: 4,
+                                  right: 4,
+                                  bgcolor: isDarkMode
+                                    ? "rgba(0,0,0,0.7)"
+                                    : "rgba(0,0,0,0.55)",
                                   color: "common.white",
                                   width: 24,
                                   height: 24,
                                   borderRadius: 1,
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  '&:hover': { bgcolor: "rgba(211, 47, 47, 0.85)" },
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s ease",
+                                  "&:hover": {
+                                    bgcolor: "rgba(211, 47, 47, 0.85)",
+                                  },
                                 }}
                               >
                                 <FontAwesomeIcon icon={faTrash} size="xs" />
@@ -514,16 +674,23 @@ export const ProductsTable = ({
                         </Box>
                       ))
                     ) : (
-                      <Box sx={{ 
-                        py: 3, 
-                        px: 4, 
-                        border: "2px dashed #e9e2d8", 
-                        borderRadius: 2,
-                        textAlign: "center",
-                        width: "100%",
-                      }}>
-                        <Typography variant="body2" color="text.secondary">
-                          No images attached yet. Click &quot;Upload Images&quot; to add product images.
+                      <Box
+                        sx={{
+                          py: 3,
+                          px: 4,
+                          border: `2px dashed ${getBorderColor()}`,
+                          borderRadius: 2,
+                          textAlign: "center",
+                          width: "100%",
+                          color: getSecondaryTextColor(),
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color={getSecondaryTextColor()}
+                        >
+                          No images attached yet. Click &quot;Upload
+                          Images&quot; to add product images.
                         </Typography>
                       </Box>
                     )}
