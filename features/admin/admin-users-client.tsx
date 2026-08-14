@@ -34,6 +34,11 @@ import {
   ListItemText,
   Checkbox,
   ListItemIcon,
+  useTheme,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  InputAdornment,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -46,6 +51,9 @@ import {
   faEdit,
   faCheckDouble,
   faTimesCircle,
+  faChevronDown,
+  faSave,
+  faFilter,
 } from "@fortawesome/free-solid-svg-icons";
 import { userActions } from "@/features/admin/users";
 
@@ -71,6 +79,30 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export const AdminUsersClient = () => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
+  // Dynamic styles
+  const getBorderColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.15)" : "#e9e2d8";
+  const getTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getSecondaryTextColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.6)";
+  const getCardBackground = () => (isDarkMode ? "#1e1e1e" : "background.paper");
+  const getHoverBackgroundColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)";
+  const getInputBackground = () =>
+    isDarkMode ? "rgba(255,255,255,0.08)" : "#ffffff";
+  const getDialogBackground = () => (isDarkMode ? "#1e1e1e" : "#ffffff");
+  const getListItemHover = () =>
+    isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
+  const getPermissionText = () =>
+    isDarkMode ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.87)";
+  const getPermissionDescription = () =>
+    isDarkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)";
+  const getAccordionBackground = () =>
+    isDarkMode ? "rgba(255,255,255,0.03)" : "#faf8f6";
+
   const USERS_PAGE_SIZE = 10;
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
@@ -79,6 +111,12 @@ export const AdminUsersClient = () => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [tabValue, setTabValue] = useState(0);
+
+  // Permission search state
+  const [permissionSearch, setPermissionSearch] = useState("");
+  const [permissionSearchRoleId, setPermissionSearchRoleId] = useState<
+    number | null
+  >(null);
 
   // User creation state
   const [newUserName, setNewUserName] = useState("");
@@ -95,11 +133,10 @@ export const AdminUsersClient = () => {
   const [openRoleDialog, setOpenRoleDialog] = useState(false);
 
   // Role edit state
-  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editingRoleId, setEditingRoleId] = useState<number | null>(null);
   const [editingRolePermissions, setEditingRolePermissions] = useState<
-    string[]
-  >([]);
-  const [openRoleEditDialog, setOpenRoleEditDialog] = useState(false);
+    Map<number, string[]>
+  >(new Map());
   const [savingPermissions, setSavingPermissions] = useState(false);
 
   // User edit state
@@ -112,6 +149,7 @@ export const AdminUsersClient = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
 
   const {
     data: rows = [],
@@ -128,6 +166,11 @@ export const AdminUsersClient = () => {
     try {
       const roleList = await userActions.listRoles();
       setRoles(roleList);
+      const permMap = new Map<number, string[]>();
+      roleList.forEach((role) => {
+        permMap.set(role.id, [...(role.permissions || [])]);
+      });
+      setEditingRolePermissions(permMap);
       return roleList;
     } catch (error) {
       const err = error as Error;
@@ -159,6 +202,18 @@ export const AdminUsersClient = () => {
     loadPermissions();
   }, []);
 
+  // Filter permissions based on search
+  const getFilteredPermissions = (roleId: number) => {
+    if (!permissionSearch.trim()) return permissions;
+
+    const searchLower = permissionSearch.toLowerCase();
+    return permissions.filter(
+      (p) =>
+        p.key.toLowerCase().includes(searchLower) ||
+        (p.description && p.description.toLowerCase().includes(searchLower)),
+    );
+  };
+
   const updateUserRoles = async (id: string, roleIds: number[]) => {
     setSavingUserRoles(true);
     try {
@@ -183,20 +238,20 @@ export const AdminUsersClient = () => {
   ) => {
     setSavingPermissions(true);
     try {
-      // Find permission IDs for the selected keys
       const permissionIds = permissions
         .filter((p) => permissionKeys.includes(p.key))
         .map((p) => p.id);
-
-      if (permissionIds.length === 0) {
-        setMessage("No permissions selected. Clearing all permissions.");
-        setMessageType("info");
-      }
 
       await userActions.updateRolePermissions(roleId, permissionIds);
       setMessage("Role permissions updated successfully");
       setMessageType("success");
       await loadRoles();
+
+      setExpandedRoleId(null);
+      setEditingRoleId(null);
+      setPermissionSearch("");
+      setPermissionSearchRoleId(null);
+
       return true;
     } catch (error) {
       const err = error as Error;
@@ -277,24 +332,6 @@ export const AdminUsersClient = () => {
     }
   };
 
-  const handleEditRole = (role: Role) => {
-    setEditingRole(role);
-    setEditingRolePermissions(role.permissions || []);
-    setOpenRoleEditDialog(true);
-  };
-
-  const handleSaveRolePermissions = async () => {
-    if (!editingRole) return;
-    const success = await updateRolePermissions(
-      editingRole.id,
-      editingRolePermissions,
-    );
-    if (success) {
-      setOpenRoleEditDialog(false);
-      setEditingRole(null);
-    }
-  };
-
   const handleEditUser = (user: AdminUserRow) => {
     setEditingUser(user);
     setEditingUserRoleIds(user.roleIds || []);
@@ -310,36 +347,60 @@ export const AdminUsersClient = () => {
     }
   };
 
-  // Select/Deselect all permissions
-  const handleSelectAllPermissions = () => {
-    const allPermissionKeys = permissions.map((p) => p.key);
-    setEditingRolePermissions(allPermissionKeys);
+  const togglePermissionInAccordion = (
+    roleId: number,
+    permissionKey: string,
+  ) => {
+    setEditingRolePermissions((prev) => {
+      const newMap = new Map(prev);
+      const currentPerms = newMap.get(roleId) || [];
+      const updatedPerms = currentPerms.includes(permissionKey)
+        ? currentPerms.filter((p) => p !== permissionKey)
+        : [...currentPerms, permissionKey];
+      newMap.set(roleId, updatedPerms);
+      return newMap;
+    });
   };
 
-  const handleDeselectAllPermissions = () => {
-    setEditingRolePermissions([]);
-  };
+  const hasPermissionsChanged = (roleId: number): boolean => {
+    const originalRole = roles.find((r) => r.id === roleId);
+    const currentPerms = editingRolePermissions.get(roleId) || [];
+    const originalPerms = originalRole?.permissions || [];
 
-  // Toggle a single permission
-  const togglePermission = (permissionKey: string) => {
-    setEditingRolePermissions((prev) =>
-      prev.includes(permissionKey)
-        ? prev.filter((p) => p !== permissionKey)
-        : [...prev, permissionKey],
-    );
-  };
-
-  // Check if all permissions are selected
-  const areAllPermissionsSelected = () => {
+    if (originalPerms.length !== currentPerms.length) return true;
     return (
-      permissions.length > 0 &&
-      permissions.every((p) => editingRolePermissions.includes(p.key))
+      originalPerms.some((p) => !currentPerms.includes(p)) ||
+      currentPerms.some((p) => !originalPerms.includes(p))
     );
   };
 
-  // Check if any permissions are selected
-  const areAnyPermissionsSelected = () => {
-    return editingRolePermissions.length > 0;
+  const handleSaveRolePermissionsFromAccordion = async (roleId: number) => {
+    const permissionsToSave = editingRolePermissions.get(roleId) || [];
+    await updateRolePermissions(roleId, permissionsToSave);
+  };
+
+  const handleSelectAllForRole = (roleId: number) => {
+    const filtered = getFilteredPermissions(roleId);
+    const allPermissionKeys = filtered.map((p) => p.key);
+    setEditingRolePermissions((prev) => {
+      const newMap = new Map(prev);
+      const currentPerms = newMap.get(roleId) || [];
+      const merged = [...new Set([...currentPerms, ...allPermissionKeys])];
+      newMap.set(roleId, merged);
+      return newMap;
+    });
+  };
+
+  const handleDeselectAllForRole = (roleId: number) => {
+    const filtered = getFilteredPermissions(roleId);
+    const filteredKeys = filtered.map((p) => p.key);
+    setEditingRolePermissions((prev) => {
+      const newMap = new Map(prev);
+      const currentPerms = newMap.get(roleId) || [];
+      const updated = currentPerms.filter((p) => !filteredKeys.includes(p));
+      newMap.set(roleId, updated);
+      return newMap;
+    });
   };
 
   const filteredRows = useMemo(() => {
@@ -420,13 +481,13 @@ export const AdminUsersClient = () => {
         </Alert>
       )}
 
-      {/* Tabs */}
       <Paper
         sx={{
           border: "1px solid",
-          borderColor: "divider",
+          borderColor: getBorderColor(),
           boxShadow: "none",
-          bgcolor: "background.paper",
+          bgcolor: getCardBackground(),
+          transition: "all 0.3s ease",
         }}
       >
         <Tabs
@@ -434,13 +495,20 @@ export const AdminUsersClient = () => {
           onChange={handleTabChange}
           sx={{
             borderBottom: 1,
-            borderColor: "divider",
+            borderColor: getBorderColor(),
             px: 2,
             "& .MuiTab-root": {
               textTransform: "none",
               fontWeight: 500,
               fontSize: "0.875rem",
               py: 2,
+              color: getSecondaryTextColor(),
+              "&.Mui-selected": {
+                color: getTextColor(),
+              },
+            },
+            "& .MuiTabs-indicator": {
+              backgroundColor: isDarkMode ? "#ffffff" : "#171512",
             },
           }}
         >
@@ -474,13 +542,24 @@ export const AdminUsersClient = () => {
                   maxWidth: 400,
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
+                    bgcolor: getInputBackground(),
+                    color: getTextColor(),
+                  },
+                  "& .MuiInputBase-input": {
+                    color: getTextColor(),
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: getSecondaryTextColor(),
                   },
                 }}
                 InputProps={{
                   startAdornment: (
                     <FontAwesomeIcon
                       icon={faSearch}
-                      style={{ marginRight: 12, color: "#999" }}
+                      style={{
+                        marginRight: 12,
+                        color: isDarkMode ? "rgba(255,255,255,0.5)" : "#999",
+                      }}
                     />
                   ),
                 }}
@@ -492,8 +571,11 @@ export const AdminUsersClient = () => {
                 sx={{
                   borderRadius: 2,
                   textTransform: "none",
-                  bgcolor: "#171512",
-                  "&:hover": { bgcolor: "#2d2a26" },
+                  bgcolor: isDarkMode ? "#ffffff" : "#171512",
+                  color: isDarkMode ? "#171512" : "#ffffff",
+                  "&:hover": {
+                    bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+                  },
                 }}
               >
                 Add User
@@ -502,8 +584,11 @@ export const AdminUsersClient = () => {
 
             {isLoading ? (
               <Box sx={{ py: 8, textAlign: "center" }}>
-                <CircularProgress size={32} sx={{ color: "#171512" }} />
-                <Typography color="text.secondary" sx={{ mt: 2 }}>
+                <CircularProgress
+                  size={32}
+                  sx={{ color: isDarkMode ? "#ffffff" : "#171512" }}
+                />
+                <Typography color={getSecondaryTextColor()} sx={{ mt: 2 }}>
                   Loading users...
                 </Typography>
               </Box>
@@ -516,7 +601,7 @@ export const AdminUsersClient = () => {
               </Typography>
             ) : filteredRows.length === 0 ? (
               <Box sx={{ py: 8, textAlign: "center" }}>
-                <Typography color="text.secondary" variant="body1">
+                <Typography color={getSecondaryTextColor()} variant="body1">
                   {searchQuery
                     ? "No users match your search."
                     : "No users found."}
@@ -529,13 +614,16 @@ export const AdminUsersClient = () => {
                     <Grid size={{ xs: 12, md: 6, lg: 4 }} key={row.id}>
                       <Card
                         sx={{
-                          border: "1px solid #e9e2d8",
+                          border: `1px solid ${getBorderColor()}`,
                           boxShadow: "none",
                           borderRadius: 2,
+                          bgcolor: getCardBackground(),
                           transition: "all 0.2s ease",
                           "&:hover": {
-                            borderColor: "#171512",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                            borderColor: getTextColor(),
+                            boxShadow: isDarkMode
+                              ? "0 4px 12px rgba(0,0,0,0.4)"
+                              : "0 4px 12px rgba(0,0,0,0.05)",
                           },
                         }}
                       >
@@ -548,14 +636,20 @@ export const AdminUsersClient = () => {
                             <Box>
                               <Typography
                                 fontWeight={600}
-                                sx={{ color: "#171512", fontSize: "0.95rem" }}
+                                sx={{
+                                  color: getTextColor(),
+                                  fontSize: "0.95rem",
+                                }}
                               >
                                 {row.full_name}
                               </Typography>
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
-                                sx={{ fontSize: "0.7rem", display: "block" }}
+                                sx={{
+                                  color: getSecondaryTextColor(),
+                                  fontSize: "0.7rem",
+                                  display: "block",
+                                }}
                               >
                                 {row.email}
                               </Typography>
@@ -564,15 +658,20 @@ export const AdminUsersClient = () => {
                               size="small"
                               onClick={() => handleEditUser(row)}
                               sx={{
-                                color: "text.secondary",
-                                "&:hover": { color: "primary.main" },
+                                color: getSecondaryTextColor(),
+                                "&:hover": {
+                                  color: getTextColor(),
+                                  bgcolor: getHoverBackgroundColor(),
+                                },
                               }}
                             >
                               <FontAwesomeIcon icon={faEdit} size="sm" />
                             </IconButton>
                           </Stack>
 
-                          <Divider sx={{ my: 1.5 }} />
+                          <Divider
+                            sx={{ borderColor: getBorderColor(), my: 1.5 }}
+                          />
 
                           <Stack
                             direction="row"
@@ -598,6 +697,9 @@ export const AdminUsersClient = () => {
                                       sx={{
                                         fontSize: "0.55rem",
                                         fontWeight: 500,
+                                        color: isDarkMode
+                                          ? "#ffffff"
+                                          : undefined,
                                       }}
                                     />
                                   ) : null;
@@ -609,7 +711,7 @@ export const AdminUsersClient = () => {
                                   sx={{
                                     fontSize: "0.55rem",
                                     fontWeight: 500,
-                                    color: "text.secondary",
+                                    color: getSecondaryTextColor(),
                                   }}
                                 />
                               )}
@@ -631,7 +733,16 @@ export const AdminUsersClient = () => {
                       count={totalPages}
                       page={page}
                       onChange={(_, value) => setPage(value)}
-                      color="primary"
+                      sx={{
+                        "& .MuiPaginationItem-root": {
+                          color: getTextColor(),
+                        },
+                        "& .Mui-selected": {
+                          bgcolor: isDarkMode
+                            ? "rgba(255,255,255,0.15)"
+                            : "action.selected",
+                        },
+                      }}
                     />
                   </Stack>
                 )}
@@ -640,7 +751,7 @@ export const AdminUsersClient = () => {
           </Box>
         </TabPanel>
 
-        {/* Roles Tab */}
+        {/* Roles Tab - with Permission Search */}
         <TabPanel value={tabValue} index={1}>
           <Box sx={{ px: 2, pb: 2 }}>
             <Stack
@@ -649,7 +760,7 @@ export const AdminUsersClient = () => {
               alignItems="center"
               sx={{ mb: 3 }}
             >
-              <Typography variant="h6" fontWeight={600}>
+              <Typography variant="h6" fontWeight={600} color={getTextColor()}>
                 Roles & Permissions
               </Typography>
               <Button
@@ -659,8 +770,11 @@ export const AdminUsersClient = () => {
                 sx={{
                   borderRadius: 2,
                   textTransform: "none",
-                  bgcolor: "#171512",
-                  "&:hover": { bgcolor: "#2d2a26" },
+                  bgcolor: isDarkMode ? "#ffffff" : "#171512",
+                  color: isDarkMode ? "#171512" : "#ffffff",
+                  "&:hover": {
+                    bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+                  },
                 }}
               >
                 Add Role
@@ -669,98 +783,436 @@ export const AdminUsersClient = () => {
 
             {loadingRoles ? (
               <Box sx={{ py: 8, textAlign: "center" }}>
-                <CircularProgress size={32} sx={{ color: "#171512" }} />
-                <Typography color="text.secondary" sx={{ mt: 2 }}>
+                <CircularProgress
+                  size={32}
+                  sx={{ color: isDarkMode ? "#ffffff" : "#171512" }}
+                />
+                <Typography color={getSecondaryTextColor()} sx={{ mt: 2 }}>
                   Loading roles...
                 </Typography>
               </Box>
             ) : roles.length === 0 ? (
               <Box sx={{ py: 8, textAlign: "center" }}>
-                <Typography color="text.secondary" variant="body1">
+                <Typography color={getSecondaryTextColor()} variant="body1">
                   No roles found.
                 </Typography>
               </Box>
             ) : (
-              <Grid container spacing={2}>
-                {roles.map((role) => (
-                  <Grid size={{ xs: 12, md: 6, lg: 4 }} key={role.id}>
-                    <Card
+              <Stack spacing={2}>
+                {roles.map((role) => {
+                  const currentPerms =
+                    editingRolePermissions.get(role.id) || [];
+                  const hasChanges = hasPermissionsChanged(role.id);
+                  const isExpanded = expandedRoleId === role.id;
+                  const filteredPerms = getFilteredPermissions(role.id);
+                  const hasFilteredResults = filteredPerms.length > 0;
+
+                  return (
+                    <Accordion
+                      key={role.id}
+                      expanded={isExpanded}
+                      onChange={() =>
+                        setExpandedRoleId(isExpanded ? null : role.id)
+                      }
                       sx={{
-                        border: "1px solid #e9e2d8",
+                        border: `1px solid ${getBorderColor()}`,
+                        borderRadius: 1,
                         boxShadow: "none",
-                        borderRadius: 2,
-                        transition: "all 0.2s ease",
+                        bgcolor: getCardBackground(),
                         "&:hover": {
-                          borderColor: "#171512",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                          bgcolor: getHoverBackgroundColor(),
+                        },
+                        "&.Mui-expanded": {
+                          bgcolor: getAccordionBackground(),
                         },
                       }}
                     >
-                      <CardContent sx={{ p: 2.5 }}>
+                      <AccordionSummary
+                        expandIcon={
+                          <FontAwesomeIcon icon={faChevronDown} size="sm" />
+                        }
+                        sx={{
+                          "& .MuiAccordionSummary-content": {
+                            alignItems: "center",
+                          },
+                        }}
+                      >
                         <Stack
                           direction="row"
                           justifyContent="space-between"
-                          alignItems="flex-start"
+                          alignItems="center"
+                          sx={{ width: "100%", pr: 2 }}
                         >
-                          <Box sx={{ flex: 1 }}>
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            alignItems="center"
+                          >
                             <Typography
+                              variant="subtitle1"
                               fontWeight={600}
-                              sx={{ color: "#171512", fontSize: "0.95rem" }}
+                              color={getTextColor()}
                             >
                               {formatRoleLabel(role.name)}
                             </Typography>
                             {role.description && (
                               <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ fontSize: "0.8rem", mt: 0.3 }}
+                                variant="caption"
+                                color={getSecondaryTextColor()}
                               >
                                 {role.description}
                               </Typography>
                             )}
+                            <Chip
+                              label={`${currentPerms.length} permissions`}
+                              size="small"
+                              sx={{
+                                fontSize: "0.6rem",
+                                bgcolor: isDarkMode
+                                  ? "rgba(255,255,255,0.1)"
+                                  : "#f0ebe3",
+                                color: getTextColor(),
+                              }}
+                            />
+                          </Stack>
+                          {hasChanges && (
+                            <Chip
+                              label="Unsaved changes"
+                              size="small"
+                              color="warning"
+                              sx={{ fontSize: "0.6rem" }}
+                            />
+                          )}
+                        </Stack>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ pt: 0 }}>
+                        <Stack spacing={2}>
+                          {/* Permission Search */}
+                          {isExpanded && (
+                            <TextField
+                              placeholder="Search permissions..."
+                              value={permissionSearch}
+                              onChange={(e) => {
+                                setPermissionSearch(e.target.value);
+                                setPermissionSearchRoleId(role.id);
+                              }}
+                              size="small"
+                              fullWidth
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  borderRadius: 1,
+                                  bgcolor: getInputBackground(),
+                                  color: getTextColor(),
+                                },
+                                "& .MuiInputBase-input": {
+                                  color: getTextColor(),
+                                },
+                              }}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <FontAwesomeIcon
+                                      icon={faSearch}
+                                      style={{
+                                        color: isDarkMode
+                                          ? "rgba(255,255,255,0.5)"
+                                          : "#999",
+                                        fontSize: 14,
+                                      }}
+                                    />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: permissionSearch && (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => {
+                                        setPermissionSearch("");
+                                        setPermissionSearchRoleId(null);
+                                      }}
+                                    >
+                                      <FontAwesomeIcon
+                                        icon={faTimes}
+                                        size="sm"
+                                      />
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                          )}
+
+                          {/* Select/Deselect All Controls */}
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            alignItems="center"
+                            flexWrap="wrap"
+                            sx={{
+                              p: 1.5,
+                              bgcolor: isDarkMode
+                                ? "rgba(255,255,255,0.06)"
+                                : "#f8f6f2",
+                              borderRadius: 1,
+                              border: `1px solid ${getBorderColor()}`,
+                            }}
+                          >
                             <Typography
                               variant="caption"
-                              color="text.secondary"
                               sx={{
-                                fontSize: "0.65rem",
-                                mt: 1,
-                                display: "block",
+                                fontWeight: 500,
+                                color: getSecondaryTextColor(),
                               }}
                             >
-                              {role.permissions?.length || 0} permissions
+                              Permissions:
                             </Typography>
-                          </Box>
-                          <Stack direction="row" spacing={0.5}>
-                            <IconButton
+                            <Button
                               size="small"
-                              onClick={() => handleEditRole(role)}
+                              variant="outlined"
+                              startIcon={
+                                <FontAwesomeIcon
+                                  icon={faCheckDouble}
+                                  size="sm"
+                                />
+                              }
+                              onClick={() => handleSelectAllForRole(role.id)}
+                              disabled={
+                                !hasFilteredResults ||
+                                filteredPerms.every((p) =>
+                                  currentPerms.includes(p.key),
+                                )
+                              }
                               sx={{
-                                color: "text.secondary",
-                                "&:hover": { color: "primary.main" },
+                                textTransform: "none",
+                                borderRadius: 1,
+                                fontSize: "0.7rem",
+                                borderColor: getBorderColor(),
+                                color: getTextColor(),
+                                "&:hover": {
+                                  borderColor: getTextColor(),
+                                  bgcolor: getHoverBackgroundColor(),
+                                },
                               }}
                             >
-                              <FontAwesomeIcon icon={faEdit} size="sm" />
-                            </IconButton>
+                              Select All{" "}
+                              {permissionSearch && `(${filteredPerms.length})`}
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={
+                                <FontAwesomeIcon
+                                  icon={faTimesCircle}
+                                  size="sm"
+                                />
+                              }
+                              onClick={() => handleDeselectAllForRole(role.id)}
+                              disabled={
+                                !hasFilteredResults ||
+                                !filteredPerms.some((p) =>
+                                  currentPerms.includes(p.key),
+                                )
+                              }
+                              sx={{
+                                textTransform: "none",
+                                borderRadius: 1,
+                                fontSize: "0.7rem",
+                                color: "error.main",
+                                borderColor: "error.main",
+                                "&:hover": {
+                                  borderColor: "error.dark",
+                                  bgcolor: isDarkMode
+                                    ? "rgba(244,67,54,0.15)"
+                                    : "error.light",
+                                },
+                              }}
+                            >
+                              Deselect All{" "}
+                              {permissionSearch && `(${filteredPerms.length})`}
+                            </Button>
+                            <Chip
+                              label={`${currentPerms.length} selected`}
+                              size="small"
+                              color={
+                                currentPerms.length > 0 ? "primary" : "default"
+                              }
+                              sx={{
+                                fontSize: "0.6rem",
+                                ml: "auto",
+                                bgcolor:
+                                  isDarkMode && currentPerms.length > 0
+                                    ? "rgba(25,118,210,0.2)"
+                                    : undefined,
+                                color:
+                                  isDarkMode && currentPerms.length > 0
+                                    ? "#90caf9"
+                                    : undefined,
+                              }}
+                            />
+                            {permissionSearch && (
+                              <Chip
+                                label={`${filteredPerms.length} results`}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  fontSize: "0.6rem",
+                                  borderColor: getBorderColor(),
+                                  color: getSecondaryTextColor(),
+                                }}
+                              />
+                            )}
                           </Stack>
+
+                          {/* Permissions List */}
+                          <List
+                            dense
+                            sx={{
+                              maxHeight: 300,
+                              overflow: "auto",
+                              bgcolor: isDarkMode
+                                ? "rgba(255,255,255,0.03)"
+                                : "transparent",
+                              borderRadius: 1,
+                              border: isDarkMode
+                                ? `1px solid ${getBorderColor()}`
+                                : "none",
+                            }}
+                          >
+                            {hasFilteredResults ? (
+                              filteredPerms.map((permission) => (
+                                <ListItem
+                                  key={permission.id}
+                                  dense
+                                  onClick={() =>
+                                    togglePermissionInAccordion(
+                                      role.id,
+                                      permission.key,
+                                    )
+                                  }
+                                  sx={{
+                                    cursor: "pointer",
+                                    borderRadius: 0.5,
+                                    "&:hover": {
+                                      bgcolor: getListItemHover(),
+                                    },
+                                    color: getTextColor(),
+                                  }}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 40 }}>
+                                    <Checkbox
+                                      edge="start"
+                                      checked={currentPerms.includes(
+                                        permission.key,
+                                      )}
+                                      tabIndex={-1}
+                                      disableRipple
+                                      sx={{
+                                        color: isDarkMode
+                                          ? "rgba(255,255,255,0.5)"
+                                          : undefined,
+                                        "&.Mui-checked": {
+                                          color: isDarkMode
+                                            ? "#90caf9"
+                                            : undefined,
+                                        },
+                                      }}
+                                    />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Box component="span">
+                                        {permission.key.replace(/_/g, " ")}
+                                        {permissionSearch && (
+                                          <Chip
+                                            label="Match"
+                                            size="small"
+                                            sx={{
+                                              ml: 1,
+                                              fontSize: "0.5rem",
+                                              height: 16,
+                                              bgcolor: isDarkMode
+                                                ? "rgba(255,255,255,0.1)"
+                                                : "#f0ebe3",
+                                              color: getSecondaryTextColor(),
+                                            }}
+                                          />
+                                        )}
+                                      </Box>
+                                    }
+                                    secondary={permission.description}
+                                    primaryTypographyProps={{
+                                      fontSize: "0.85rem",
+                                      color: getPermissionText(),
+                                      fontWeight: 500,
+                                    }}
+                                    secondaryTypographyProps={{
+                                      fontSize: "0.7rem",
+                                      color: getPermissionDescription(),
+                                    }}
+                                  />
+                                </ListItem>
+                              ))
+                            ) : (
+                              <Box sx={{ py: 4, textAlign: "center" }}>
+                                <Typography
+                                  color={getSecondaryTextColor()}
+                                  variant="body2"
+                                >
+                                  No permissions match your search.
+                                </Typography>
+                              </Box>
+                            )}
+                          </List>
+
+                          {/* Save Button */}
+                          {hasChanges && (
+                            <Button
+                              variant="contained"
+                              startIcon={
+                                <FontAwesomeIcon icon={faSave} size="sm" />
+                              }
+                              onClick={() =>
+                                handleSaveRolePermissionsFromAccordion(role.id)
+                              }
+                              disabled={savingPermissions}
+                              sx={{
+                                alignSelf: "flex-end",
+                                textTransform: "none",
+                                bgcolor: isDarkMode ? "#ffffff" : "#171512",
+                                color: isDarkMode ? "#171512" : "#ffffff",
+                                "&:hover": {
+                                  bgcolor: isDarkMode
+                                    ? "rgba(255,255,255,0.9)"
+                                    : "#2d2a26",
+                                },
+                              }}
+                            >
+                              {savingPermissions ? "Saving..." : "Save Changes"}
+                            </Button>
+                          )}
                         </Stack>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
+                      </AccordionDetails>
+                    </Accordion>
+                  );
+                })}
+              </Stack>
             )}
           </Box>
         </TabPanel>
       </Paper>
 
-      {/* Add User Dialog */}
+      {/* Add User Dialog - unchanged */}
       <Dialog
         open={openUserDialog}
         onClose={() => setOpenUserDialog(false)}
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 2 },
+          sx: {
+            borderRadius: 2,
+            bgcolor: getDialogBackground(),
+            border: `1px solid ${getBorderColor()}`,
+          },
         }}
       >
         <DialogTitle>
@@ -769,10 +1221,14 @@ export const AdminUsersClient = () => {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h6" fontWeight={600} color={getTextColor()}>
               Add New User
             </Typography>
-            <IconButton size="small" onClick={() => setOpenUserDialog(false)}>
+            <IconButton
+              size="small"
+              onClick={() => setOpenUserDialog(false)}
+              sx={{ color: getSecondaryTextColor() }}
+            >
               <FontAwesomeIcon icon={faTimes} size="sm" />
             </IconButton>
           </Stack>
@@ -785,6 +1241,15 @@ export const AdminUsersClient = () => {
               onChange={(e) => setNewUserName(e.target.value)}
               fullWidth
               size="small"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: getInputBackground(),
+                  color: getTextColor(),
+                },
+                "& .MuiInputLabel-root": {
+                  color: getSecondaryTextColor(),
+                },
+              }}
             />
             <TextField
               label="Email *"
@@ -793,6 +1258,15 @@ export const AdminUsersClient = () => {
               onChange={(e) => setNewUserEmail(e.target.value)}
               fullWidth
               size="small"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: getInputBackground(),
+                  color: getTextColor(),
+                },
+                "& .MuiInputLabel-root": {
+                  color: getSecondaryTextColor(),
+                },
+              }}
             />
             <TextField
               label="Password *"
@@ -801,14 +1275,32 @@ export const AdminUsersClient = () => {
               onChange={(e) => setNewUserPassword(e.target.value)}
               fullWidth
               size="small"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: getInputBackground(),
+                  color: getTextColor(),
+                },
+                "& .MuiInputLabel-root": {
+                  color: getSecondaryTextColor(),
+                },
+              }}
             />
             <FormControl fullWidth size="small">
-              <InputLabel>Roles</InputLabel>
+              <InputLabel sx={{ color: getSecondaryTextColor() }}>
+                Roles
+              </InputLabel>
               <Select
                 multiple
                 value={newUserRoleIds}
                 onChange={(e) => setNewUserRoleIds(e.target.value as number[])}
                 label="Roles"
+                sx={{
+                  bgcolor: getInputBackground(),
+                  color: getTextColor(),
+                  "& .MuiSelect-select": {
+                    color: getTextColor(),
+                  },
+                }}
                 renderValue={(selected) => (
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                     {selected.map((roleId) => {
@@ -818,6 +1310,12 @@ export const AdminUsersClient = () => {
                           key={roleId}
                           label={formatRoleLabel(role.name)}
                           size="small"
+                          sx={{
+                            color: isDarkMode ? "#ffffff" : undefined,
+                            bgcolor: isDarkMode
+                              ? "rgba(255,255,255,0.15)"
+                              : undefined,
+                          }}
                         />
                       ) : null;
                     })}
@@ -837,7 +1335,7 @@ export const AdminUsersClient = () => {
         <DialogActions sx={{ p: 2 }}>
           <Button
             onClick={() => setOpenUserDialog(false)}
-            sx={{ textTransform: "none", color: "#666" }}
+            sx={{ textTransform: "none", color: getSecondaryTextColor() }}
           >
             Cancel
           </Button>
@@ -847,12 +1345,18 @@ export const AdminUsersClient = () => {
             disabled={creatingUser}
             sx={{
               textTransform: "none",
-              bgcolor: "#171512",
-              "&:hover": { bgcolor: "#2d2a26" },
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+              },
             }}
           >
             {creatingUser ? (
-              <CircularProgress size={20} sx={{ color: "white" }} />
+              <CircularProgress
+                size={20}
+                sx={{ color: isDarkMode ? "#171512" : "white" }}
+              />
             ) : (
               "Create User"
             )}
@@ -860,14 +1364,18 @@ export const AdminUsersClient = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Add Role Dialog */}
+      {/* Add Role Dialog - unchanged */}
       <Dialog
         open={openRoleDialog}
         onClose={() => setOpenRoleDialog(false)}
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 2 },
+          sx: {
+            borderRadius: 2,
+            bgcolor: getDialogBackground(),
+            border: `1px solid ${getBorderColor()}`,
+          },
         }}
       >
         <DialogTitle>
@@ -876,10 +1384,14 @@ export const AdminUsersClient = () => {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h6" fontWeight={600} color={getTextColor()}>
               Add New Role
             </Typography>
-            <IconButton size="small" onClick={() => setOpenRoleDialog(false)}>
+            <IconButton
+              size="small"
+              onClick={() => setOpenRoleDialog(false)}
+              sx={{ color: getSecondaryTextColor() }}
+            >
               <FontAwesomeIcon icon={faTimes} size="sm" />
             </IconButton>
           </Stack>
@@ -893,6 +1405,15 @@ export const AdminUsersClient = () => {
               fullWidth
               size="small"
               placeholder="e.g., Sales Manager"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: getInputBackground(),
+                  color: getTextColor(),
+                },
+                "& .MuiInputLabel-root": {
+                  color: getSecondaryTextColor(),
+                },
+              }}
             />
             <TextField
               label="Description (optional)"
@@ -903,13 +1424,22 @@ export const AdminUsersClient = () => {
               multiline
               minRows={2}
               placeholder="Describe the role's responsibilities..."
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: getInputBackground(),
+                  color: getTextColor(),
+                },
+                "& .MuiInputLabel-root": {
+                  color: getSecondaryTextColor(),
+                },
+              }}
             />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button
             onClick={() => setOpenRoleDialog(false)}
-            sx={{ textTransform: "none", color: "#666" }}
+            sx={{ textTransform: "none", color: getSecondaryTextColor() }}
           >
             Cancel
           </Button>
@@ -919,12 +1449,18 @@ export const AdminUsersClient = () => {
             disabled={creatingRole}
             sx={{
               textTransform: "none",
-              bgcolor: "#171512",
-              "&:hover": { bgcolor: "#2d2a26" },
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+              },
             }}
           >
             {creatingRole ? (
-              <CircularProgress size={20} sx={{ color: "white" }} />
+              <CircularProgress
+                size={20}
+                sx={{ color: isDarkMode ? "#171512" : "white" }}
+              />
             ) : (
               "Create Role"
             )}
@@ -932,171 +1468,18 @@ export const AdminUsersClient = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Role Permissions Dialog */}
-      <Dialog
-        open={openRoleEditDialog}
-        onClose={() => setOpenRoleEditDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 2 },
-        }}
-      >
-        <DialogTitle>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Typography variant="h6" fontWeight={600}>
-              Edit Role Permissions
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setOpenRoleEditDialog(false)}
-            >
-              <FontAwesomeIcon icon={faTimes} size="sm" />
-            </IconButton>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            {editingRole && (
-              <Typography variant="subtitle1" fontWeight={600}>
-                {formatRoleLabel(editingRole.name)}
-              </Typography>
-            )}
-
-            {/* Select All / Deselect All Controls */}
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              sx={{
-                p: 1.5,
-                bgcolor: "action.hover",
-                borderRadius: 1,
-                border: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                Permissions:
-              </Typography>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<FontAwesomeIcon icon={faCheckDouble} size="sm" />}
-                onClick={handleSelectAllPermissions}
-                disabled={areAllPermissionsSelected()}
-                sx={{
-                  textTransform: "none",
-                  borderRadius: 1,
-                  fontSize: "0.7rem",
-                }}
-              >
-                Select All
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<FontAwesomeIcon icon={faTimesCircle} size="sm" />}
-                onClick={handleDeselectAllPermissions}
-                disabled={!areAnyPermissionsSelected()}
-                sx={{
-                  textTransform: "none",
-                  borderRadius: 1,
-                  fontSize: "0.7rem",
-                  color: "error.main",
-                  borderColor: "error.main",
-                  "&:hover": {
-                    borderColor: "error.dark",
-                    bgcolor: "error.light",
-                  },
-                }}
-              >
-                Deselect All
-              </Button>
-              <Chip
-                label={`${editingRolePermissions.length} selected`}
-                size="small"
-                color={
-                  editingRolePermissions.length > 0 ? "primary" : "default"
-                }
-                sx={{ fontSize: "0.6rem", ml: "auto" }}
-              />
-            </Stack>
-
-            <Typography variant="caption" color="text.secondary">
-              Select permissions for this role:
-            </Typography>
-
-            <List dense sx={{ maxHeight: 400, overflow: "auto" }}>
-              {permissions.map((permission) => (
-                <ListItem
-                  key={permission.id}
-                  dense
-                  onClick={() => togglePermission(permission.key)}
-                  sx={{
-                    cursor: "pointer",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                  }}
-                >
-                  <ListItemIcon>
-                    <Checkbox
-                      edge="start"
-                      checked={editingRolePermissions.includes(permission.key)}
-                      tabIndex={-1}
-                      disableRipple
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={permission.key.replace(/_/g, " ")}
-                    secondary={permission.description}
-                    primaryTypographyProps={{ fontSize: "0.85rem" }}
-                    secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => setOpenRoleEditDialog(false)}
-            sx={{ textTransform: "none", color: "#666" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveRolePermissions}
-            disabled={savingPermissions}
-            sx={{
-              textTransform: "none",
-              bgcolor: "#171512",
-              "&:hover": { bgcolor: "#2d2a26" },
-            }}
-          >
-            {savingPermissions ? (
-              <CircularProgress size={20} sx={{ color: "white" }} />
-            ) : (
-              "Save Permissions"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Edit User Roles Dialog */}
+      {/* Edit User Roles Dialog - unchanged */}
       <Dialog
         open={openUserEditDialog}
         onClose={() => setOpenUserEditDialog(false)}
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 2 },
+          sx: {
+            borderRadius: 2,
+            bgcolor: getDialogBackground(),
+            border: `1px solid ${getBorderColor()}`,
+          },
         }}
       >
         <DialogTitle>
@@ -1105,12 +1488,13 @@ export const AdminUsersClient = () => {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h6" fontWeight={600} color={getTextColor()}>
               Edit User Roles
             </Typography>
             <IconButton
               size="small"
               onClick={() => setOpenUserEditDialog(false)}
+              sx={{ color: getSecondaryTextColor() }}
             >
               <FontAwesomeIcon icon={faTimes} size="sm" />
             </IconButton>
@@ -1119,14 +1503,25 @@ export const AdminUsersClient = () => {
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             {editingUser && (
-              <Typography variant="subtitle1" fontWeight={600}>
+              <Typography
+                variant="subtitle1"
+                fontWeight={600}
+                color={getTextColor()}
+              >
                 {editingUser.full_name}
               </Typography>
             )}
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color={getSecondaryTextColor()}>
               Select roles for this user:
             </Typography>
-            <List dense>
+            <List
+              dense
+              sx={{
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.03)" : "transparent",
+                borderRadius: 1,
+                border: isDarkMode ? `1px solid ${getBorderColor()}` : "none",
+              }}
+            >
               {roles.map((role) => (
                 <ListItem
                   key={role.id}
@@ -1140,34 +1535,57 @@ export const AdminUsersClient = () => {
                   }}
                   sx={{
                     cursor: "pointer",
+                    borderRadius: 0.5,
                     "&:hover": {
-                      bgcolor: "action.hover",
+                      bgcolor: getListItemHover(),
                     },
+                    color: getTextColor(),
                   }}
                 >
-                  <ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: 40 }}>
                     <Checkbox
                       edge="start"
                       checked={editingUserRoleIds.includes(role.id)}
                       tabIndex={-1}
                       disableRipple
+                      sx={{
+                        color: isDarkMode ? "rgba(255,255,255,0.5)" : undefined,
+                        "&.Mui-checked": {
+                          color: isDarkMode ? "#90caf9" : undefined,
+                        },
+                      }}
                     />
                   </ListItemIcon>
                   <ListItemText
                     primary={formatRoleLabel(role.name)}
                     secondary={role.description}
-                    primaryTypographyProps={{ fontSize: "0.85rem" }}
-                    secondaryTypographyProps={{ fontSize: "0.7rem" }}
+                    primaryTypographyProps={{
+                      fontSize: "0.85rem",
+                      color: getPermissionText(),
+                      fontWeight: 500,
+                    }}
+                    secondaryTypographyProps={{
+                      fontSize: "0.7rem",
+                      color: getPermissionDescription(),
+                    }}
                   />
                 </ListItem>
               ))}
             </List>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions
+          sx={{ p: 2, borderTop: `1px solid ${getBorderColor()}` }}
+        >
           <Button
             onClick={() => setOpenUserEditDialog(false)}
-            sx={{ textTransform: "none", color: "#666" }}
+            sx={{
+              textTransform: "none",
+              color: getSecondaryTextColor(),
+              "&:hover": {
+                bgcolor: getHoverBackgroundColor(),
+              },
+            }}
           >
             Cancel
           </Button>
@@ -1177,12 +1595,18 @@ export const AdminUsersClient = () => {
             disabled={savingUserRoles}
             sx={{
               textTransform: "none",
-              bgcolor: "#171512",
-              "&:hover": { bgcolor: "#2d2a26" },
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+              },
             }}
           >
             {savingUserRoles ? (
-              <CircularProgress size={20} sx={{ color: "white" }} />
+              <CircularProgress
+                size={20}
+                sx={{ color: isDarkMode ? "#171512" : "white" }}
+              />
             ) : (
               "Save Roles"
             )}
