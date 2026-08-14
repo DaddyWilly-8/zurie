@@ -20,6 +20,8 @@ import {
   DialogActions,
   useMediaQuery,
   Paper,
+  Alert,
+  Snackbar,
   IconButton,
 } from "@mui/material";
 import React, { useState } from "react";
@@ -37,6 +39,7 @@ import {
   faCircle,
   faExclamationTriangle,
   faChevronDown,
+  faCopy,
 } from "@fortawesome/free-solid-svg-icons";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
@@ -76,6 +79,9 @@ export const ProductsTable = ({
   const [productToDelete, setProductToDelete] = useState<AdminProduct | null>(
     null,
   );
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [productToDuplicate, setProductToDuplicate] =
+    useState<AdminProduct | null>(null);
   const [deleteImageDialogOpen, setDeleteImageDialogOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<{
     productId: string;
@@ -83,6 +89,14 @@ export const ProductsTable = ({
     imageUrl: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
 
   const categoryLabelByValue = new Map(
     categoryOptions.map((item) => [item.value, item.label]),
@@ -107,6 +121,7 @@ export const ProductsTable = ({
     isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper";
   const getHoverBackgroundColor = () =>
     isDarkMode ? "rgba(255,255,255,0.06)" : "action.hover";
+  const getDialogBackground = () => (isDarkMode ? "#1e1e1e" : "#ffffff");
 
   const getStockLabel = (item: AdminProduct) => {
     const status =
@@ -168,6 +183,19 @@ export const ProductsTable = ({
     }
   };
 
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning",
+  ) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
   // Handle delete product click
   const handleDeleteClick = (product: AdminProduct) => {
     setProductToDelete(product);
@@ -182,10 +210,41 @@ export const ProductsTable = ({
       await onDelete(String(productToDelete.id));
       setDeleteDialogOpen(false);
       setProductToDelete(null);
+      showSnackbar(
+        `Product "${productToDelete.name}" deleted successfully.`,
+        "success",
+      );
     } catch (error) {
       console.error("Failed to delete product:", error);
+      showSnackbar("Failed to delete product. Please try again.", "error");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Handle duplicate product click
+  const handleDuplicateClick = (product: AdminProduct) => {
+    setProductToDuplicate(product);
+    setDuplicateDialogOpen(true);
+  };
+
+  // Handle confirm duplicate product
+  const handleConfirmDuplicate = async () => {
+    if (!productToDuplicate) return;
+    setIsDuplicating(true);
+    try {
+      await onDuplicate(String(productToDuplicate.id));
+      setDuplicateDialogOpen(false);
+      setProductToDuplicate(null);
+      showSnackbar(
+        `Product "${productToDuplicate.name}" duplicated successfully.`,
+        "success",
+      );
+    } catch (error) {
+      console.error("Failed to duplicate product:", error);
+      showSnackbar("Failed to duplicate product. Please try again.", "error");
+    } finally {
+      setIsDuplicating(false);
     }
   };
 
@@ -207,8 +266,10 @@ export const ProductsTable = ({
       await onDeleteImage(imageToDelete.productId, imageToDelete.imageId);
       setDeleteImageDialogOpen(false);
       setImageToDelete(null);
+      showSnackbar("Image removed successfully.", "success");
     } catch (error) {
       console.error("Failed to delete image:", error);
+      showSnackbar("Failed to remove image. Please try again.", "error");
     } finally {
       setIsDeleting(false);
     }
@@ -462,7 +523,7 @@ export const ProductsTable = ({
 
                   {/* Actions */}
                   <Divider sx={{ borderColor: getBorderColor() }} />
-                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <Stack direction="row" spacing={1}>
                     <Button
                       size="small"
                       variant="outlined"
@@ -473,7 +534,8 @@ export const ProductsTable = ({
                         borderRadius: 1,
                         borderColor: getBorderColor(),
                         color: getTextColor(),
-                        fontSize: "0.6rem",
+                        fontSize: "0.55rem",
+                        flex: 1,
                         "&:hover": {
                           borderColor: getTextColor(),
                           bgcolor: getHoverBackgroundColor(),
@@ -485,14 +547,15 @@ export const ProductsTable = ({
                     <Button
                       size="small"
                       variant="outlined"
-                      onClick={() => onDuplicate(String(productId))}
-                      startIcon={<FontAwesomeIcon icon={faClone} size="sm" />}
+                      onClick={() => handleDuplicateClick(item)}
+                      startIcon={<FontAwesomeIcon icon={faCopy} size="sm" />}
                       sx={{
                         textTransform: "none",
                         borderRadius: 1,
                         borderColor: getBorderColor(),
                         color: getTextColor(),
-                        fontSize: "0.6rem",
+                        fontSize: "0.55rem",
+                        flex: 1,
                         "&:hover": {
                           borderColor: getTextColor(),
                           bgcolor: getHoverBackgroundColor(),
@@ -512,7 +575,8 @@ export const ProductsTable = ({
                         borderRadius: 1,
                         borderColor: getBorderColor(),
                         color: getSecondaryTextColor(),
-                        fontSize: "0.6rem",
+                        fontSize: "0.55rem",
+                        flex: 1,
                         "&:hover": {
                           borderColor: "#d32f2f",
                           color: "#d32f2f",
@@ -669,6 +733,14 @@ export const ProductsTable = ({
           productName={productToDelete?.name}
           isDarkMode={isDarkMode}
         />
+        <DuplicateProductDialog
+          open={duplicateDialogOpen}
+          onClose={() => setDuplicateDialogOpen(false)}
+          onConfirm={handleConfirmDuplicate}
+          isDuplicating={isDuplicating}
+          productName={productToDuplicate?.name}
+          isDarkMode={isDarkMode}
+        />
         <DeleteImageDialog
           open={deleteImageDialogOpen}
           onClose={() => setDeleteImageDialogOpen(false)}
@@ -676,6 +748,22 @@ export const ProductsTable = ({
           isDeleting={isDeleting}
           isDarkMode={isDarkMode}
         />
+
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </>
     );
   }
@@ -1034,7 +1122,7 @@ export const ProductsTable = ({
                           component="span"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onDuplicate(String(productId));
+                            handleDuplicateClick(item);
                           }}
                           sx={{
                             display: "inline-flex",
@@ -1056,7 +1144,7 @@ export const ProductsTable = ({
                             },
                           }}
                         >
-                          <FontAwesomeIcon icon={faClone} size="sm" />
+                          <FontAwesomeIcon icon={faCopy} size="sm" />
                         </Box>
                       </Tooltip>
                       <Tooltip title="Delete Product">
@@ -1256,6 +1344,14 @@ export const ProductsTable = ({
         productName={productToDelete?.name}
         isDarkMode={isDarkMode}
       />
+      <DuplicateProductDialog
+        open={duplicateDialogOpen}
+        onClose={() => setDuplicateDialogOpen(false)}
+        onConfirm={handleConfirmDuplicate}
+        isDuplicating={isDuplicating}
+        productName={productToDuplicate?.name}
+        isDarkMode={isDarkMode}
+      />
       <DeleteImageDialog
         open={deleteImageDialogOpen}
         onClose={() => setDeleteImageDialogOpen(false)}
@@ -1263,6 +1359,22 @@ export const ProductsTable = ({
         isDeleting={isDeleting}
         isDarkMode={isDarkMode}
       />
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
@@ -1292,6 +1404,8 @@ const DeleteProductDialog = ({
       sx: {
         borderRadius: 2,
         p: 1,
+        bgcolor: isDarkMode ? "#1e1e1e" : "#ffffff",
+        border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8"}`,
       },
     }}
   >
@@ -1310,15 +1424,28 @@ const DeleteProductDialog = ({
       >
         <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
       </Box>
-      <Typography component="span" variant="h6" fontWeight={600}>
+      <Typography
+        component="span"
+        variant="h6"
+        fontWeight={600}
+        sx={{ color: isDarkMode ? "#ffffff" : "#171512" }}
+      >
         Delete Product
       </Typography>
     </DialogTitle>
     <DialogContent>
-      <DialogContentText sx={{ mb: 2 }}>
+      <DialogContentText
+        sx={{
+          mb: 2,
+          color: isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary",
+        }}
+      >
         Are you sure you want to delete{" "}
-        <strong>{productName || "this product"}</strong>? This action cannot be
-        undone and will permanently remove the product from your store.
+        <strong style={{ color: isDarkMode ? "#ffffff" : "#171512" }}>
+          {productName || "this product"}
+        </strong>
+        ? This action cannot be undone and will permanently remove the product
+        from your store.
       </DialogContentText>
     </DialogContent>
     <DialogActions sx={{ p: 2, pt: 0 }}>
@@ -1326,7 +1453,7 @@ const DeleteProductDialog = ({
         onClick={onClose}
         sx={{
           textTransform: "none",
-          color: "text.secondary",
+          color: isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary",
           "&:hover": {
             bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
           },
@@ -1352,6 +1479,152 @@ const DeleteProductDialog = ({
   </Dialog>
 );
 
+// Duplicate Product Dialog Component
+const DuplicateProductDialog = ({
+  open,
+  onClose,
+  onConfirm,
+  isDuplicating,
+  productName,
+  isDarkMode,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDuplicating: boolean;
+  productName?: string;
+  isDarkMode: boolean;
+}) => {
+  const getBorderColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
+  const getDialogBackground = () => (isDarkMode ? "#1e1e1e" : "#ffffff");
+  const getTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getSecondaryTextColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          p: 1,
+          bgcolor: getDialogBackground(),
+          border: `1px solid ${getBorderColor()}`,
+        },
+      }}
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            bgcolor: isDarkMode ? "rgba(25,118,210,0.15)" : "#e3f2fd",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#1976d2",
+          }}
+        >
+          <FontAwesomeIcon icon={faCopy} size="lg" />
+        </Box>
+        <Typography
+          component="span"
+          variant="h6"
+          fontWeight={600}
+          sx={{ color: getTextColor() }}
+        >
+          Duplicate Product
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ mb: 2, color: getSecondaryTextColor() }}>
+          Are you sure you want to duplicate{" "}
+          <strong style={{ color: getTextColor() }}>
+            {productName || "this product"}
+          </strong>
+          ?
+        </DialogContentText>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "#f8f6f2",
+            borderRadius: 1,
+            border: `1px solid ${getBorderColor()}`,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: getTextColor() }}>
+            <strong>What will be duplicated:</strong>
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: getSecondaryTextColor(), display: "block", mt: 1 }}
+          >
+            • Product name, description, and specifications
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: getSecondaryTextColor(), display: "block" }}
+          >
+            • Pricing and inventory settings
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: getSecondaryTextColor(), display: "block" }}
+          >
+            • Category assignment and flags (Featured, Best Seller, etc.)
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: getSecondaryTextColor(), display: "block" }}
+          >
+            • Product images (copied to the new product)
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: getSecondaryTextColor(), display: "block", mt: 0.5 }}
+          >
+            ⚠️ The duplicate will be created as a{" "}
+            <strong style={{ color: getTextColor() }}>Draft</strong> status.
+          </Typography>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ p: 2, pt: 0 }}>
+        <Button
+          onClick={onClose}
+          sx={{
+            textTransform: "none",
+            color: getSecondaryTextColor(),
+            "&:hover": {
+              bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          disabled={isDuplicating}
+          variant="contained"
+          color="primary"
+          sx={{
+            textTransform: "none",
+            "&:disabled": {
+              opacity: 0.6,
+            },
+          }}
+        >
+          {isDuplicating ? "Duplicating..." : "Duplicate Product"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 // Delete Image Dialog Component
 const DeleteImageDialog = ({
   open,
@@ -1365,71 +1638,87 @@ const DeleteImageDialog = ({
   onConfirm: () => void;
   isDeleting: boolean;
   isDarkMode: boolean;
-}) => (
-  <Dialog
-    open={open}
-    onClose={onClose}
-    maxWidth="sm"
-    fullWidth
-    PaperProps={{
-      sx: {
-        borderRadius: 2,
-        p: 1,
-      },
-    }}
-  >
-    <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#d32f2f",
-        }}
-      >
-        <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
-      </Box>
-      <Typography component="span" variant="h6" fontWeight={600}>
-        Remove Image
-      </Typography>
-    </DialogTitle>
-    <DialogContent>
-      <DialogContentText sx={{ mb: 2 }}>
-        Are you sure you want to remove this image? This action cannot be
-        undone.
-      </DialogContentText>
-    </DialogContent>
-    <DialogActions sx={{ p: 2, pt: 0 }}>
-      <Button
-        onClick={onClose}
-        sx={{
-          textTransform: "none",
-          color: "text.secondary",
-          "&:hover": {
-            bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
-          },
-        }}
-      >
-        Cancel
-      </Button>
-      <Button
-        onClick={onConfirm}
-        disabled={isDeleting}
-        variant="contained"
-        color="error"
-        sx={{
-          textTransform: "none",
-          "&:disabled": {
-            opacity: 0.6,
-          },
-        }}
-      >
-        {isDeleting ? "Removing..." : "Remove Image"}
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+}) => {
+  const getBorderColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
+  const getDialogBackground = () => (isDarkMode ? "#1e1e1e" : "#ffffff");
+  const getTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getSecondaryTextColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          p: 1,
+          bgcolor: getDialogBackground(),
+          border: `1px solid ${getBorderColor()}`,
+        },
+      }}
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#d32f2f",
+          }}
+        >
+          <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+        </Box>
+        <Typography
+          component="span"
+          variant="h6"
+          fontWeight={600}
+          sx={{ color: getTextColor() }}
+        >
+          Remove Image
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ mb: 2, color: getSecondaryTextColor() }}>
+          Are you sure you want to remove this image? This action cannot be
+          undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions sx={{ p: 2, pt: 0 }}>
+        <Button
+          onClick={onClose}
+          sx={{
+            textTransform: "none",
+            color: getSecondaryTextColor(),
+            "&:hover": {
+              bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          disabled={isDeleting}
+          variant="contained"
+          color="error"
+          sx={{
+            textTransform: "none",
+            "&:disabled": {
+              opacity: 0.6,
+            },
+          }}
+        >
+          {isDeleting ? "Removing..." : "Remove Image"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
