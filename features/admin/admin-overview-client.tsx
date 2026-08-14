@@ -18,16 +18,18 @@ import {
   type DashboardOverview,
 } from "@/services/dashboard/dashboard.service";
 
-const StatCard = ({
-  label,
-  value,
-  icon,
-}: {
+type StatCardProps = {
   label: string;
   value: number;
   icon: typeof faBoxArchive;
-}) => (
+  href: string;
+  color?: string;
+};
+
+const StatCard = ({ label, value, icon, href, color }: StatCardProps) => (
   <Card
+    component={Link}
+    href={href}
     sx={{
       height: "100%",
       border: "1px solid",
@@ -37,10 +39,18 @@ const StatCard = ({
       bgcolor: "background.paper",
       px: 2.6,
       py: 2.2,
+      textDecoration: "none",
+      transition: "all 0.2s ease",
+      cursor: "pointer",
+      "&:hover": {
+        borderColor: "text.primary",
+        bgcolor: "action.hover",
+        transform: "translateY(-2px)",
+      },
     }}
   >
     <Stack spacing={1.6}>
-      <Box sx={{ color: "primary.main" }}>
+      <Box sx={{ color: color || "primary.main" }}>
         <FontAwesomeIcon icon={icon} />
       </Box>
       <Typography
@@ -61,8 +71,6 @@ const StatCard = ({
     </Stack>
   </Card>
 );
-
-type Overview = DashboardOverview;
 
 const emptyOverview: DashboardOverview = {
   totalProducts: 0,
@@ -90,19 +98,35 @@ export const AdminOverviewClient = () => {
       label: "Total Products",
       value: overview?.totalProducts,
       icon: faBoxArchive,
+      href: "/admin/products",
     },
     {
       label: "In Stock",
       value: overview?.productsInStock,
       icon: faCircleCheck,
+      href: "/admin/products?status=published",
+      color: "#2e7d32",
     },
     {
       label: "Out Of Stock",
       value: overview?.productsOutOfStock,
       icon: faCircleXmark,
+      href: "/admin/products?status=out_of_stock",
+      color: "#d32f2f",
     },
-    { label: "Categories", value: overview?.totalCategories, icon: faTags },
-    { label: "New Orders", value: overview?.newOrders, icon: faComment },
+    {
+      label: "Categories",
+      value: overview?.totalCategories,
+      icon: faTags,
+      href: "/admin/categories",
+    },
+    {
+      label: "New Orders",
+      value: overview?.newOrders,
+      icon: faComment,
+      href: "/admin/orders?status=new",
+      color: "#1976d2",
+    },
   ];
 
   const actionButtonSx = {
@@ -156,6 +180,8 @@ export const AdminOverviewClient = () => {
             label={item.label}
             value={item.value}
             icon={item.icon}
+            href={item.href}
+            color={item.color}
           />
         ))}
       </Box>

@@ -58,10 +58,12 @@ export default async function HomePage() {
       : "";
   const bannerCtaText = String(homepageData?.bannerCtaText ?? "Learn More");
   const bannerCtaLink = String(homepageData?.bannerCtaLink ?? "/shop");
+
   const pickImage = (...sources: Array<string | undefined>) =>
     sources.find(
       (source) => typeof source === "string" && source.trim().length > 0,
     ) ?? "/images/products/fallback.png";
+
   const featured =
     featuredRows.length > 0 ? featuredRows.slice(0, 3) : products.slice(0, 3);
   const bestSellers =
@@ -73,13 +75,20 @@ export default async function HomePage() {
       ? newArrivalRows.slice(0, 3)
       : products.slice(0, 3);
 
+  // Filter categories with valid images and provide fallback
   const categoryCards = categories
     .slice(0, 4)
     .map((category) => {
+      // Get the image URL or use fallback
+      const image =
+        category.imageUrl && category.imageUrl.trim().length > 0
+          ? category.imageUrl
+          : "/images/products/fallback.png";
+
       return {
         label: category.name,
         href: `/shop?category=${encodeURIComponent(category.slug)}`,
-        image: category.imageUrl,
+        image: image,
       };
     })
     .filter(Boolean) as Array<{ label: string; href: string; image: string }>;
@@ -254,7 +263,7 @@ export default async function HomePage() {
           <Grid container spacing={2.2}>
             {categoryCards.map((category) => (
               <Grid key={category.label} size={{ xs: 12, sm: 6, md: 3 }}>
-                <Link href={category.href}>
+                <Link href={category.href} style={{ textDecoration: "none" }}>
                   <Box
                     sx={{
                       position: "relative",
@@ -262,6 +271,11 @@ export default async function HomePage() {
                       border: "1px solid",
                       borderColor: "divider",
                       overflow: "hidden",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        borderColor: "text.primary",
+                        transform: "scale(1.01)",
+                      },
                     }}
                   >
                     <Image
@@ -470,7 +484,7 @@ export default async function HomePage() {
         </section>
 
         <section style={{ marginTop: "4.4rem" }}>
-          {bannerActive ? (
+          {bannerActive && bannerImage && bannerImage.trim().length > 0 ? (
             <Box
               sx={{
                 position: "relative",
@@ -481,15 +495,13 @@ export default async function HomePage() {
                 mb: 4,
               }}
             >
-              {bannerImage ? (
-                <Image
-                  src={bannerImage}
-                  alt={bannerTitle || "Promotional banner"}
-                  fill
-                  sizes="100vw"
-                  style={{ objectFit: "cover" }}
-                />
-              ) : null}
+              <Image
+                src={bannerImage}
+                alt={bannerTitle || "Promotional banner"}
+                fill
+                sizes="100vw"
+                style={{ objectFit: "cover" }}
+              />
               <Box
                 sx={{
                   position: "absolute",
