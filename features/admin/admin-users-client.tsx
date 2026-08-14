@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Divider,
   Pagination,
   Stack,
   Tab,
@@ -53,7 +52,6 @@ import {
   faTimesCircle,
   faChevronDown,
   faSave,
-  faFilter,
 } from "@fortawesome/free-solid-svg-icons";
 import { userActions } from "@/features/admin/users";
 
@@ -669,10 +667,6 @@ export const AdminUsersClient = () => {
                             </IconButton>
                           </Stack>
 
-                          <Divider
-                            sx={{ borderColor: getBorderColor(), my: 1.5 }}
-                          />
-
                           <Stack
                             direction="row"
                             justifyContent="space-between"
@@ -889,179 +883,191 @@ export const AdminUsersClient = () => {
                         <Stack spacing={2}>
                           {/* Permission Search */}
                           {isExpanded && (
-                            <TextField
-                              placeholder="Search permissions..."
-                              value={permissionSearch}
-                              onChange={(e) => {
-                                setPermissionSearch(e.target.value);
-                                setPermissionSearchRoleId(role.id);
-                              }}
-                              size="small"
-                              fullWidth
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  borderRadius: 1,
-                                  bgcolor: getInputBackground(),
-                                  color: getTextColor(),
-                                },
-                                "& .MuiInputBase-input": {
-                                  color: getTextColor(),
-                                },
-                              }}
-                              InputProps={{
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    <FontAwesomeIcon
-                                      icon={faSearch}
-                                      style={{
-                                        color: isDarkMode
-                                          ? "rgba(255,255,255,0.5)"
-                                          : "#999",
-                                        fontSize: 14,
-                                      }}
-                                    />
-                                  </InputAdornment>
-                                ),
-                                endAdornment: permissionSearch && (
-                                  <InputAdornment position="end">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => {
-                                        setPermissionSearch("");
-                                        setPermissionSearchRoleId(null);
-                                      }}
-                                    >
+                            <Grid container spacing={2} sx={{ mb: 2 }}>
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <TextField
+                                  placeholder="Search permissions..."
+                                  value={permissionSearch}
+                                  onChange={(e) => {
+                                    setPermissionSearch(e.target.value);
+                                    setPermissionSearchRoleId(role.id);
+                                  }}
+                                  size="small"
+                                  fullWidth
+                                  sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                      borderRadius: 1,
+                                      bgcolor: getInputBackground(),
+                                      color: getTextColor(),
+                                    },
+                                    "& .MuiInputBase-input": {
+                                      color: getTextColor(),
+                                    },
+                                  }}
+                                  InputProps={{
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        <FontAwesomeIcon
+                                          icon={faSearch}
+                                          style={{
+                                            color: isDarkMode
+                                              ? "rgba(255,255,255,0.5)"
+                                              : "#999",
+                                            fontSize: 14,
+                                          }}
+                                        />
+                                      </InputAdornment>
+                                    ),
+                                    endAdornment: permissionSearch && (
+                                      <InputAdornment position="end">
+                                        <IconButton
+                                          size="small"
+                                          onClick={() => {
+                                            setPermissionSearch("");
+                                            setPermissionSearchRoleId(null);
+                                          }}
+                                        >
+                                          <FontAwesomeIcon
+                                            icon={faTimes}
+                                            size="sm"
+                                          />
+                                        </IconButton>
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                />
+                              </Grid>
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Stack
+                                  direction="row"
+                                  spacing={1.5}
+                                  alignItems="center"
+                                  sx={{
+                                    height: "100%",
+                                    flexWrap: "wrap",
+                                    p: { xs: 1, md: 0 },
+                                    bgcolor: isDarkMode
+                                      ? "rgba(255,255,255,0.03)"
+                                      : "transparent",
+                                    borderRadius: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      fontWeight: 500,
+                                      color: getSecondaryTextColor(),
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    Quick Actions:
+                                  </Typography>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={
                                       <FontAwesomeIcon
-                                        icon={faTimes}
+                                        icon={faCheckDouble}
                                         size="sm"
                                       />
-                                    </IconButton>
-                                  </InputAdornment>
-                                ),
-                              }}
-                            />
+                                    }
+                                    onClick={() =>
+                                      handleSelectAllForRole(role.id)
+                                    }
+                                    disabled={
+                                      !hasFilteredResults ||
+                                      filteredPerms.every((p) =>
+                                        currentPerms.includes(p.key),
+                                      )
+                                    }
+                                    sx={{
+                                      textTransform: "none",
+                                      borderRadius: 1,
+                                      fontSize: "0.65rem",
+                                      borderColor: getBorderColor(),
+                                      color: getTextColor(),
+                                      "&:hover": {
+                                        borderColor: getTextColor(),
+                                        bgcolor: getHoverBackgroundColor(),
+                                      },
+                                    }}
+                                  >
+                                    Select All{" "}
+                                    {permissionSearch &&
+                                      `(${filteredPerms.length})`}
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={
+                                      <FontAwesomeIcon
+                                        icon={faTimesCircle}
+                                        size="sm"
+                                      />
+                                    }
+                                    onClick={() =>
+                                      handleDeselectAllForRole(role.id)
+                                    }
+                                    disabled={
+                                      !hasFilteredResults ||
+                                      !filteredPerms.some((p) =>
+                                        currentPerms.includes(p.key),
+                                      )
+                                    }
+                                    sx={{
+                                      textTransform: "none",
+                                      borderRadius: 1,
+                                      fontSize: "0.65rem",
+                                      color: "error.main",
+                                      borderColor: "error.main",
+                                      "&:hover": {
+                                        borderColor: "error.dark",
+                                        bgcolor: isDarkMode
+                                          ? "rgba(244,67,54,0.15)"
+                                          : "error.light",
+                                      },
+                                    }}
+                                  >
+                                    Deselect All{" "}
+                                    {permissionSearch &&
+                                      `(${filteredPerms.length})`}
+                                  </Button>
+                                  <Chip
+                                    label={`${currentPerms.length} selected`}
+                                    size="small"
+                                    color={
+                                      currentPerms.length > 0
+                                        ? "primary"
+                                        : "default"
+                                    }
+                                    sx={{
+                                      fontSize: "0.55rem",
+                                      bgcolor:
+                                        isDarkMode && currentPerms.length > 0
+                                          ? "rgba(25,118,210,0.2)"
+                                          : undefined,
+                                      color:
+                                        isDarkMode && currentPerms.length > 0
+                                          ? "#90caf9"
+                                          : undefined,
+                                    }}
+                                  />
+                                  {permissionSearch && (
+                                    <Chip
+                                      label={`${filteredPerms.length} results`}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        fontSize: "0.55rem",
+                                        borderColor: getBorderColor(),
+                                        color: getSecondaryTextColor(),
+                                      }}
+                                    />
+                                  )}
+                                </Stack>
+                              </Grid>
+                            </Grid>
                           )}
-
-                          {/* Select/Deselect All Controls */}
-                          <Stack
-                            direction="row"
-                            spacing={2}
-                            alignItems="center"
-                            flexWrap="wrap"
-                            sx={{
-                              p: 1.5,
-                              bgcolor: isDarkMode
-                                ? "rgba(255,255,255,0.06)"
-                                : "#f8f6f2",
-                              borderRadius: 1,
-                              border: `1px solid ${getBorderColor()}`,
-                            }}
-                          >
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontWeight: 500,
-                                color: getSecondaryTextColor(),
-                              }}
-                            >
-                              Permissions:
-                            </Typography>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={
-                                <FontAwesomeIcon
-                                  icon={faCheckDouble}
-                                  size="sm"
-                                />
-                              }
-                              onClick={() => handleSelectAllForRole(role.id)}
-                              disabled={
-                                !hasFilteredResults ||
-                                filteredPerms.every((p) =>
-                                  currentPerms.includes(p.key),
-                                )
-                              }
-                              sx={{
-                                textTransform: "none",
-                                borderRadius: 1,
-                                fontSize: "0.7rem",
-                                borderColor: getBorderColor(),
-                                color: getTextColor(),
-                                "&:hover": {
-                                  borderColor: getTextColor(),
-                                  bgcolor: getHoverBackgroundColor(),
-                                },
-                              }}
-                            >
-                              Select All{" "}
-                              {permissionSearch && `(${filteredPerms.length})`}
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={
-                                <FontAwesomeIcon
-                                  icon={faTimesCircle}
-                                  size="sm"
-                                />
-                              }
-                              onClick={() => handleDeselectAllForRole(role.id)}
-                              disabled={
-                                !hasFilteredResults ||
-                                !filteredPerms.some((p) =>
-                                  currentPerms.includes(p.key),
-                                )
-                              }
-                              sx={{
-                                textTransform: "none",
-                                borderRadius: 1,
-                                fontSize: "0.7rem",
-                                color: "error.main",
-                                borderColor: "error.main",
-                                "&:hover": {
-                                  borderColor: "error.dark",
-                                  bgcolor: isDarkMode
-                                    ? "rgba(244,67,54,0.15)"
-                                    : "error.light",
-                                },
-                              }}
-                            >
-                              Deselect All{" "}
-                              {permissionSearch && `(${filteredPerms.length})`}
-                            </Button>
-                            <Chip
-                              label={`${currentPerms.length} selected`}
-                              size="small"
-                              color={
-                                currentPerms.length > 0 ? "primary" : "default"
-                              }
-                              sx={{
-                                fontSize: "0.6rem",
-                                ml: "auto",
-                                bgcolor:
-                                  isDarkMode && currentPerms.length > 0
-                                    ? "rgba(25,118,210,0.2)"
-                                    : undefined,
-                                color:
-                                  isDarkMode && currentPerms.length > 0
-                                    ? "#90caf9"
-                                    : undefined,
-                              }}
-                            />
-                            {permissionSearch && (
-                              <Chip
-                                label={`${filteredPerms.length} results`}
-                                size="small"
-                                variant="outlined"
-                                sx={{
-                                  fontSize: "0.6rem",
-                                  borderColor: getBorderColor(),
-                                  color: getSecondaryTextColor(),
-                                }}
-                              />
-                            )}
-                          </Stack>
 
                           {/* Permissions List */}
                           <List
