@@ -19,7 +19,14 @@ export const metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [products, featuredRows, bestSellerRows, newArrivalRows, brand, homepage] = await Promise.all([
+  const [
+    products,
+    featuredRows,
+    bestSellerRows,
+    newArrivalRows,
+    brand,
+    homepage,
+  ] = await Promise.all([
     getProducts({ page: 1, pageSize: 12 }),
     getProducts({ featured: true, page: 1, pageSize: 3 }),
     getProducts({ bestSeller: true, page: 1, pageSize: 3 }),
@@ -32,40 +39,47 @@ export default async function HomePage() {
   const homepageData = (homepage as Record<string, unknown> | null) ?? null;
   const heroTitle = "Zuriè";
   const heroSubtitle = "The Atelier Collection";
-  const heroDescription = "The architecture of elegance, handcrafted for the modern woman.";
+  const heroDescription =
+    "The architecture of elegance, handcrafted for the modern woman.";
   const heroButtonText = "Discover The Collection";
   const heroButtonLink = String(homepageData?.heroButtonLink ?? "/shop");
   const heroImageFromCms =
-    typeof homepageData?.heroImage === "string" ? homepageData.heroImage : undefined;
+    typeof homepageData?.heroImage === "string"
+      ? homepageData.heroImage
+      : undefined;
   const heroActive = Boolean(homepageData?.heroActive ?? true);
 
   const bannerActive = Boolean(homepageData?.bannerActive ?? false);
   const bannerTitle = String(homepageData?.bannerTitle ?? "");
   const bannerDescription = String(homepageData?.bannerDescription ?? "");
   const bannerImage =
-    typeof homepageData?.bannerImage === "string" ? homepageData.bannerImage : "";
+    typeof homepageData?.bannerImage === "string"
+      ? homepageData.bannerImage
+      : "";
   const bannerCtaText = String(homepageData?.bannerCtaText ?? "Learn More");
   const bannerCtaLink = String(homepageData?.bannerCtaLink ?? "/shop");
   const pickImage = (...sources: Array<string | undefined>) =>
-    sources.find((source) => typeof source === "string" && source.trim().length > 0) ??
-    "/images/products/fallback.png";
-  const featured = featuredRows.length > 0 ? featuredRows.slice(0, 3) : products.slice(0, 3);
-  const bestSellers = bestSellerRows.length > 0 ? bestSellerRows.slice(0, 3) : products.slice(0, 3);
-  const newArrivals = newArrivalRows.length > 0 ? newArrivalRows.slice(0, 3) : products.slice(0, 3);
-  const categoryImageMap: Record<string, string> = {
-    handbags: "/images/products/aurelia-1.png",
-    "tote-bags": "/images/products/serene-1.png",
-    "shoulder-bags": "/images/products/celeste-1.png",
-    "crossbody-bags": "/images/products/luna-2.png",
-    wallets: "/images/products/serene-1.png",
-    backpacks: "/images/products/nova-1.png",
-  };
-  const categoryCards = categories.slice(0, 4)
+    sources.find(
+      (source) => typeof source === "string" && source.trim().length > 0,
+    ) ?? "/images/products/fallback.png";
+  const featured =
+    featuredRows.length > 0 ? featuredRows.slice(0, 3) : products.slice(0, 3);
+  const bestSellers =
+    bestSellerRows.length > 0
+      ? bestSellerRows.slice(0, 3)
+      : products.slice(0, 3);
+  const newArrivals =
+    newArrivalRows.length > 0
+      ? newArrivalRows.slice(0, 3)
+      : products.slice(0, 3);
+
+  const categoryCards = categories
+    .slice(0, 4)
     .map((category) => {
       return {
         label: category.name,
         href: `/shop?category=${encodeURIComponent(category.slug)}`,
-        image: pickImage(categoryImageMap[category.slug]),
+        image: category.imageUrl,
       };
     })
     .filter(Boolean) as Array<{ label: string; href: string; image: string }>;
@@ -83,106 +97,106 @@ export default async function HomePage() {
   return (
     <Stack spacing={{ xs: 6.5, md: 10 }}>
       {heroActive ? (
-      <Box
-        sx={{
-          position: "relative",
-          minHeight: { xs: "68vh", sm: "74vh", md: "86vh" },
-          width: "100%",
-          marginTop: { xs: -3, md: -6 },
-          overflow: "hidden",
-        }}
-      >
-        <Image
-          src={heroImage}
-          alt="Zuriè luxury handbag editorial"
-          fill
-          priority
-          sizes="100vw"
-          style={{ objectFit: "cover" }}
-        />
         <Box
           sx={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(180deg, rgba(16,14,12,0.28) 0%, rgba(16,14,12,0.54) 100%)",
-          }}
-        />
-
-        <Container
-          maxWidth="lg"
-          sx={{
             position: "relative",
-            zIndex: 2,
             minHeight: { xs: "68vh", sm: "74vh", md: "86vh" },
-            display: "grid",
-            placeItems: "center",
-            textAlign: "center",
-            px: 2.5,
+            width: "100%",
+            marginTop: { xs: -3, md: -6 },
+            overflow: "hidden",
           }}
         >
-          <Box maxWidth={780}>
-            <Typography
-              sx={{
-                textTransform: "uppercase",
-                letterSpacing: "0.4em",
-                fontSize: { xs: "0.62rem", md: "0.72rem" },
-                color: "#f8efe1",
-              }}
-            >
-              {heroSubtitle}
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1.5,
-                fontFamily: "var(--font-playfair), serif",
-                fontSize: { xs: "3rem", sm: "4.4rem", md: "7.2rem" },
-                lineHeight: 0.95,
-                color: "#fff",
-              }}
-            >
-              {heroTitle}
-            </Typography>
-            <Typography
-              sx={{
-                mt: 3,
-                mb: 4,
-                color: "#efe8dc",
-                fontFamily: "var(--font-playfair), serif",
-                fontStyle: "italic",
-                fontSize: { xs: "1.05rem", sm: "1.3rem", md: "2rem" },
-              }}
-            >
-              {heroDescription}
-            </Typography>
-            <Button
-              component={Link}
-              href={heroButtonLink}
-              variant="outlined"
-              size="large"
-              sx={{
-                color: "#fff",
-                borderColor: "rgba(255,255,255,0.48)",
-                px: { xs: 3.2, md: 4.8 },
-                py: 1.15,
-                textTransform: "uppercase",
-                letterSpacing: "0.22em",
-                fontSize: { xs: "0.68rem", md: "0.74rem" },
-                borderRadius: 0,
-                "&:hover": {
-                  borderColor: "#fff",
-                  backgroundColor: "rgba(255,255,255,0.06)",
-                },
-              }}
-            >
-              {heroButtonText}
-              <Box component="span" sx={{ ml: 1.2 }}>
-                <FontAwesomeIcon icon={faArrowRight} fontSize={12} />
-              </Box>
-            </Button>
-          </Box>
-        </Container>
-      </Box>
+          <Image
+            src={heroImage}
+            alt="Zuriè luxury handbag editorial"
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: "cover" }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(16,14,12,0.28) 0%, rgba(16,14,12,0.54) 100%)",
+            }}
+          />
+
+          <Container
+            maxWidth="lg"
+            sx={{
+              position: "relative",
+              zIndex: 2,
+              minHeight: { xs: "68vh", sm: "74vh", md: "86vh" },
+              display: "grid",
+              placeItems: "center",
+              textAlign: "center",
+              px: 2.5,
+            }}
+          >
+            <Box maxWidth={780}>
+              <Typography
+                sx={{
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4em",
+                  fontSize: { xs: "0.62rem", md: "0.72rem" },
+                  color: "#f8efe1",
+                }}
+              >
+                {heroSubtitle}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1.5,
+                  fontFamily: "var(--font-playfair), serif",
+                  fontSize: { xs: "3rem", sm: "4.4rem", md: "7.2rem" },
+                  lineHeight: 0.95,
+                  color: "#fff",
+                }}
+              >
+                {heroTitle}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 3,
+                  mb: 4,
+                  color: "#efe8dc",
+                  fontFamily: "var(--font-playfair), serif",
+                  fontStyle: "italic",
+                  fontSize: { xs: "1.05rem", sm: "1.3rem", md: "2rem" },
+                }}
+              >
+                {heroDescription}
+              </Typography>
+              <Button
+                component={Link}
+                href={heroButtonLink}
+                variant="outlined"
+                size="large"
+                sx={{
+                  color: "#fff",
+                  borderColor: "rgba(255,255,255,0.48)",
+                  px: { xs: 3.2, md: 4.8 },
+                  py: 1.15,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.22em",
+                  fontSize: { xs: "0.68rem", md: "0.74rem" },
+                  borderRadius: 0,
+                  "&:hover": {
+                    borderColor: "#fff",
+                    backgroundColor: "rgba(255,255,255,0.06)",
+                  },
+                }}
+              >
+                {heroButtonText}
+                <Box component="span" sx={{ ml: 1.2 }}>
+                  <FontAwesomeIcon icon={faArrowRight} fontSize={12} />
+                </Box>
+              </Button>
+            </Box>
+          </Container>
+        </Box>
       ) : null}
 
       <Box
@@ -335,9 +349,11 @@ export default async function HomePage() {
           >
             <Grid container spacing={{ xs: 2.5, md: 4 }} alignItems="stretch">
               <Grid size={{ xs: 12, md: 6 }}>
-                <Box sx={{ position: "relative", height: { xs: 360, md: 700 } }}>
+                <Box
+                  sx={{ position: "relative", height: { xs: 360, md: 700 } }}
+                >
                   <Image
-                    src={'/images/products/new2.webp'}
+                    src={"/images/products/new2.webp"}
                     alt="Zuriè atelier"
                     fill
                     sizes="(max-width: 900px) 100vw, 48vw"
@@ -478,7 +494,8 @@ export default async function HomePage() {
                 sx={{
                   position: "absolute",
                   inset: 0,
-                  background: "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.62))",
+                  background:
+                    "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.62))",
                   color: "#fff",
                   display: "grid",
                   placeItems: "center",
@@ -487,13 +504,23 @@ export default async function HomePage() {
                 }}
               >
                 <Box>
-                  <Typography variant="h4" sx={{ fontFamily: "var(--font-playfair), serif" }}>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontFamily: "var(--font-playfair), serif" }}
+                  >
                     {bannerTitle}
                   </Typography>
-                  <Typography sx={{ mt: 1.2, mb: 2.2, color: "rgba(255,255,255,0.88)" }}>
+                  <Typography
+                    sx={{ mt: 1.2, mb: 2.2, color: "rgba(255,255,255,0.88)" }}
+                  >
                     {bannerDescription}
                   </Typography>
-                  <Button component={Link} href={bannerCtaLink} variant="outlined" color="inherit">
+                  <Button
+                    component={Link}
+                    href={bannerCtaLink}
+                    variant="outlined"
+                    color="inherit"
+                  >
                     {bannerCtaText}
                   </Button>
                 </Box>

@@ -13,6 +13,11 @@ import {
   Box,
   Button,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import React, { useState } from "react";
 import Image from "next/image";
@@ -27,6 +32,7 @@ import {
   faStar,
   faFire,
   faCircle,
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
@@ -58,6 +64,19 @@ export const ProductsTable = ({
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
     null,
   );
+
+  // Dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<AdminProduct | null>(
+    null,
+  );
+  const [deleteImageDialogOpen, setDeleteImageDialogOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<{
+    productId: string;
+    imageId: string;
+    imageUrl: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const categoryLabelByValue = new Map(
     categoryOptions.map((item) => [item.value, item.label]),
@@ -139,568 +158,754 @@ export const ProductsTable = ({
     }
   };
 
-  return (
-    <Box sx={{ width: "100%" }} mt={1}>
-      {products.map((item) => {
-        const categoryKey = String(
-          (item as AdminProduct & { categoryId?: string }).categoryId ??
-            item.category_id ??
-            "",
-        );
-        const categoryLabel =
-          categoryLabelByValue.get(categoryKey) ?? "Uncategorized";
-        const imageUrls = getProductImageUrls(item);
-        const imageEntries = getProductImageEntries(item);
-        const productId = String(item.id);
-        const isExpanded = expandedProductId === productId;
+  // Handle delete product click
+  const handleDeleteClick = (product: AdminProduct) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
 
-        return (
-          <Accordion
-            key={item.id}
-            expanded={isExpanded}
-            square
-            sx={{
-              borderRadius: 2,
-              borderTop: 2,
-              borderColor: getBorderColor(),
-              mb: 1.5,
-              bgcolor: isDarkMode
-                ? "rgba(255,255,255,0.03)"
-                : "background.paper",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                bgcolor: isDarkMode ? "rgba(255,255,255,0.06)" : "action.hover",
-              },
-              "&.Mui-expanded": {
-                bgcolor: isDarkMode
-                  ? "rgba(255,255,255,0.05)"
-                  : "background.paper",
-              },
-            }}
-            onChange={() =>
-              setExpandedProductId((current) =>
-                current === productId ? null : productId,
-              )
-            }
-          >
-            <AccordionSummary
-              expandIcon={isExpanded ? <RemoveIcon /> : <AddIcon />}
+  // Handle confirm delete product
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDelete(String(productToDelete.id));
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete product:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle delete image click
+  const handleDeleteImageClick = (
+    productId: string,
+    imageId: string,
+    imageUrl: string,
+  ) => {
+    setImageToDelete({ productId, imageId, imageUrl });
+    setDeleteImageDialogOpen(true);
+  };
+
+  // Handle confirm delete image
+  const handleConfirmDeleteImage = async () => {
+    if (!imageToDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteImage(imageToDelete.productId, imageToDelete.imageId);
+      setDeleteImageDialogOpen(false);
+      setImageToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete image:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <Box sx={{ width: "100%" }} mt={1}>
+        {products.map((item) => {
+          const categoryKey = String(
+            (item as AdminProduct & { categoryId?: string }).categoryId ??
+              item.category_id ??
+              "",
+          );
+          const categoryLabel =
+            categoryLabelByValue.get(categoryKey) ?? "Uncategorized";
+          const imageUrls = getProductImageUrls(item);
+          const imageEntries = getProductImageEntries(item);
+          const productId = String(item.id);
+          const isExpanded = expandedProductId === productId;
+
+          return (
+            <Accordion
+              key={item.id}
+              expanded={isExpanded}
+              square
               sx={{
-                px: 3,
-                py: 1,
-                flexDirection: "row-reverse",
-                ".MuiAccordionSummary-content": {
-                  alignItems: "center",
-                  "&.Mui-expanded": {
-                    margin: "12px 0",
-                  },
+                borderRadius: 2,
+                borderTop: 2,
+                borderColor: getBorderColor(),
+                mb: 1.5,
+                bgcolor: isDarkMode
+                  ? "rgba(255,255,255,0.03)"
+                  : "background.paper",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  bgcolor: isDarkMode
+                    ? "rgba(255,255,255,0.06)"
+                    : "action.hover",
                 },
-                ".MuiAccordionSummary-expandIconWrapper": {
-                  borderRadius: 1,
-                  border: 1,
-                  borderColor: getBorderColor(),
-                  color: isDarkMode
-                    ? "rgba(255,255,255,0.6)"
-                    : "text.secondary",
-                  transform: "none",
-                  mr: 1,
-                  transition: "all 0.3s ease",
-                  "&.Mui-expanded": {
-                    transform: "none",
-                    color: isDarkMode ? "#ffffff" : "primary.main",
-                    borderColor: isDarkMode ? "#ffffff" : "primary.main",
-                  },
-                  "& svg": {
-                    fontSize: "1.25rem",
-                  },
+                "&.Mui-expanded": {
+                  bgcolor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "background.paper",
                 },
               }}
+              onChange={() =>
+                setExpandedProductId((current) =>
+                  current === productId ? null : productId,
+                )
+              }
             >
-              <Grid
-                container
-                alignItems="center"
-                spacing={1}
+              <AccordionSummary
+                expandIcon={isExpanded ? <RemoveIcon /> : <AddIcon />}
                 sx={{
-                  cursor: "pointer",
-                  width: "100%",
-                  "&:hover": {
-                    bgcolor: isDarkMode
-                      ? "rgba(255,255,255,0.03)"
-                      : "action.hover",
+                  px: 3,
+                  py: 1,
+                  flexDirection: "row-reverse",
+                  ".MuiAccordionSummary-content": {
+                    alignItems: "center",
+                    "&.Mui-expanded": {
+                      margin: "12px 0",
+                    },
+                  },
+                  ".MuiAccordionSummary-expandIconWrapper": {
+                    borderRadius: 1,
+                    border: 1,
+                    borderColor: getBorderColor(),
+                    color: isDarkMode
+                      ? "rgba(255,255,255,0.6)"
+                      : "text.secondary",
+                    transform: "none",
+                    mr: 1,
+                    transition: "all 0.3s ease",
+                    "&.Mui-expanded": {
+                      transform: "none",
+                      color: isDarkMode ? "#ffffff" : "primary.main",
+                      borderColor: isDarkMode ? "#ffffff" : "primary.main",
+                    },
+                    "& svg": {
+                      fontSize: "1.25rem",
+                    },
                   },
                 }}
-                paddingLeft={2}
-                paddingRight={2}
               >
-                {/* Product Image */}
-                <Grid size={{ xs: 4, md: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      overflow: "hidden",
-                      bgcolor: getBackgroundColor(),
-                      border: `1px solid ${getBorderColor()}`,
-                      position: "relative",
-                    }}
-                  >
-                    <Image
-                      src={imageUrls[0] ?? "/images/products/fallback.png"}
-                      alt={item.name}
-                      fill
-                      sizes="48px"
-                      style={{ objectFit: "cover" }}
-                      priority={false}
-                    />
-                  </Box>
-                </Grid>
-
-                {/* Product Name */}
-                <Grid size={{ xs: 8, md: 2.5 }}>
-                  <Tooltip title="Product Name">
-                    <Typography
-                      variant="h5"
-                      fontSize={14}
-                      lineHeight={1.25}
-                      mb={0}
-                      noWrap
-                      fontWeight={600}
-                      color={getTextColor()}
-                    >
-                      {item.name}
-                    </Typography>
-                  </Tooltip>
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    alignItems="center"
-                    sx={{ mt: 0.3 }}
-                  >
-                    <Typography
-                      variant="caption"
-                      color={getSecondaryTextColor()}
-                      sx={{ fontSize: "0.6rem" }}
-                    >
-                      {item.slug}
-                    </Typography>
-                    <Chip
-                      label={item.status ?? "draft"}
-                      size="small"
-                      color={getStatusColor(item.status ?? "draft")}
+                <Grid
+                  container
+                  alignItems="center"
+                  spacing={1}
+                  sx={{
+                    cursor: "pointer",
+                    width: "100%",
+                    "&:hover": {
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.03)"
+                        : "action.hover",
+                    },
+                  }}
+                  paddingLeft={2}
+                  paddingRight={2}
+                >
+                  {/* Product Image */}
+                  <Grid size={{ xs: 4, md: 1.5 }}>
+                    <Box
                       sx={{
-                        fontSize: "0.5rem",
-                        height: 16,
-                        fontWeight: 500,
-                        color: isDarkMode ? "#ffffff" : "inherit",
-                      }}
-                    />
-                  </Stack>
-                </Grid>
-
-                {/* Category */}
-                <Grid size={{ xs: 6, md: 2 }}>
-                  <Tooltip title="Category">
-                    <Chip
-                      label={categoryLabel}
-                      size="small"
-                      sx={{
-                        fontSize: "0.6rem",
-                        bgcolor: getChipBackgroundColor(),
-                        color: getChipTextColor(),
-                        fontWeight: 500,
-                        height: 22,
-                      }}
-                    />
-                  </Tooltip>
-                </Grid>
-
-                {/* Price */}
-                <Grid size={{ xs: 6, md: 2 }}>
-                  <Tooltip title="Price">
-                    <Typography
-                      fontWeight={600}
-                      sx={{ fontSize: "0.85rem", color: getPriceColor() }}
-                    >
-                      {formatBaseCurrencyInCurrency(
-                        item.price,
-                        currency,
-                        rates,
-                      )}
-                    </Typography>
-                  </Tooltip>
-                  {(item.salePrice ??
-                    item.sale_price ??
-                    item.compareAtPrice ??
-                    item.compare_at_price) && (
-                    <Typography
-                      component="span"
-                      sx={{
-                        ml: 0.5,
-                        fontSize: "0.6rem",
-                        color: getSecondaryTextColor(),
-                        textDecoration: "line-through",
+                        width: 48,
+                        height: 48,
+                        borderRadius: 1.5,
+                        overflow: "hidden",
+                        bgcolor: getBackgroundColor(),
+                        border: `1px solid ${getBorderColor()}`,
+                        position: "relative",
                       }}
                     >
-                      {formatBaseCurrencyInCurrency(
-                        item.salePrice ??
-                          item.sale_price ??
-                          item.compareAtPrice ??
-                          item.compare_at_price ??
-                          0,
-                        currency,
-                        rates,
-                      )}
-                    </Typography>
-                  )}
-                </Grid>
-
-                {/* Stock */}
-                <Grid size={{ xs: 6, md: 2 }}>
-                  <Tooltip title="Stock Status">
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      <Chip
-                        label={getStockLabel(item)}
-                        size="small"
-                        color={getStockColor(item)}
-                        sx={{
-                          fontSize: "0.5rem",
-                          height: 18,
-                          fontWeight: 500,
-                          color: isDarkMode ? "#ffffff" : "inherit",
-                        }}
+                      <Image
+                        src={imageUrls[0] ?? "/images/products/fallback.png"}
+                        alt={item.name}
+                        fill
+                        sizes="48px"
+                        style={{ objectFit: "cover" }}
+                        priority={false}
                       />
+                    </Box>
+                  </Grid>
+
+                  {/* Product Name */}
+                  <Grid size={{ xs: 8, md: 2.5 }}>
+                    <Tooltip title="Product Name">
+                      <Typography
+                        variant="h5"
+                        fontSize={14}
+                        lineHeight={1.25}
+                        mb={0}
+                        noWrap
+                        fontWeight={600}
+                        color={getTextColor()}
+                      >
+                        {item.name}
+                      </Typography>
+                    </Tooltip>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      alignItems="center"
+                      sx={{ mt: 0.3 }}
+                    >
                       <Typography
                         variant="caption"
                         color={getSecondaryTextColor()}
                         sx={{ fontSize: "0.6rem" }}
                       >
-                        Qty: {getStockQuantity(item)}
+                        {item.slug}
                       </Typography>
+                      <Chip
+                        label={item.status ?? "draft"}
+                        size="small"
+                        color={getStatusColor(item.status ?? "draft")}
+                        sx={{
+                          fontSize: "0.5rem",
+                          height: 16,
+                          fontWeight: 500,
+                        }}
+                      />
                     </Stack>
-                  </Tooltip>
-                </Grid>
+                  </Grid>
 
-                {/* Flags */}
-                <Grid size={{ xs: 6, md: 1.5 }}>
-                  <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                    {item.featured && (
+                  {/* Category */}
+                  <Grid size={{ xs: 6, md: 2 }}>
+                    <Tooltip title="Category">
                       <Chip
-                        icon={<FontAwesomeIcon icon={faStar} size="xs" />}
-                        label="Featured"
+                        label={categoryLabel}
                         size="small"
                         sx={{
-                          fontSize: "0.45rem",
-                          height: 18,
-                          bgcolor: isDarkMode
-                            ? "rgba(255,152,0,0.2)"
-                            : "#fff3e0",
-                          color: isDarkMode ? "#ffb74d" : "#e65100",
-                          fontWeight: 500,
-                        }}
-                      />
-                    )}
-                    {item.best_seller && (
-                      <Chip
-                        icon={<FontAwesomeIcon icon={faFire} size="xs" />}
-                        label="Best Seller"
-                        size="small"
-                        sx={{
-                          fontSize: "0.45rem",
-                          height: 18,
-                          bgcolor: isDarkMode
-                            ? "rgba(244,67,54,0.2)"
-                            : "#fce4ec",
-                          color: isDarkMode ? "#ef9a9a" : "#c62828",
-                          fontWeight: 500,
-                        }}
-                      />
-                    )}
-                    {item.new_arrival && (
-                      <Chip
-                        icon={<FontAwesomeIcon icon={faCircle} size="xs" />}
-                        label="New"
-                        size="small"
-                        sx={{
-                          fontSize: "0.45rem",
-                          height: 18,
-                          bgcolor: isDarkMode
-                            ? "rgba(76,175,80,0.2)"
-                            : "#e8f5e9",
-                          color: isDarkMode ? "#81c784" : "#2e7d32",
-                          fontWeight: 500,
-                        }}
-                      />
-                    )}
-                  </Stack>
-                </Grid>
-              </Grid>
-              <Divider sx={{ borderColor: getBorderColor() }} />
-            </AccordionSummary>
-
-            {/* Expanded Section - Actions and Images */}
-            <AccordionDetails
-              sx={{
-                backgroundColor: isDarkMode
-                  ? "rgba(255,255,255,0.02)"
-                  : "background.paper",
-                marginBottom: 3,
-                px: 3,
-                py: 2,
-              }}
-            >
-              <Grid container spacing={2}>
-                {/* Actions Row - Top Right */}
-                <Grid size={{ xs: 12 }}>
-                  <Stack
-                    direction="row"
-                    justifyContent="flex-end"
-                    alignItems="center"
-                    spacing={1.5}
-                    sx={{ mb: 2 }}
-                  >
-                    <Tooltip title="Edit Product">
-                      <Box
-                        component="span"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(productId);
-                        }}
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          width: 36,
-                          height: 36,
-                          borderRadius: 1.5,
-                          color: getIconColor(),
-                          cursor: "pointer",
-                          border: `1px solid ${getBorderColor()}`,
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            bgcolor: isDarkMode
-                              ? "rgba(255,255,255,0.08)"
-                              : "#f0ebe3",
-                            color: getHoverIconColor(),
-                            borderColor: getHoverIconColor(),
-                          },
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faPencil} size="sm" />
-                      </Box>
-                    </Tooltip>
-                    <Tooltip title="Duplicate Product">
-                      <Box
-                        component="span"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDuplicate(productId);
-                        }}
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          width: 36,
-                          height: 36,
-                          borderRadius: 1.5,
-                          color: getIconColor(),
-                          cursor: "pointer",
-                          border: `1px solid ${getBorderColor()}`,
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            bgcolor: isDarkMode
-                              ? "rgba(255,255,255,0.08)"
-                              : "#f0ebe3",
-                            color: getHoverIconColor(),
-                            borderColor: getHoverIconColor(),
-                          },
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faClone} size="sm" />
-                      </Box>
-                    </Tooltip>
-                    <Tooltip title="Delete Product">
-                      <Box
-                        component="span"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(productId);
-                        }}
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          width: 36,
-                          height: 36,
-                          borderRadius: 1.5,
-                          color: getIconColor(),
-                          cursor: "pointer",
-                          border: `1px solid ${getBorderColor()}`,
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            bgcolor: isDarkMode
-                              ? "rgba(244,67,54,0.15)"
-                              : "#fce4ec",
-                            color: "#d32f2f",
-                            borderColor: "#d32f2f",
-                          },
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faTrash} size="sm" />
-                      </Box>
-                    </Tooltip>
-                  </Stack>
-                </Grid>
-
-                {/* Images Section */}
-                <Grid size={{ xs: 12 }}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ mb: 2 }}
-                  >
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight={600}
-                        sx={{ color: getTextColor() }}
-                      >
-                        Images
-                      </Typography>
-                      <Chip
-                        label={`${imageEntries.length} images`}
-                        size="small"
-                        sx={{
+                          fontSize: "0.6rem",
                           bgcolor: getChipBackgroundColor(),
                           color: getChipTextColor(),
-                          fontSize: "0.6rem",
+                          fontWeight: 500,
+                          height: 22,
                         }}
                       />
-                    </Stack>
-                    <Button
-                      component="label"
-                      variant="outlined"
-                      size="small"
-                      startIcon={<FontAwesomeIcon icon={faImage} size="sm" />}
-                      sx={{
-                        borderRadius: 2,
-                        textTransform: "none",
-                        borderColor: getBorderColor(),
-                        color: getTextColor(),
-                        "&:hover": {
-                          bgcolor: isDarkMode
-                            ? "rgba(255,255,255,0.05)"
-                            : "#f0ebe3",
-                          borderColor: getTextColor(),
-                        },
-                      }}
-                    >
-                      Upload Images
-                      <input
-                        hidden
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(event) => {
-                          const files = Array.from(event.target.files ?? []);
-                          if (!files.length) return;
-                          void onUploadImages(productId, files);
-                          event.target.value = "";
-                        }}
-                      />
-                    </Button>
-                  </Stack>
-                </Grid>
+                    </Tooltip>
+                  </Grid>
 
-                <Grid size={{ xs: 12 }}>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-                    {imageEntries.length ? (
-                      imageEntries.map((imageEntry, index) => (
-                        <Box
-                          key={`${imageEntry.id || imageEntry.url}-${index}`}
-                          sx={{
-                            width: 100,
-                            height: 100,
-                            borderRadius: 1.5,
-                            overflow: "hidden",
-                            border: `1px solid ${getBorderColor()}`,
-                            position: "relative",
-                            bgcolor: isDarkMode
-                              ? "rgba(255,255,255,0.05)"
-                              : "#ffffff",
-                          }}
-                        >
-                          <Image
-                            src={imageEntry.url}
-                            alt={`${item.name} image ${index + 1}`}
-                            fill
-                            sizes="100px"
-                            style={{ objectFit: "cover" }}
-                            priority={false}
-                          />
-                          {imageEntry.id && (
-                            <Tooltip title="Remove Image">
-                              <Box
-                                component="span"
-                                onClick={() =>
-                                  void onDeleteImage(productId, imageEntry.id)
-                                }
-                                sx={{
-                                  position: "absolute",
-                                  top: 4,
-                                  right: 4,
-                                  bgcolor: isDarkMode
-                                    ? "rgba(0,0,0,0.7)"
-                                    : "rgba(0,0,0,0.55)",
-                                  color: "common.white",
-                                  width: 24,
-                                  height: 24,
-                                  borderRadius: 1,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s ease",
-                                  "&:hover": {
-                                    bgcolor: "rgba(211, 47, 47, 0.85)",
-                                  },
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faTrash} size="xs" />
-                              </Box>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      ))
-                    ) : (
-                      <Box
+                  {/* Price */}
+                  <Grid size={{ xs: 6, md: 2 }}>
+                    <Tooltip title="Price">
+                      <Typography
+                        fontWeight={600}
+                        sx={{ fontSize: "0.85rem", color: getPriceColor() }}
+                      >
+                        {formatBaseCurrencyInCurrency(
+                          item.price,
+                          currency,
+                          rates,
+                        )}
+                      </Typography>
+                    </Tooltip>
+                    {(item.salePrice ??
+                      item.sale_price ??
+                      item.compareAtPrice ??
+                      item.compare_at_price) && (
+                      <Typography
+                        component="span"
                         sx={{
-                          py: 3,
-                          px: 4,
-                          border: `2px dashed ${getBorderColor()}`,
-                          borderRadius: 2,
-                          textAlign: "center",
-                          width: "100%",
+                          ml: 0.5,
+                          fontSize: "0.6rem",
                           color: getSecondaryTextColor(),
+                          textDecoration: "line-through",
                         }}
                       >
-                        <Typography
-                          variant="body2"
-                          color={getSecondaryTextColor()}
-                        >
-                          No images attached yet. Click &quot;Upload
-                          Images&quot; to add product images.
-                        </Typography>
-                      </Box>
+                        {formatBaseCurrencyInCurrency(
+                          item.salePrice ??
+                            item.sale_price ??
+                            item.compareAtPrice ??
+                            item.compare_at_price ??
+                            0,
+                          currency,
+                          rates,
+                        )}
+                      </Typography>
                     )}
-                  </Box>
+                  </Grid>
+
+                  {/* Stock */}
+                  <Grid size={{ xs: 6, md: 2 }}>
+                    <Tooltip title="Stock Status">
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Chip
+                          label={getStockLabel(item)}
+                          size="small"
+                          color={getStockColor(item)}
+                          sx={{
+                            fontSize: "0.5rem",
+                            height: 18,
+                            fontWeight: 500,
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          color={getSecondaryTextColor()}
+                          sx={{ fontSize: "0.6rem" }}
+                        >
+                          Qty: {getStockQuantity(item)}
+                        </Typography>
+                      </Stack>
+                    </Tooltip>
+                  </Grid>
+
+                  {/* Flags */}
+                  <Grid size={{ xs: 6, md: 1.5 }}>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                      {item.featured && (
+                        <Chip
+                          icon={<FontAwesomeIcon icon={faStar} size="xs" />}
+                          label="Featured"
+                          size="small"
+                          sx={{
+                            fontSize: "0.45rem",
+                            height: 18,
+                            bgcolor: isDarkMode
+                              ? "rgba(255,152,0,0.2)"
+                              : "#fff3e0",
+                            fontWeight: 500,
+                          }}
+                        />
+                      )}
+                      {item.best_seller && (
+                        <Chip
+                          icon={<FontAwesomeIcon icon={faFire} size="xs" />}
+                          label="Best Seller"
+                          size="small"
+                          sx={{
+                            fontSize: "0.45rem",
+                            height: 18,
+                            bgcolor: isDarkMode
+                              ? "rgba(244,67,54,0.2)"
+                              : "#fce4ec",
+                            fontWeight: 500,
+                          }}
+                        />
+                      )}
+                      {item.new_arrival && (
+                        <Chip
+                          icon={<FontAwesomeIcon icon={faCircle} size="xs" />}
+                          label="New"
+                          size="small"
+                          sx={{
+                            fontSize: "0.45rem",
+                            height: 18,
+                            bgcolor: isDarkMode
+                              ? "rgba(76,175,80,0.2)"
+                              : "#e8f5e9",
+                            fontWeight: 500,
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
-    </Box>
+                <Divider sx={{ borderColor: getBorderColor() }} />
+              </AccordionSummary>
+
+              {/* Expanded Section - Actions and Images */}
+              <AccordionDetails
+                sx={{
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.02)"
+                    : "background.paper",
+                  marginBottom: 3,
+                  px: 3,
+                  py: 2,
+                }}
+              >
+                <Grid container spacing={2}>
+                  {/* Actions Row - Top Right */}
+                  <Grid size={{ xs: 12 }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="flex-end"
+                      alignItems="center"
+                      spacing={1.5}
+                      sx={{ mb: 2 }}
+                    >
+                      <Tooltip title="Edit Product">
+                        <Box
+                          component="span"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(String(productId));
+                          }}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1.5,
+                            color: getIconColor(),
+                            cursor: "pointer",
+                            border: `1px solid ${getBorderColor()}`,
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              bgcolor: isDarkMode
+                                ? "rgba(255,255,255,0.08)"
+                                : "#f0ebe3",
+                              color: getHoverIconColor(),
+                              borderColor: getHoverIconColor(),
+                            },
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faPencil} size="sm" />
+                        </Box>
+                      </Tooltip>
+                      <Tooltip title="Duplicate Product">
+                        <Box
+                          component="span"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDuplicate(String(productId));
+                          }}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1.5,
+                            color: getIconColor(),
+                            cursor: "pointer",
+                            border: `1px solid ${getBorderColor()}`,
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              bgcolor: isDarkMode
+                                ? "rgba(255,255,255,0.08)"
+                                : "#f0ebe3",
+                              color: getHoverIconColor(),
+                              borderColor: getHoverIconColor(),
+                            },
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faClone} size="sm" />
+                        </Box>
+                      </Tooltip>
+                      <Tooltip title="Delete Product">
+                        <Box
+                          component="span"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(item);
+                          }}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1.5,
+                            color: getIconColor(),
+                            cursor: "pointer",
+                            border: `1px solid ${getBorderColor()}`,
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              bgcolor: isDarkMode
+                                ? "rgba(244,67,54,0.15)"
+                                : "#fce4ec",
+                              color: "#d32f2f",
+                              borderColor: "#d32f2f",
+                            },
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faTrash} size="sm" />
+                        </Box>
+                      </Tooltip>
+                    </Stack>
+                  </Grid>
+
+                  {/* Images Section */}
+                  <Grid size={{ xs: 12 }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ mb: 2 }}
+                    >
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={600}
+                          sx={{ color: getTextColor() }}
+                        >
+                          Images
+                        </Typography>
+                        <Chip
+                          label={`${imageEntries.length} images`}
+                          size="small"
+                          sx={{
+                            bgcolor: getChipBackgroundColor(),
+                            color: getChipTextColor(),
+                            fontSize: "0.6rem",
+                          }}
+                        />
+                      </Stack>
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        size="small"
+                        startIcon={<FontAwesomeIcon icon={faImage} size="sm" />}
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: "none",
+                          borderColor: getBorderColor(),
+                          color: getTextColor(),
+                          "&:hover": {
+                            bgcolor: isDarkMode
+                              ? "rgba(255,255,255,0.05)"
+                              : "#f0ebe3",
+                            borderColor: getTextColor(),
+                          },
+                        }}
+                      >
+                        Upload Images
+                        <input
+                          hidden
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(event) => {
+                            const files = Array.from(event.target.files ?? []);
+                            if (!files.length) return;
+                            void onUploadImages(productId, files);
+                            event.target.value = "";
+                          }}
+                        />
+                      </Button>
+                    </Stack>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+                      {imageEntries.length ? (
+                        imageEntries.map((imageEntry, index) => (
+                          <Box
+                            key={`${imageEntry.id || imageEntry.url}-${index}`}
+                            sx={{
+                              width: 100,
+                              height: 100,
+                              borderRadius: 1.5,
+                              overflow: "hidden",
+                              border: `1px solid ${getBorderColor()}`,
+                              position: "relative",
+                              bgcolor: isDarkMode
+                                ? "rgba(255,255,255,0.05)"
+                                : "#ffffff",
+                            }}
+                          >
+                            <Image
+                              src={imageEntry.url}
+                              alt={`${item.name} image ${index + 1}`}
+                              fill
+                              sizes="100px"
+                              style={{ objectFit: "cover" }}
+                              priority={false}
+                            />
+                            {imageEntry.id && (
+                              <Tooltip title="Remove Image">
+                                <Box
+                                  component="span"
+                                  onClick={() =>
+                                    handleDeleteImageClick(
+                                      productId,
+                                      imageEntry.id,
+                                      imageEntry.url,
+                                    )
+                                  }
+                                  sx={{
+                                    position: "absolute",
+                                    top: 4,
+                                    right: 4,
+                                    bgcolor: isDarkMode
+                                      ? "rgba(0,0,0,0.7)"
+                                      : "rgba(0,0,0,0.55)",
+                                    color: "common.white",
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: 1,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease",
+                                    "&:hover": {
+                                      bgcolor: "rgba(211, 47, 47, 0.85)",
+                                    },
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon={faTrash} size="xs" />
+                                </Box>
+                              </Tooltip>
+                            )}
+                          </Box>
+                        ))
+                      ) : (
+                        <Box
+                          sx={{
+                            py: 3,
+                            px: 4,
+                            border: `2px dashed ${getBorderColor()}`,
+                            borderRadius: 2,
+                            textAlign: "center",
+                            width: "100%",
+                            color: getSecondaryTextColor(),
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            color={getSecondaryTextColor()}
+                          >
+                            No images attached yet. Click &quot;Upload
+                            Images&quot; to add product images.
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+          );
+        })}
+      </Box>
+
+      {/* Delete Product Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            p: 1,
+          },
+        }}
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#d32f2f",
+            }}
+          >
+            <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+          </Box>
+          <Typography component="span" variant="h6" fontWeight={600}>
+            Delete Product
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Are you sure you want to delete{" "}
+            <strong>{productToDelete?.name}</strong>? This action cannot be
+            undone and will permanently remove the product from your store.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            sx={{
+              textTransform: "none",
+              color: "text.secondary",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            disabled={isDeleting}
+            variant="contained"
+            color="error"
+            sx={{
+              textTransform: "none",
+              "&:disabled": {
+                opacity: 0.6,
+              },
+            }}
+          >
+            {isDeleting ? "Deleting..." : "Delete Product"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Image Confirmation Dialog */}
+      <Dialog
+        open={deleteImageDialogOpen}
+        onClose={() => setDeleteImageDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            p: 1,
+          },
+        }}
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#d32f2f",
+            }}
+          >
+            <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+          </Box>
+          <Typography component="span" variant="h6" fontWeight={600}>
+            Remove Image
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Are you sure you want to remove this image? This action cannot be
+            undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button
+            onClick={() => setDeleteImageDialogOpen(false)}
+            sx={{
+              textTransform: "none",
+              color: "text.secondary",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDeleteImage}
+            disabled={isDeleting}
+            variant="contained"
+            color="error"
+            sx={{
+              textTransform: "none",
+              "&:disabled": {
+                opacity: 0.6,
+              },
+            }}
+          >
+            {isDeleting ? "Removing..." : "Remove Image"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };

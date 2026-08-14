@@ -15,6 +15,7 @@ export const SectionHeading = ({
     <Stack spacing={1.25} sx={{ mb: 4.5 }}>
       {eyebrow ? (
         <Typography
+          textAlign="center"
           sx={{
             textTransform: "uppercase",
             letterSpacing: "0.26em",
@@ -26,24 +27,15 @@ export const SectionHeading = ({
         </Typography>
       ) : null}
       <Typography
-        variant="h2"
+        variant="h3"
+        textAlign="center"
         sx={{
-          fontSize: { xs: "2rem", md: "2.75rem" },
+          fontSize: { xs: "1.5rem", md: "2.75rem" },
           lineHeight: 1.15,
         }}
       >
         {title}
       </Typography>
-      {subtitle ? (
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          maxWidth={760}
-          sx={{ fontSize: { xs: "1rem", md: "1.08rem" } }}
-        >
-          {subtitle}
-        </Typography>
-      ) : null}
     </Stack>
   );
 };

@@ -1,33 +1,60 @@
 "use client";
-
+import { useState } from "react";
 import {
   Grid,
   MenuItem,
   Stack,
   TextField,
+  FormHelperText,
+  Alert,
+  Typography,
 } from "@mui/material";
 import { AdminField, AdminToggle } from "@/components/admin";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
-import { convertFromBaseCurrency, convertToBaseCurrency } from "@/utils/currency";
+import {
+  convertFromBaseCurrency,
+  convertToBaseCurrency,
+} from "@/utils/currency";
 import InputAdornment from "@mui/material/InputAdornment";
 import type { ProductFieldsProps } from "./types";
 
-export const ProductFields = ({ state, onChange, categoryOptions, errors }: ProductFieldsProps) => {
+type DecimalFieldKey = "price" | "buyingPrice" | "compareAt";
+
+export const ProductFields = ({
+  state,
+  onChange,
+  categoryOptions,
+  errors,
+}: ProductFieldsProps) => {
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
 
-  const getError = <K extends keyof ProductFieldsProps["state"]>(key: K) => errors?.[key] ?? "";
+  // Tracks which decimal field is currently focused, and the raw text
+  // the user is typing into it (so "12." doesn't get collapsed to "12").
+  const [editingField, setEditingField] = useState<DecimalFieldKey | null>(
+    null,
+  );
+  const [rawValue, setRawValue] = useState("");
 
-  const formatNumber = (value: number | null, options?: { maxFractionDigits?: number }) => {
+  const getError = <K extends keyof ProductFieldsProps["state"]>(key: K) =>
+    errors?.[key] ?? "";
+
+  const formatNumber = (
+    value: number | null,
+    options?: { maxFractionDigits?: number },
+  ) => {
     if (value === null || Number.isNaN(value)) return "";
     const converted = convertFromBaseCurrency(value, currency, rates);
     return new Intl.NumberFormat("en-US", {
-      maximumFractionDigits: options?.maxFractionDigits ?? (currency === "TZS" ? 0 : 2),
+      maximumFractionDigits:
+        options?.maxFractionDigits ?? (currency === "TZS" ? 0 : 2),
+      minimumFractionDigits: 0,
     }).format(converted);
   };
 
   const parseNumber = (value: string) => {
-    const normalized = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+    // Remove all non-numeric characters except decimal point and minus sign
+    const normalized = value.replace(/[^\d.\-]/g, "");
     if (!normalized) return null;
 
     const parsed = Number(normalized);
@@ -41,8 +68,83 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
     return convertToBaseCurrency(parsed, currency, rates);
   };
 
+  // Builds the value/onFocus/onBlur/onChange props for a decimal-money field.
+  // While the field is focused we show exactly what the user typed (rawValue),
+  // so intermediate states like "12." or "-" or "0.50" aren't reformatted away
+  // mid-keystroke. On blur we drop back to the formatted display value.
+  const decimalFieldProps = (field: DecimalFieldKey, value: number | null) => {
+    const isEditing = editingField === field;
+
+    return {
+      value: isEditing ? rawValue : formatNumber(value),
+      onFocus: () => {
+        setEditingField(field);
+        setRawValue(
+          value !== null && !Number.isNaN(value)
+            ? String(convertFromBaseCurrency(value, currency, rates))
+            : "",
+        );
+      },
+      onBlur: () => {
+        setEditingField(null);
+      },
+      onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = event.target.value;
+
+        // Only allow an optional leading minus, digits, and a single decimal point
+        if (!/^-?\d*\.?\d*$/.test(raw)) return;
+
+        setRawValue(raw);
+
+        if (raw === "" || raw === "." || raw === "-") {
+          onChange(field, null);
+          return;
+        }
+
+        const parsed = parseBaseCurrencyValue(raw);
+        if (parsed !== null) {
+          onChange(field, parsed);
+        }
+      },
+    };
+  };
+
+  const hasImages =
+    state.imageUrlsText.trim().length > 0 || state.existingImageIds.length > 0;
+  const isStatusError =
+    errors?.status === "Product must have at least one image to be published" ||
+    errors?.status === "Product must have stock to be published";
+
   return (
     <Grid container spacing={2.5}>
+      {/* Status warning when trying to publish without images */}
+      {state.status === "published" && !hasImages && (
+        <Grid size={{ xs: 12 }}>
+          <Alert severity="warning" sx={{ mb: 1 }}>
+            <Typography variant="body2" fontWeight={500}>
+              ⚠️ Product cannot be published without images
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Please upload at least one image before publishing.
+            </Typography>
+          </Alert>
+        </Grid>
+      )}
+
+      {/* Status warning when trying to publish without stock */}
+      {state.status === "published" && state.stockCount <= 0 && (
+        <Grid size={{ xs: 12 }}>
+          <Alert severity="warning" sx={{ mb: 1 }}>
+            <Typography variant="body2" fontWeight={500}>
+              ⚠️ Product cannot be published without stock
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Please add stock quantity before publishing.
+            </Typography>
+          </Alert>
+        </Grid>
+      )}
+
       <Grid size={{ xs: 12, md: 6 }}>
         <TextField
           label="Name"
@@ -80,15 +182,16 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
       <Grid size={{ xs: 12, md: 6 }}>
         <TextField
           label="Price"
-          value={formatNumber(state.price)}
-          onChange={(event) => onChange("price", parseBaseCurrencyValue(event.target.value))}
+          {...decimalFieldProps("price", state.price)}
           fullWidth
           error={Boolean(getError("price"))}
           helperText={getError("price")}
           variant="outlined"
           inputMode="decimal"
           InputProps={{
-            startAdornment: <InputAdornment position="start">{currency}</InputAdornment>,
+            endAdornment: (
+              <InputAdornment position="end">{currency}</InputAdornment>
+            ),
           }}
           sx={{
             bgcolor: "background.paper",
@@ -101,15 +204,16 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
       <Grid size={{ xs: 12, md: 6 }}>
         <TextField
           label="Buying Price"
-          value={formatNumber(state.buyingPrice)}
-          onChange={(event) => onChange("buyingPrice", parseBaseCurrencyValue(event.target.value))}
+          {...decimalFieldProps("buyingPrice", state.buyingPrice)}
           fullWidth
           error={Boolean(getError("buyingPrice"))}
           helperText={getError("buyingPrice")}
           variant="outlined"
           inputMode="decimal"
           InputProps={{
-            startAdornment: <InputAdornment position="start">{currency}</InputAdornment>,
+            endAdornment: (
+              <InputAdornment position="end">{currency}</InputAdornment>
+            ),
           }}
           sx={{
             bgcolor: "background.paper",
@@ -122,15 +226,16 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
       <Grid size={{ xs: 12, md: 6 }}>
         <TextField
           label="Sale Price"
-          value={formatNumber(state.compareAt)}
-          onChange={(event) => onChange("compareAt", parseBaseCurrencyValue(event.target.value))}
+          {...decimalFieldProps("compareAt", state.compareAt)}
           fullWidth
           error={Boolean(getError("compareAt"))}
           helperText={getError("compareAt") || "Optional discount price"}
           variant="outlined"
           inputMode="decimal"
           InputProps={{
-            startAdornment: <InputAdornment position="start">{currency}</InputAdornment>,
+            endAdornment: (
+              <InputAdornment position="end">{currency}</InputAdornment>
+            ),
           }}
           sx={{
             bgcolor: "background.paper",
@@ -177,11 +282,16 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
           label="Status"
           select
           value={state.status}
-          onChange={(event) => onChange("status", event.target.value as ProductFieldsProps["state"]["status"])}
+          onChange={(event) =>
+            onChange(
+              "status",
+              event.target.value as ProductFieldsProps["state"]["status"],
+            )
+          }
           fullWidth
           variant="outlined"
-          error={Boolean(getError("status"))}
-          helperText={getError("status")}
+          error={isStatusError}
+          helperText={isStatusError ? getError("status") : ""}
           sx={{
             bgcolor: "background.paper",
             "& .MuiOutlinedInput-root": {
@@ -193,6 +303,16 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
           <MenuItem value="published">Published</MenuItem>
           <MenuItem value="archived">Archived</MenuItem>
         </TextField>
+        {state.status === "published" && !hasImages && (
+          <FormHelperText error sx={{ mt: 0.5 }}>
+            Please add images before publishing
+          </FormHelperText>
+        )}
+        {state.status === "published" && state.stockCount <= 0 && (
+          <FormHelperText error sx={{ mt: 0.5 }}>
+            Please add stock before publishing
+          </FormHelperText>
+        )}
       </Grid>
       <Grid size={{ xs: 12 }}>
         <AdminField
@@ -252,10 +372,11 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
             "& .MuiOutlinedInput-root": {
               borderRadius: 0,
             },
-            "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
-              WebkitAppearance: "none",
-              margin: 0,
-            },
+            "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
+              {
+                WebkitAppearance: "none",
+                margin: 0,
+              },
             "& input[type=number]": {
               MozAppearance: "textfield",
             },
@@ -296,10 +417,26 @@ export const ProductFields = ({ state, onChange, categoryOptions, errors }: Prod
       </Grid>
       <Grid size={{ xs: 12, md: 12 }}>
         <Stack direction="row" spacing={3} flexWrap="wrap" sx={{ mt: 1 }}>
-          <AdminToggle label="In Stock" checked={state.inStock} onChange={(checked) => onChange("inStock", checked)} />
-          <AdminToggle label="Featured" checked={state.featured} onChange={(checked) => onChange("featured", checked)} />
-          <AdminToggle label="Best Seller" checked={state.bestSeller} onChange={(checked) => onChange("bestSeller", checked)} />
-          <AdminToggle label="New Arrival" checked={state.newArrival} onChange={(checked) => onChange("newArrival", checked)} />
+          <AdminToggle
+            label="In Stock"
+            checked={state.inStock}
+            onChange={(checked) => onChange("inStock", checked)}
+          />
+          <AdminToggle
+            label="Featured"
+            checked={state.featured}
+            onChange={(checked) => onChange("featured", checked)}
+          />
+          <AdminToggle
+            label="Best Seller"
+            checked={state.bestSeller}
+            onChange={(checked) => onChange("bestSeller", checked)}
+          />
+          <AdminToggle
+            label="New Arrival"
+            checked={state.newArrival}
+            onChange={(checked) => onChange("newArrival", checked)}
+          />
         </Stack>
       </Grid>
       <Grid size={{ xs: 12 }}>

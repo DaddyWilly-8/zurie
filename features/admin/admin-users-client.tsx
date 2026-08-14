@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Role } from "@/features/admin/users";
+import type { Role, Permission, AdminUserRow } from "@/features/admin/users";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
-  Badge,
   Box,
   Button,
   Card,
@@ -30,6 +29,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  List,
+  ListItem,
+  ListItemText,
+  Checkbox,
+  ListItemIcon,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -39,8 +43,11 @@ import {
   faTimes,
   faShieldAlt,
   faSearch,
+  faEdit,
+  faCheckDouble,
+  faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
-import { userActions, type UserRole } from "@/features/admin/users";
+import { userActions } from "@/features/admin/users";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -77,7 +84,7 @@ export const AdminUsersClient = () => {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserRole, setNewUserRole] = useState("");
+  const [newUserRoleIds, setNewUserRoleIds] = useState<number[]>([]);
   const [creatingUser, setCreatingUser] = useState(false);
   const [openUserDialog, setOpenUserDialog] = useState(false);
 
@@ -87,8 +94,23 @@ export const AdminUsersClient = () => {
   const [creatingRole, setCreatingRole] = useState(false);
   const [openRoleDialog, setOpenRoleDialog] = useState(false);
 
+  // Role edit state
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editingRolePermissions, setEditingRolePermissions] = useState<
+    string[]
+  >([]);
+  const [openRoleEditDialog, setOpenRoleEditDialog] = useState(false);
+  const [savingPermissions, setSavingPermissions] = useState(false);
+
+  // User edit state
+  const [editingUser, setEditingUser] = useState<AdminUserRow | null>(null);
+  const [editingUserRoleIds, setEditingUserRoleIds] = useState<number[]>([]);
+  const [openUserEditDialog, setOpenUserEditDialog] = useState(false);
+  const [savingUserRoles, setSavingUserRoles] = useState(false);
+
   // Role list state
   const [roles, setRoles] = useState<Role[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
 
   const {
@@ -106,26 +128,83 @@ export const AdminUsersClient = () => {
     try {
       const roleList = await userActions.listRoles();
       setRoles(roleList);
-    } catch {
-      // Handle error silently
+      return roleList;
+    } catch (error) {
+      const err = error as Error;
+      console.error("Failed to load roles:", err);
+      setMessage("Failed to load roles");
+      setMessageType("error");
+      return [];
     } finally {
       setLoadingRoles(false);
     }
   };
 
+  const loadPermissions = async () => {
+    try {
+      const permissionList = await userActions.listPermissions();
+      setPermissions(permissionList);
+      return permissionList;
+    } catch (error) {
+      const err = error as Error;
+      console.error("Failed to load permissions:", err);
+      setMessage("Failed to load permissions");
+      setMessageType("error");
+      return [];
+    }
+  };
+
   useEffect(() => {
     loadRoles();
+    loadPermissions();
   }, []);
 
-  const updateRole = async (id: string, role: UserRole, roleIds?: number[]) => {
+  const updateUserRoles = async (id: string, roleIds: number[]) => {
+    setSavingUserRoles(true);
     try {
-      await userActions.updateRole(id, role, roleIds);
+      await userActions.updateUserRoles(id, roleIds);
+      setMessage("User roles updated successfully");
       setMessageType("success");
-      setMessage("Role updated successfully");
       await refetch();
-    } catch {
+      return true;
+    } catch (error) {
+      const err = error as Error;
+      setMessage(err?.message || "Failed to update user roles");
       setMessageType("error");
-      setMessage("Failed to update role");
+      return false;
+    } finally {
+      setSavingUserRoles(false);
+    }
+  };
+
+  const updateRolePermissions = async (
+    roleId: number,
+    permissionKeys: string[],
+  ) => {
+    setSavingPermissions(true);
+    try {
+      // Find permission IDs for the selected keys
+      const permissionIds = permissions
+        .filter((p) => permissionKeys.includes(p.key))
+        .map((p) => p.id);
+
+      if (permissionIds.length === 0) {
+        setMessage("No permissions selected. Clearing all permissions.");
+        setMessageType("info");
+      }
+
+      await userActions.updateRolePermissions(roleId, permissionIds);
+      setMessage("Role permissions updated successfully");
+      setMessageType("success");
+      await loadRoles();
+      return true;
+    } catch (error) {
+      const err = error as Error;
+      setMessage(err?.message || "Failed to update role permissions");
+      setMessageType("error");
+      return false;
+    } finally {
+      setSavingPermissions(false);
     }
   };
 
@@ -135,31 +214,36 @@ export const AdminUsersClient = () => {
       !newUserEmail.trim() ||
       !newUserPassword.trim()
     ) {
-      setMessageType("error");
       setMessage("Name, email, and password are required.");
+      setMessageType("error");
       return;
     }
 
+    setCreatingUser(true);
     try {
-      setCreatingUser(true);
-      await userActions.createUser({
+      const response = await userActions.createUser({
         name: newUserName.trim(),
         email: newUserEmail.trim(),
         password: newUserPassword,
-        role: newUserRole || undefined,
       });
-      setMessageType("success");
+
+      if (newUserRoleIds.length > 0 && response?.data?.id) {
+        const userId = String(response.data.id);
+        await userActions.updateUserRoles(userId, newUserRoleIds);
+      }
+
       setMessage("User created successfully.");
+      setMessageType("success");
       setNewUserName("");
       setNewUserEmail("");
       setNewUserPassword("");
-      setNewUserRole("");
+      setNewUserRoleIds([]);
       setOpenUserDialog(false);
       await refetch();
     } catch (error) {
       const err = error as Error;
-      setMessageType("error");
       setMessage(err?.message || "Failed to create user.");
+      setMessageType("error");
     } finally {
       setCreatingUser(false);
     }
@@ -167,30 +251,95 @@ export const AdminUsersClient = () => {
 
   const handleCreateRole = async () => {
     if (!roleName.trim()) {
-      setMessageType("error");
       setMessage("Role name is required.");
+      setMessageType("error");
       return;
     }
 
+    setCreatingRole(true);
     try {
-      setCreatingRole(true);
       await userActions.createRole({
         name: roleName.trim(),
         description: roleDescription.trim() || undefined,
       });
-      setMessageType("success");
       setMessage("Role created successfully.");
+      setMessageType("success");
       setRoleName("");
       setRoleDescription("");
       setOpenRoleDialog(false);
       await loadRoles();
     } catch (error) {
       const err = error as Error;
-      setMessageType("error");
       setMessage(err?.message || "Failed to create role.");
+      setMessageType("error");
     } finally {
       setCreatingRole(false);
     }
+  };
+
+  const handleEditRole = (role: Role) => {
+    setEditingRole(role);
+    setEditingRolePermissions(role.permissions || []);
+    setOpenRoleEditDialog(true);
+  };
+
+  const handleSaveRolePermissions = async () => {
+    if (!editingRole) return;
+    const success = await updateRolePermissions(
+      editingRole.id,
+      editingRolePermissions,
+    );
+    if (success) {
+      setOpenRoleEditDialog(false);
+      setEditingRole(null);
+    }
+  };
+
+  const handleEditUser = (user: AdminUserRow) => {
+    setEditingUser(user);
+    setEditingUserRoleIds(user.roleIds || []);
+    setOpenUserEditDialog(true);
+  };
+
+  const handleSaveUserRoles = async () => {
+    if (!editingUser) return;
+    const success = await updateUserRoles(editingUser.id, editingUserRoleIds);
+    if (success) {
+      setOpenUserEditDialog(false);
+      setEditingUser(null);
+    }
+  };
+
+  // Select/Deselect all permissions
+  const handleSelectAllPermissions = () => {
+    const allPermissionKeys = permissions.map((p) => p.key);
+    setEditingRolePermissions(allPermissionKeys);
+  };
+
+  const handleDeselectAllPermissions = () => {
+    setEditingRolePermissions([]);
+  };
+
+  // Toggle a single permission
+  const togglePermission = (permissionKey: string) => {
+    setEditingRolePermissions((prev) =>
+      prev.includes(permissionKey)
+        ? prev.filter((p) => p !== permissionKey)
+        : [...prev, permissionKey],
+    );
+  };
+
+  // Check if all permissions are selected
+  const areAllPermissionsSelected = () => {
+    return (
+      permissions.length > 0 &&
+      permissions.every((p) => editingRolePermissions.includes(p.key))
+    );
+  };
+
+  // Check if any permissions are selected
+  const areAnyPermissionsSelected = () => {
+    return editingRolePermissions.length > 0;
   };
 
   const filteredRows = useMemo(() => {
@@ -208,17 +357,6 @@ export const AdminUsersClient = () => {
     const start = (page - 1) * USERS_PAGE_SIZE;
     return filteredRows.slice(start, start + USERS_PAGE_SIZE);
   }, [filteredRows, page]);
-
-  const roleOptions = useMemo(() => {
-    const unique = new Set<UserRole>();
-    rows.forEach((row) => {
-      unique.add(row.role);
-    });
-    paginatedRows.forEach((row) => {
-      unique.add(row.role);
-    });
-    return Array.from(unique);
-  }, [rows, paginatedRows]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -314,7 +452,7 @@ export const AdminUsersClient = () => {
           <Tab
             icon={<FontAwesomeIcon icon={faShieldAlt} size="sm" />}
             iconPosition="start"
-            label={"Roles"}
+            label={"Roles & Permissions"}
           />
         </Tabs>
 
@@ -327,30 +465,26 @@ export const AdminUsersClient = () => {
               alignItems="center"
               sx={{ mb: 3 }}
             >
-              <Typography variant="h6" fontWeight={600}>
-                {/* Search */}
-                <TextField
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  size="small"
-                  sx={{
-                    mb: 3,
-                    maxWidth: 400,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <FontAwesomeIcon
-                        icon={faSearch}
-                        style={{ marginRight: 12, color: "#999" }}
-                      />
-                    ),
-                  }}
-                />
-              </Typography>
+              <TextField
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                size="small"
+                sx={{
+                  maxWidth: 400,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <FontAwesomeIcon
+                      icon={faSearch}
+                      style={{ marginRight: 12, color: "#999" }}
+                    />
+                  ),
+                }}
+              />
               <Button
                 variant="contained"
                 startIcon={<FontAwesomeIcon icon={faUserPlus} size="sm" />}
@@ -390,7 +524,6 @@ export const AdminUsersClient = () => {
               </Box>
             ) : (
               <>
-                {/* User Cards Grid - Matches Screenshot */}
                 <Grid container spacing={2}>
                   {paginatedRows.map((row) => (
                     <Grid size={{ xs: 12, md: 6, lg: 4 }} key={row.id}>
@@ -419,17 +552,24 @@ export const AdminUsersClient = () => {
                               >
                                 {row.full_name}
                               </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontSize: "0.7rem", display: "block" }}
+                              >
+                                {row.email}
+                              </Typography>
                             </Box>
-                            <Chip
-                              label={formatRoleLabel(row.role)}
-                              color={getRoleColor(row.role)}
+                            <IconButton
                               size="small"
+                              onClick={() => handleEditUser(row)}
                               sx={{
-                                fontSize: "0.6rem",
-                                fontWeight: 500,
-                                mt: 0.5,
+                                color: "text.secondary",
+                                "&:hover": { color: "primary.main" },
                               }}
-                            />
+                            >
+                              <FontAwesomeIcon icon={faEdit} size="sm" />
+                            </IconButton>
                           </Stack>
 
                           <Divider sx={{ my: 1.5 }} />
@@ -439,36 +579,41 @@ export const AdminUsersClient = () => {
                             justifyContent="space-between"
                             alignItems="center"
                           >
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontSize: "0.65rem" }}
-                            ></Typography>
-                            <TextField
-                              size="small"
-                              select
-                              value={row.role}
-                              onChange={(event) =>
-                                updateRole(
-                                  row.id,
-                                  event.target.value as UserRole,
-                                  row.roleIds,
-                                )
-                              }
-                              sx={{
-                                minWidth: 150,
-                                "& .MuiOutlinedInput-root": {
-                                  borderRadius: 1.5,
-                                  fontSize: "0.75rem",
-                                },
-                              }}
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              flexWrap="wrap"
                             >
-                              {roleOptions.map((role) => (
-                                <MenuItem key={role} value={role}>
-                                  {formatRoleLabel(role)}
-                                </MenuItem>
-                              ))}
-                            </TextField>
+                              {row.roleIds && row.roleIds.length > 0 ? (
+                                row.roleIds.map((roleId) => {
+                                  const role = roles.find(
+                                    (r) => r.id === roleId,
+                                  );
+                                  return role ? (
+                                    <Chip
+                                      key={roleId}
+                                      label={formatRoleLabel(role.name)}
+                                      color={getRoleColor(role.name)}
+                                      size="small"
+                                      sx={{
+                                        fontSize: "0.55rem",
+                                        fontWeight: 500,
+                                      }}
+                                    />
+                                  ) : null;
+                                })
+                              ) : (
+                                <Chip
+                                  label="No roles"
+                                  size="small"
+                                  sx={{
+                                    fontSize: "0.55rem",
+                                    fontWeight: 500,
+                                    color: "text.secondary",
+                                  }}
+                                />
+                              )}
+                            </Stack>
                           </Stack>
                         </CardContent>
                       </Card>
@@ -504,7 +649,9 @@ export const AdminUsersClient = () => {
               alignItems="center"
               sx={{ mb: 3 }}
             >
-              <Typography variant="h6" fontWeight={600}></Typography>
+              <Typography variant="h6" fontWeight={600}>
+                Roles & Permissions
+              </Typography>
               <Button
                 variant="contained"
                 startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
@@ -555,7 +702,7 @@ export const AdminUsersClient = () => {
                           justifyContent="space-between"
                           alignItems="flex-start"
                         >
-                          <Box>
+                          <Box sx={{ flex: 1 }}>
                             <Typography
                               fontWeight={600}
                               sx={{ color: "#171512", fontSize: "0.95rem" }}
@@ -583,11 +730,18 @@ export const AdminUsersClient = () => {
                               {role.permissions?.length || 0} permissions
                             </Typography>
                           </Box>
-                          <Chip
-                            label={role.users_count || 0}
-                            size="small"
-                            sx={{ fontSize: "0.6rem", fontWeight: 500 }}
-                          />
+                          <Stack direction="row" spacing={0.5}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditRole(role)}
+                              sx={{
+                                color: "text.secondary",
+                                "&:hover": { color: "primary.main" },
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faEdit} size="sm" />
+                            </IconButton>
+                          </Stack>
                         </Stack>
                       </CardContent>
                     </Card>
@@ -649,16 +803,31 @@ export const AdminUsersClient = () => {
               size="small"
             />
             <FormControl fullWidth size="small">
-              <InputLabel>Role (optional)</InputLabel>
+              <InputLabel>Roles</InputLabel>
               <Select
-                value={newUserRole}
-                onChange={(e) => setNewUserRole(e.target.value)}
-                label="Role (optional)"
+                multiple
+                value={newUserRoleIds}
+                onChange={(e) => setNewUserRoleIds(e.target.value as number[])}
+                label="Roles"
+                renderValue={(selected) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {selected.map((roleId) => {
+                      const role = roles.find((r) => r.id === roleId);
+                      return role ? (
+                        <Chip
+                          key={roleId}
+                          label={formatRoleLabel(role.name)}
+                          size="small"
+                        />
+                      ) : null;
+                    })}
+                  </Box>
+                )}
               >
-                <MenuItem value="">No role</MenuItem>
                 {roles.map((role) => (
-                  <MenuItem key={role.id} value={role.name}>
-                    {formatRoleLabel(role.name)}
+                  <MenuItem key={role.id} value={role.id}>
+                    <Checkbox checked={newUserRoleIds.indexOf(role.id) > -1} />
+                    <ListItemText primary={formatRoleLabel(role.name)} />
                   </MenuItem>
                 ))}
               </Select>
@@ -758,6 +927,264 @@ export const AdminUsersClient = () => {
               <CircularProgress size={20} sx={{ color: "white" }} />
             ) : (
               "Create Role"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Role Permissions Dialog */}
+      <Dialog
+        open={openRoleEditDialog}
+        onClose={() => setOpenRoleEditDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 2 },
+        }}
+      >
+        <DialogTitle>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Edit Role Permissions
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => setOpenRoleEditDialog(false)}
+            >
+              <FontAwesomeIcon icon={faTimes} size="sm" />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {editingRole && (
+              <Typography variant="subtitle1" fontWeight={600}>
+                {formatRoleLabel(editingRole.name)}
+              </Typography>
+            )}
+
+            {/* Select All / Deselect All Controls */}
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              sx={{
+                p: 1.5,
+                bgcolor: "action.hover",
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                Permissions:
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FontAwesomeIcon icon={faCheckDouble} size="sm" />}
+                onClick={handleSelectAllPermissions}
+                disabled={areAllPermissionsSelected()}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 1,
+                  fontSize: "0.7rem",
+                }}
+              >
+                Select All
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FontAwesomeIcon icon={faTimesCircle} size="sm" />}
+                onClick={handleDeselectAllPermissions}
+                disabled={!areAnyPermissionsSelected()}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 1,
+                  fontSize: "0.7rem",
+                  color: "error.main",
+                  borderColor: "error.main",
+                  "&:hover": {
+                    borderColor: "error.dark",
+                    bgcolor: "error.light",
+                  },
+                }}
+              >
+                Deselect All
+              </Button>
+              <Chip
+                label={`${editingRolePermissions.length} selected`}
+                size="small"
+                color={
+                  editingRolePermissions.length > 0 ? "primary" : "default"
+                }
+                sx={{ fontSize: "0.6rem", ml: "auto" }}
+              />
+            </Stack>
+
+            <Typography variant="caption" color="text.secondary">
+              Select permissions for this role:
+            </Typography>
+
+            <List dense sx={{ maxHeight: 400, overflow: "auto" }}>
+              {permissions.map((permission) => (
+                <ListItem
+                  key={permission.id}
+                  dense
+                  onClick={() => togglePermission(permission.key)}
+                  sx={{
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: "action.hover",
+                    },
+                  }}
+                >
+                  <ListItemIcon>
+                    <Checkbox
+                      edge="start"
+                      checked={editingRolePermissions.includes(permission.key)}
+                      tabIndex={-1}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={permission.key.replace(/_/g, " ")}
+                    secondary={permission.description}
+                    primaryTypographyProps={{ fontSize: "0.85rem" }}
+                    secondaryTypographyProps={{ fontSize: "0.7rem" }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setOpenRoleEditDialog(false)}
+            sx={{ textTransform: "none", color: "#666" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveRolePermissions}
+            disabled={savingPermissions}
+            sx={{
+              textTransform: "none",
+              bgcolor: "#171512",
+              "&:hover": { bgcolor: "#2d2a26" },
+            }}
+          >
+            {savingPermissions ? (
+              <CircularProgress size={20} sx={{ color: "white" }} />
+            ) : (
+              "Save Permissions"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit User Roles Dialog */}
+      <Dialog
+        open={openUserEditDialog}
+        onClose={() => setOpenUserEditDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 2 },
+        }}
+      >
+        <DialogTitle>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Edit User Roles
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => setOpenUserEditDialog(false)}
+            >
+              <FontAwesomeIcon icon={faTimes} size="sm" />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {editingUser && (
+              <Typography variant="subtitle1" fontWeight={600}>
+                {editingUser.full_name}
+              </Typography>
+            )}
+            <Typography variant="caption" color="text.secondary">
+              Select roles for this user:
+            </Typography>
+            <List dense>
+              {roles.map((role) => (
+                <ListItem
+                  key={role.id}
+                  dense
+                  onClick={() => {
+                    setEditingUserRoleIds((prev) =>
+                      prev.includes(role.id)
+                        ? prev.filter((id) => id !== role.id)
+                        : [...prev, role.id],
+                    );
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: "action.hover",
+                    },
+                  }}
+                >
+                  <ListItemIcon>
+                    <Checkbox
+                      edge="start"
+                      checked={editingUserRoleIds.includes(role.id)}
+                      tabIndex={-1}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={formatRoleLabel(role.name)}
+                    secondary={role.description}
+                    primaryTypographyProps={{ fontSize: "0.85rem" }}
+                    secondaryTypographyProps={{ fontSize: "0.7rem" }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setOpenUserEditDialog(false)}
+            sx={{ textTransform: "none", color: "#666" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveUserRoles}
+            disabled={savingUserRoles}
+            sx={{
+              textTransform: "none",
+              bgcolor: "#171512",
+              "&:hover": { bgcolor: "#2d2a26" },
+            }}
+          >
+            {savingUserRoles ? (
+              <CircularProgress size={20} sx={{ color: "white" }} />
+            ) : (
+              "Save Roles"
             )}
           </Button>
         </DialogActions>

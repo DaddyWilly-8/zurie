@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductFields } from "./product-fields";
-import { emptyFormState, toFormState } from "./product-utils";
+import { emptyFormState, toFormState, parseImageUrls } from "./product-utils";
 import { productFormSchema } from "./product-form.schema";
 import type { AdminProduct, ProductFormState } from "./types";
 
@@ -31,6 +31,7 @@ export const ProductEditDialog = ({
   onSubmit,
 }: ProductEditDialogProps) => {
   const [submitError, setSubmitError] = useState("");
+  const [statusError, setStatusError] = useState("");
   const form = useForm<ProductFormState>({
     resolver: zodResolver(productFormSchema) as Resolver<ProductFormState>,
     defaultValues: emptyFormState,
@@ -41,6 +42,7 @@ export const ProductEditDialog = ({
     if (product) {
       form.reset(toFormState(product));
       setSubmitError("");
+      setStatusError("");
     }
   }, [product, form]);
 
@@ -65,16 +67,54 @@ export const ProductEditDialog = ({
       shouldDirty: true,
       shouldValidate: true,
     });
+
+    // Clear status error when fields change
+    if (
+      key === "status" ||
+      key === "imageUrlsText" ||
+      key === "stockCount" ||
+      key === "existingImageIds"
+    ) {
+      setStatusError("");
+    }
   };
 
   const submit = form.handleSubmit(async (payload) => {
     if (!product) return;
     setSubmitError("");
+    setStatusError("");
+
+    // Check if trying to publish without images
+    if (payload.status === "published") {
+      const hasImages =
+        parseImageUrls(payload.imageUrlsText).length > 0 ||
+        payload.existingImageIds.length > 0;
+      if (!hasImages) {
+        setStatusError(
+          "Cannot publish product without images. Please upload at least one image.",
+        );
+        return;
+      }
+      if (payload.stockCount <= 0) {
+        setStatusError(
+          "Cannot publish product without stock. Please add stock quantity.",
+        );
+        return;
+      }
+    }
+
     const saved = await onSubmit(String(product.id), payload);
     if (!saved) {
       setSubmitError("Failed to update product.");
     }
   });
+
+  // Check current status validation for UI feedback
+  const hasImages =
+    parseImageUrls(values.imageUrlsText).length > 0 ||
+    values.existingImageIds.length > 0;
+  const canPublish = hasImages && values.stockCount > 0;
+  const isInvalidPublish = values.status === "published" && !canPublish;
 
   return (
     <Dialog
@@ -161,6 +201,25 @@ export const ProductEditDialog = ({
               {submitError}
             </Alert>
           ) : null}
+
+          {statusError ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {statusError}
+            </Alert>
+          ) : null}
+
+          {isInvalidPublish && !statusError && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2" fontWeight={500}>
+                ⚠️ Product cannot be published
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {!hasImages && "Product needs at least one image. "}
+                {values.stockCount <= 0 && "Product needs stock quantity."}
+              </Typography>
+            </Alert>
+          )}
+
           {product ? (
             <ProductFields
               state={values}
@@ -203,7 +262,7 @@ export const ProductEditDialog = ({
           <Button
             type="submit"
             variant="contained"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isInvalidPublish}
             startIcon={
               isSubmitting ? (
                 <CircularProgress size={14} color="inherit" />
@@ -217,6 +276,9 @@ export const ProductEditDialog = ({
               bgcolor: "text.primary",
               px: 4,
               "&:hover": { bgcolor: "text.secondary" },
+              "&:disabled": {
+                opacity: 0.6,
+              },
             }}
           >
             {isSubmitting ? "Saving..." : "Save Changes"}

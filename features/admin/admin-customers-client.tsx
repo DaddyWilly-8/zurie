@@ -120,9 +120,11 @@ export const AdminCustomersClient = () => {
             alignItems="center"
             sx={{ mb: 2.5 }}
           >
-            <Typography variant="h6" fontWeight={600} sx={{ color: "#171512" }}>
-              Customers
-            </Typography>
+            <Typography
+              variant="h6"
+              fontWeight={600}
+              sx={{ color: "#171512" }}
+            ></Typography>
             <Chip
               label={`${rows.length} customers`}
               size="small"
@@ -178,7 +180,7 @@ export const AdminCustomersClient = () => {
             alignItems="center"
             justifyContent="space-between"
           >
-            <Typography variant="h6" fontWeight={600} sx={{ color: "#171512" }}>
+            <Typography variant="h6" fontWeight={600}>
               Customer Details
             </Typography>
             <IconButton
@@ -218,11 +220,7 @@ export const AdminCustomersClient = () => {
                 >
                   Customer Name
                 </Typography>
-                <Typography
-                  variant="h5"
-                  fontWeight={600}
-                  sx={{ color: "#171512", mt: 0.5 }}
-                >
+                <Typography variant="h5" fontWeight={600} sx={{ mt: 0.5 }}>
                   {detail.name || "N/A"}
                 </Typography>
               </Box>

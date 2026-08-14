@@ -14,7 +14,7 @@ import { type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductFields } from "./product-fields";
 import { productFormSchema } from "./product-form.schema";
-import { emptyFormState } from "./product-utils";
+import { emptyFormState, parseImageUrls } from "./product-utils";
 import type { ProductFormState } from "./types";
 
 type ProductCreateDialogProps = {
@@ -49,17 +49,45 @@ export const ProductCreateDialog = ({
   const errors = useMemo(
     () =>
       Object.fromEntries(
-        Object.entries(form.formState.errors).map(([key, value]) => [key, value?.message ?? ""]),
+        Object.entries(form.formState.errors).map(([key, value]) => [
+          key,
+          value?.message ?? "",
+        ]),
       ) as Partial<Record<keyof ProductFormState, string>>,
     [form.formState.errors],
   );
 
-  const changeField = <K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) => {
-    form.setValue(key as never, value as never, { shouldDirty: true, shouldValidate: true });
+  const changeField = <K extends keyof ProductFormState>(
+    key: K,
+    value: ProductFormState[K],
+  ) => {
+    form.setValue(key as never, value as never, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   const submit = form.handleSubmit(async (payload) => {
     setSubmitError("");
+
+    if (payload.status === "published") {
+      const hasImages =
+        parseImageUrls(payload.imageUrlsText).length > 0 ||
+        payload.existingImageIds.length > 0;
+      if (!hasImages) {
+        setSubmitError(
+          "Cannot publish product without images. Please upload at least one image.",
+        );
+        return;
+      }
+      if (payload.stockCount <= 0) {
+        setSubmitError(
+          "Cannot publish product without stock. Please add stock quantity.",
+        );
+        return;
+      }
+    }
+
     const created = await onSubmit(payload);
     if (created) {
       form.reset(emptyFormState);
@@ -69,12 +97,7 @@ export const ProductCreateDialog = ({
   });
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="md"
-    >
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle
         component="div"
         sx={{
@@ -88,11 +111,29 @@ export const ProductCreateDialog = ({
           flexShrink: 0,
         }}
       >
-        <Typography variant="h4" textAlign="center" component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
+        <Typography
+          variant="h4"
+          textAlign="center"
+          component="div"
+          sx={{
+            color: "text.primary",
+            fontFamily: "var(--font-playfair), serif",
+            lineHeight: 1,
+          }}
+        >
           New Product
         </Typography>
-        </DialogTitle>
-      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      </DialogTitle>
+      <Box
+        component="form"
+        onSubmit={submit}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          overflow: "hidden",
+        }}
+      >
         <DialogContent
           dividers
           sx={{
@@ -118,7 +159,11 @@ export const ProductCreateDialog = ({
             },
           }}
         >
-          {submitError ? <Alert severity="error" sx={{ mb: 2 }}>{submitError}</Alert> : null}
+          {submitError ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {submitError}
+            </Alert>
+          ) : null}
           <ProductFields
             state={values}
             onChange={changeField}
@@ -126,7 +171,16 @@ export const ProductCreateDialog = ({
             errors={errors}
           />
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2.5, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider", flexShrink: 0 }}>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2.5,
+            bgcolor: "background.paper",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            flexShrink: 0,
+          }}
+        >
           <Button
             onClick={onClose}
             variant="outlined"
@@ -151,7 +205,11 @@ export const ProductCreateDialog = ({
             type="submit"
             variant="contained"
             disabled={isSubmitting}
-            startIcon={isSubmitting ? <CircularProgress size={14} color="inherit" /> : null}
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : null
+            }
             sx={{
               borderRadius: 0,
               textTransform: "uppercase",

@@ -68,9 +68,18 @@ export const API_ENDPOINTS = {
     create: "/users",
     attachRole: (id: string) => `/users/${id}/roles`,
   },
+  adminRoles: {
+    list: "/admin/roles",
+  },
+  adminPermissions: {
+    list: "/admin/permissions",
+  },
   roles: {
     create: "/roles",
     attachPermission: (id: string) => `/roles/${id}/permissions`,
+    updatePermissions: (id: string) => `/roles/${id}/permissions`,
+    detachPermission: (id: string, permissionId: string) =>
+      `/roles/${id}/permissions/${permissionId}`,
   },
   adminUsers: {
     list: "/admin/users",

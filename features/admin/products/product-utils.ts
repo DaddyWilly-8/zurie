@@ -80,7 +80,9 @@ const getColorHex = (name: string): string => {
   return colorMap[name] || "#CCCCCC";
 };
 
-const parseColors = (value: string): Array<{ name: string; hex: string }> | undefined => {
+const parseColors = (
+  value: string,
+): Array<{ name: string; hex: string }> | undefined => {
   const colors = parseList(value)
     .map((name) => {
       if (!name) return null;
@@ -140,15 +142,20 @@ export const toFormState = (product: AdminProduct): ProductFormState => {
   ].filter((url): url is string => Boolean(url));
 
   const imageIds = (product.images ?? []).map((item) => String(item.id));
-  const stockStatus = product.stockStatus ?? product.stock_status ?? (product.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
+  const stockStatus =
+    product.stockStatus ??
+    product.stock_status ??
+    (product.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
 
   return {
     name: product.name ?? "",
     slug: product.slug ?? "",
     description: product.description ?? "",
-    shortDescription: product.shortDescription ?? product.short_description ?? "",
+    shortDescription:
+      product.shortDescription ?? product.short_description ?? "",
     price: product.price ?? null,
-    buyingPrice: product.buyingPrice ?? product.buying_price ?? product.price ?? null,
+    buyingPrice:
+      product.buyingPrice ?? product.buying_price ?? product.price ?? null,
     compareAt: product.salePrice ?? product.sale_price ?? null,
     sku: product.sku ?? "",
     status: product.status ?? "draft",
@@ -158,14 +165,18 @@ export const toFormState = (product: AdminProduct): ProductFormState => {
     lining: product.specifications?.[2] ?? "",
     seoTitle: product.seoTitle ?? product.seo_title ?? "",
     seoDescription: product.seoDescription ?? product.seo_description ?? "",
-    featuredImageUrl: product.featuredImageUrl ?? product.featured_image_url ?? "",
-    categoryId: String(product.categoryId ?? product.category_id ?? product.category ?? ""),
+    featuredImageUrl:
+      product.featuredImageUrl ?? product.featured_image_url ?? "",
+    categoryId: String(
+      product.categoryId ?? product.category_id ?? product.category ?? "",
+    ),
     category: product.category ?? "",
     featured: Boolean(product.featured),
     bestSeller: Boolean(product.bestSeller ?? product.best_seller),
     newArrival: Boolean(product.newArrival ?? product.new_arrival),
     inStock: stockStatus !== "OUT_OF_STOCK",
-    stockCount: product.quantity ?? product.stockCount ?? product.stock_count ?? 0,
+    stockCount:
+      product.quantity ?? product.stockCount ?? product.stock_count ?? 0,
     imageUrlsText: imageUrls.join("\n"),
     existingImageIds: imageIds,
     removedImageIds: [],
@@ -184,7 +195,9 @@ const toBasePayload = (state: ProductFormState) => {
   const colors = parseColors(state.colorsText);
   const sizes = optionalStringList(parseList(state.sizesText));
   const specifications = optionalStringList(
-    [state.dimensions, state.hardware, state.lining].map((item) => item.trim()).filter(Boolean),
+    [state.dimensions, state.hardware, state.lining]
+      .map((item) => item.trim())
+      .filter(Boolean),
   );
   return {
     name: state.name.trim(),
@@ -209,12 +222,22 @@ const toBasePayload = (state: ProductFormState) => {
   };
 };
 
+export const hasProductImages = (state: ProductFormState): boolean => {
+  const imageUrls = parseImageUrls(state.imageUrlsText);
+  return imageUrls.length > 0 || state.existingImageIds.length > 0;
+};
+
+export const canPublishProduct = (state: ProductFormState): boolean => {
+  return hasProductImages(state) && state.stockCount > 0;
+};
+
 export const toCreatePayload = (state: ProductFormState) => ({
   ...toBasePayload(state),
   quantity: Math.max(0, Number(state.stockCount) || 0),
 });
 
-export const toUpdatePayload = (state: ProductFormState) => toBasePayload(state);
+export const toUpdatePayload = (state: ProductFormState) =>
+  toBasePayload(state);
 
 export const toInventoryPayload = (state: ProductFormState) => ({
   quantity: Math.max(0, Number(state.stockCount) || 0),
