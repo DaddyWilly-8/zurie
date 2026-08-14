@@ -825,22 +825,6 @@ export const AdminUsersClient = () => {
                                 />
                               )}
                             </Stack>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditUser(row);
-                              }}
-                              sx={{
-                                color: getSecondaryTextColor(),
-                                "&:hover": {
-                                  color: getTextColor(),
-                                  bgcolor: getHoverBackgroundColor(),
-                                },
-                              }}
-                            >
-                              <FontAwesomeIcon icon={faEdit} size="sm" />
-                            </IconButton>
                           </Stack>
                         </Stack>
                       </AccordionSummary>
