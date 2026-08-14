@@ -60,9 +60,9 @@ const links: AdminNavLink[] = [
   { href: "/admin/categories", label: "Categories", icon: faLayerGroup },
   { href: "/admin/orders", label: "Orders", icon: faBoxesPacking },
   { href: "/admin/customers", label: "Customers", icon: faUsers },
-  { href: "/admin/settings", label: "Settings", icon: faGear },
+  // { href: "/admin/settings", label: "Settings", icon: faGear },
   { href: "/admin/users", label: "Admin Users", icon: faUserShield },
-  { href: "/admin/activity", label: "Activity", icon: faChartLine },
+  // { href: "/admin/activity", label: "Activity", icon: faChartLine },
 ];
 
 export const AdminShell = ({ children }: { children: React.ReactNode }) => {
