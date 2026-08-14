@@ -21,7 +21,10 @@ type CategoryFormDialogProps = {
   editing: boolean;
   form: CategoryForm;
   onClose: () => void;
-  onChange: <K extends keyof CategoryForm>(key: K, value: CategoryForm[K]) => void;
+  onChange: <K extends keyof CategoryForm>(
+    key: K,
+    value: CategoryForm[K],
+  ) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
@@ -55,30 +58,36 @@ export const CategoryFormDialog = ({
       <DialogTitle
         component="div"
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
           justifyContent: "space-between",
           px: { xs: 2.5, md: 3.5 },
           pt: { xs: 2.5, md: 3 },
           pb: 1,
         }}
       >
-        <Typography variant="h4" component="div" sx={{ color: "text.primary", fontFamily: "var(--font-playfair), serif", lineHeight: 1 }}>
+        <Typography
+          variant="h4"
+          component="div"
+          textAlign={"center"}
+          sx={{
+            color: "text.primary",
+            fontFamily: "var(--font-playfair), serif",
+            lineHeight: 1,
+          }}
+        >
           {editing ? "Edit Category" : "New Category"}
         </Typography>
-        <IconButton size="small" onClick={onClose} aria-label="Close category dialog">
-          <FontAwesomeIcon icon={faTimes} size="sm" />
-        </IconButton>
       </DialogTitle>
 
-      <Box component="form" onSubmit={onSubmit} sx={{ display: "flex", flexDirection: "column" }}>
+      <Box
+        component="form"
+        onSubmit={onSubmit}
+        sx={{ display: "flex", flexDirection: "column" }}
+      >
         <DialogContent
           dividers
           sx={{
             bgcolor: "background.paper",
-            px: { xs: 2.5, md: 3.5 },
-            pb: 3,
-            pt: 0.5,
+            pt: 2,
             overflowY: "auto",
             "& .MuiInputLabel-root": {
               textTransform: "uppercase",
@@ -94,10 +103,20 @@ export const CategoryFormDialog = ({
         >
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <AdminField label="Name" value={form.name} onChange={(value) => onChange("name", value)} required />
+              <AdminField
+                label="Name"
+                value={form.name}
+                onChange={(value) => onChange("name", value)}
+                required
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <AdminField label="Slug" value={form.slug} onChange={(value) => onChange("slug", value)} required />
+              <AdminField
+                label="Slug"
+                value={form.slug}
+                onChange={(value) => onChange("slug", value)}
+                required
+              />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <AdminField
@@ -108,8 +127,13 @@ export const CategoryFormDialog = ({
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", pl: 1.5 }}>
-                Category image is managed from the category list after create/update.
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", pl: 1.5 }}
+              >
+                Category image is managed from the category list after
+                create/update.
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -121,18 +145,42 @@ export const CategoryFormDialog = ({
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Stack direction="row" alignItems="center" sx={{ height: "100%" }}>
-                <AdminToggle label="Visible" checked={form.visible} onChange={(checked) => onChange("visible", checked)} />
+              <Stack
+                direction="row"
+                alignItems="center"
+                sx={{ height: "100%" }}
+              >
+                <AdminToggle
+                  label="Visible"
+                  checked={form.visible}
+                  onChange={(checked) => onChange("visible", checked)}
+                />
               </Stack>
             </Grid>
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider" }}>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+            bgcolor: "background.paper",
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           <Button
             onClick={onClose}
             variant="outlined"
-            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.72rem", borderColor: "divider", color: "text.primary", px: 3 }}
+            sx={{
+              borderRadius: 0,
+              textTransform: "uppercase",
+              letterSpacing: "0.3em",
+              fontSize: "0.72rem",
+              borderColor: "divider",
+              color: "text.primary",
+              px: 3,
+            }}
           >
             Cancel
           </Button>
@@ -140,9 +188,21 @@ export const CategoryFormDialog = ({
             type="submit"
             variant="contained"
             disabled={saving}
-            sx={{ borderRadius: 0, textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.72rem", bgcolor: "text.primary", px: 4, "&:hover": { bgcolor: "text.secondary" } }}
+            sx={{
+              borderRadius: 0,
+              textTransform: "uppercase",
+              letterSpacing: "0.3em",
+              fontSize: "0.72rem",
+              bgcolor: "text.primary",
+              px: 4,
+              "&:hover": { bgcolor: "text.secondary" },
+            }}
           >
-            {saving ? "Saving..." : editing ? "Save Changes" : "Create Category"}
+            {saving
+              ? "Saving..."
+              : editing
+                ? "Save Changes"
+                : "Create Category"}
           </Button>
         </DialogActions>
       </Box>
