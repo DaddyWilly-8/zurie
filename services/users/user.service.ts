@@ -1,4 +1,3 @@
-// services/users/user.service.ts
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
 import type {
@@ -15,7 +14,7 @@ type AdminUserApi = {
   email?: string;
   phone?: string | null;
   role?: UserRole;
-  roles?: Array<{ id?: number; name?: string }>;
+  roles?: string[];
   roleIds?: number[];
   created_at?: string;
   createdAt?: string;
@@ -39,7 +38,7 @@ type PermissionApi = {
 
 const normalizeRole = (row: AdminUserApi): UserRole => {
   if (row.role) return row.role;
-  const roleName = row.roles?.[0]?.name;
+  const roleName = row.roles?.[0];
   if (
     roleName === "super_admin" ||
     roleName === "admin" ||
@@ -55,19 +54,21 @@ const normalizeRole = (row: AdminUserApi): UserRole => {
   return "staff";
 };
 
-const normalizeUserRow = (row: AdminUserApi): AdminUserRow => ({
-  id: String(row.id),
-  full_name: row.full_name ?? row.name ?? null,
-  email: row.email ?? "",
-  phone: row.phone ?? null,
-  role: normalizeRole(row),
-  roleIds:
-    row.roleIds ??
-    (row.roles ?? [])
-      .map((role) => Number(role.id))
-      .filter((id) => Number.isFinite(id)),
-  created_at: row.created_at ?? row.createdAt ?? new Date().toISOString(),
-});
+const normalizeUserRow = (row: AdminUserApi): AdminUserRow => {
+  const roleNames = row.roles || [];
+
+  return {
+    id: String(row.id),
+    full_name: row.full_name ?? row.name ?? null,
+    name: row.name ?? row.full_name ?? null,
+    email: row.email ?? "",
+    phone: row.phone ?? null,
+    role: normalizeRole(row),
+    roleNames: roleNames,
+    roleIds: [],
+    created_at: row.created_at ?? row.createdAt ?? new Date().toISOString(),
+  };
+};
 
 export const userService = {
   listUsers() {
@@ -124,20 +125,34 @@ export const userService = {
     );
   },
 
-  updateRolePermissions(roleId: number, permissionIds: number[]) {
-    // Use POST /roles/{id}/permissions with permissionId
-    // Or use PUT if the endpoint supports replacing all permissions
-    return apiClient.post<{ success: boolean }>(
-      API_ENDPOINTS.roles.attachPermission(String(roleId)),
-      { permissionId: permissionIds }, // May need to send one at a time
-    );
+  // NEW: Sync all permissions for a role (replaces all existing permissions)
+  syncRolePermissions(roleId: number, permissionIds: number[]) {
+    // If the backend supports PUT to replace all permissions
+    return apiClient
+      .put<{ success: boolean }>(
+        API_ENDPOINTS.roles.updatePermissions(String(roleId)),
+        { permissionIds },
+      )
+      .catch(() => {
+        // If PUT fails, try POST one by one
+        return Promise.all(
+          permissionIds.map((permissionId) =>
+            apiClient.post<{ success: boolean }>(
+              API_ENDPOINTS.roles.attachPermission(String(roleId)),
+              { permissionId },
+            ),
+          ),
+        );
+      });
   },
 
-  syncRolePermissions(roleId: number, permissionIds: number[]) {
-    // If there's a dedicated sync endpoint
-    return apiClient.put<{ success: boolean }>(
-      API_ENDPOINTS.roles.updatePermissions(String(roleId)),
-      { permissionIds },
+  // NEW: Remove a permission from a role (if DELETE endpoint exists)
+  removePermissionFromRole(roleId: number, permissionId: number) {
+    return apiClient.delete<{ success: boolean }>(
+      API_ENDPOINTS.roles.detachPermission(
+        String(roleId),
+        String(permissionId),
+      ),
     );
   },
 

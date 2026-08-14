@@ -1,4 +1,3 @@
-// features/admin/users/types.ts
 export type UserRole =
   | "super_admin"
   | "admin"
@@ -28,11 +27,13 @@ export type Role = {
 export type AdminUserRow = {
   id: string;
   full_name: string | null;
+  name?: string | null; // Added name property
   email?: string;
   phone?: string | null;
   role: UserRole;
-  roleIds?: number[];
-  roles?: Role[];
+  roleNames?: string[]; // Role names from the API
+  roleIds?: number[]; // Role IDs after matching with roles list
+  roles?: string[] | Role[];
   created_at: string;
 };
 

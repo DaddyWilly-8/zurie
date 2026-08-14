@@ -1,4 +1,3 @@
-// services/api/endpoints.ts
 export const API_ENDPOINTS = {
   auth: {
     csrfCookie: "/sanctum/csrf-cookie",

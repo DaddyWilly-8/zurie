@@ -112,9 +112,6 @@ export const AdminUsersClient = () => {
 
   // Permission search state
   const [permissionSearch, setPermissionSearch] = useState("");
-  const [permissionSearchRoleId, setPermissionSearchRoleId] = useState<
-    number | null
-  >(null);
 
   // User creation state
   const [newUserName, setNewUserName] = useState("");
@@ -131,7 +128,6 @@ export const AdminUsersClient = () => {
   const [openRoleDialog, setOpenRoleDialog] = useState(false);
 
   // Role edit state
-  const [editingRoleId, setEditingRoleId] = useState<number | null>(null);
   const [editingRolePermissions, setEditingRolePermissions] = useState<
     Map<number, string[]>
   >(new Map());
@@ -201,7 +197,7 @@ export const AdminUsersClient = () => {
   }, []);
 
   // Filter permissions based on search
-  const getFilteredPermissions = (roleId: number) => {
+  const getFilteredPermissions = () => {
     if (!permissionSearch.trim()) return permissions;
 
     const searchLower = permissionSearch.toLowerCase();
@@ -236,19 +232,55 @@ export const AdminUsersClient = () => {
   ) => {
     setSavingPermissions(true);
     try {
-      const permissionIds = permissions
-        .filter((p) => permissionKeys.includes(p.key))
-        .map((p) => p.id);
+      // Find the original role to get current permissions
+      const originalRole = roles.find((r) => r.id === roleId);
+      const originalPerms = originalRole?.permissions || [];
 
-      await userActions.updateRolePermissions(roleId, permissionIds);
-      setMessage("Role permissions updated successfully");
+      // Find which permissions are NEW (to be added)
+      const permissionsToAdd = permissionKeys.filter(
+        (key) => !originalPerms.includes(key),
+      );
+
+      // Find which permissions are REMOVED
+      const permissionsToRemove = originalPerms.filter(
+        (key) => !permissionKeys.includes(key),
+      );
+
+      // Get permission IDs
+      const allPermissions = permissions;
+
+      // Handle removals first
+      for (const permissionKey of permissionsToRemove) {
+        const permission = allPermissions.find((p) => p.key === permissionKey);
+        if (permission) {
+          try {
+            await userActions.removePermissionFromRole(roleId, permission.id);
+          } catch (error) {
+            console.warn(
+              `Could not remove permission ${permissionKey}:`,
+              error,
+            );
+          }
+        }
+      }
+
+      // Handle additions
+      const permissionIds = permissionsToAdd
+        .map((key) => allPermissions.find((p) => p.key === key)?.id)
+        .filter((id): id is number => id !== undefined);
+
+      if (permissionIds.length > 0) {
+        await userActions.updateRolePermissions(roleId, permissionIds);
+      }
+
+      setMessage(
+        `Updated ${permissionsToAdd.length} permission(s) added, ${permissionsToRemove.length} removed.`,
+      );
       setMessageType("success");
       await loadRoles();
 
       setExpandedRoleId(null);
-      setEditingRoleId(null);
       setPermissionSearch("");
-      setPermissionSearchRoleId(null);
 
       return true;
     } catch (error) {
@@ -332,7 +364,15 @@ export const AdminUsersClient = () => {
 
   const handleEditUser = (user: AdminUserRow) => {
     setEditingUser(user);
-    setEditingUserRoleIds(user.roleIds || []);
+    // Map role names to role IDs
+    const roleNames = user.roleNames || [];
+    const roleIds = roleNames
+      .map((roleName: string) => {
+        const role = roles.find((r) => r.name === roleName);
+        return role?.id;
+      })
+      .filter((id): id is number => id !== undefined);
+    setEditingUserRoleIds(roleIds);
     setOpenUserEditDialog(true);
   };
 
@@ -378,7 +418,7 @@ export const AdminUsersClient = () => {
   };
 
   const handleSelectAllForRole = (roleId: number) => {
-    const filtered = getFilteredPermissions(roleId);
+    const filtered = getFilteredPermissions();
     const allPermissionKeys = filtered.map((p) => p.key);
     setEditingRolePermissions((prev) => {
       const newMap = new Map(prev);
@@ -390,7 +430,7 @@ export const AdminUsersClient = () => {
   };
 
   const handleDeselectAllForRole = (roleId: number) => {
-    const filtered = getFilteredPermissions(roleId);
+    const filtered = getFilteredPermissions();
     const filteredKeys = filtered.map((p) => p.key);
     setEditingRolePermissions((prev) => {
       const newMap = new Map(prev);
@@ -404,7 +444,12 @@ export const AdminUsersClient = () => {
   const filteredRows = useMemo(() => {
     if (!searchQuery.trim()) return rows;
     const query = searchQuery.toLowerCase();
-    return rows.filter((row) => row.full_name?.toLowerCase().includes(query));
+    return rows.filter(
+      (row: AdminUserRow) =>
+        row.full_name?.toLowerCase().includes(query) ||
+        row.name?.toLowerCase().includes(query) ||
+        row.email?.toLowerCase().includes(query),
+    );
   }, [rows, searchQuery]);
 
   const totalPages = useMemo(
@@ -639,7 +684,7 @@ export const AdminUsersClient = () => {
                                   fontSize: "0.95rem",
                                 }}
                               >
-                                {row.full_name}
+                                {row.full_name || row.name}
                               </Typography>
                               <Typography
                                 variant="caption"
@@ -677,16 +722,13 @@ export const AdminUsersClient = () => {
                               spacing={0.5}
                               flexWrap="wrap"
                             >
-                              {row.roleIds && row.roleIds.length > 0 ? (
-                                row.roleIds.map((roleId) => {
-                                  const role = roles.find(
-                                    (r) => r.id === roleId,
-                                  );
-                                  return role ? (
+                              {(row.roleNames || []).length > 0 ? (
+                                (row.roleNames || []).map(
+                                  (roleName: string) => (
                                     <Chip
-                                      key={roleId}
-                                      label={formatRoleLabel(role.name)}
-                                      color={getRoleColor(role.name)}
+                                      key={roleName}
+                                      label={formatRoleLabel(roleName)}
+                                      color={getRoleColor(roleName)}
                                       size="small"
                                       sx={{
                                         fontSize: "0.55rem",
@@ -696,8 +738,8 @@ export const AdminUsersClient = () => {
                                           : undefined,
                                       }}
                                     />
-                                  ) : null;
-                                })
+                                  ),
+                                )
                               ) : (
                                 <Chip
                                   label="No roles"
@@ -798,7 +840,7 @@ export const AdminUsersClient = () => {
                     editingRolePermissions.get(role.id) || [];
                   const hasChanges = hasPermissionsChanged(role.id);
                   const isExpanded = expandedRoleId === role.id;
-                  const filteredPerms = getFilteredPermissions(role.id);
+                  const filteredPerms = getFilteredPermissions();
                   const hasFilteredResults = filteredPerms.length > 0;
 
                   return (
@@ -890,7 +932,6 @@ export const AdminUsersClient = () => {
                                   value={permissionSearch}
                                   onChange={(e) => {
                                     setPermissionSearch(e.target.value);
-                                    setPermissionSearchRoleId(role.id);
                                   }}
                                   size="small"
                                   fullWidth
@@ -924,7 +965,6 @@ export const AdminUsersClient = () => {
                                           size="small"
                                           onClick={() => {
                                             setPermissionSearch("");
-                                            setPermissionSearchRoleId(null);
                                           }}
                                         >
                                           <FontAwesomeIcon
@@ -1207,7 +1247,7 @@ export const AdminUsersClient = () => {
         </TabPanel>
       </Paper>
 
-      {/* Add User Dialog - unchanged */}
+      {/* Add User Dialog */}
       <Dialog
         open={openUserDialog}
         onClose={() => setOpenUserDialog(false)}
@@ -1370,7 +1410,7 @@ export const AdminUsersClient = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Add Role Dialog - unchanged */}
+      {/* Add Role Dialog */}
       <Dialog
         open={openRoleDialog}
         onClose={() => setOpenRoleDialog(false)}
@@ -1474,7 +1514,7 @@ export const AdminUsersClient = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit User Roles Dialog - unchanged */}
+      {/* Edit User Roles Dialog */}
       <Dialog
         open={openUserEditDialog}
         onClose={() => setOpenUserEditDialog(false)}
@@ -1514,7 +1554,7 @@ export const AdminUsersClient = () => {
                 fontWeight={600}
                 color={getTextColor()}
               >
-                {editingUser.full_name}
+                {editingUser.full_name || editingUser.name}
               </Typography>
             )}
             <Typography variant="caption" color={getSecondaryTextColor()}>

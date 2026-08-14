@@ -1,4 +1,3 @@
-// features/admin/users/user-actions.ts
 import { userService } from "@/services/users/user.service";
 import type { AdminUserRow, UserRole, Role, Permission } from "./types";
 
@@ -41,9 +40,12 @@ export const userActions = {
 
   async updateRolePermissions(roleId: number, permissionIds: number[]) {
     try {
-      // Try to sync all permissions at once
+      // Try to sync all permissions at once (replace all)
       return await userService.syncRolePermissions(roleId, permissionIds);
     } catch (error) {
+      console.warn("Sync failed, trying individual attachments:", error);
+
+      // Fallback: attach one by one
       const results = [];
       for (const permissionId of permissionIds) {
         try {
@@ -56,8 +58,20 @@ export const userActions = {
           console.error(`Failed to attach permission ${permissionId}:`, err);
         }
       }
-
       return results;
+    }
+  },
+
+  // NEW: Remove a permission from a role
+  async removePermissionFromRole(roleId: number, permissionId: number) {
+    try {
+      return await userService.removePermissionFromRole(roleId, permissionId);
+    } catch (error) {
+      console.error(
+        `Failed to remove permission ${permissionId} from role ${roleId}:`,
+        error,
+      );
+      throw error;
     }
   },
 
