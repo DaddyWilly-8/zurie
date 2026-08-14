@@ -40,6 +40,7 @@ import {
   InputAdornment,
   useMediaQuery,
   Divider,
+  FormHelperText,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -58,6 +59,7 @@ import {
   faPhone,
   faCalendar,
   faUser,
+  faExclamationCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { userActions } from "@/features/admin/users";
 
@@ -81,6 +83,15 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
+
+// Validation error type
+type FormErrors = {
+  name?: string;
+  email?: string;
+  password?: string;
+  roleName?: string;
+  roleDescription?: string;
+};
 
 export const AdminUsersClient = () => {
   const theme = useTheme();
@@ -128,12 +139,14 @@ export const AdminUsersClient = () => {
   const [newUserRoleIds, setNewUserRoleIds] = useState<number[]>([]);
   const [creatingUser, setCreatingUser] = useState(false);
   const [openUserDialog, setOpenUserDialog] = useState(false);
+  const [userFormErrors, setUserFormErrors] = useState<FormErrors>({});
 
   // Role creation state
   const [roleName, setRoleName] = useState("");
   const [roleDescription, setRoleDescription] = useState("");
   const [creatingRole, setCreatingRole] = useState(false);
   const [openRoleDialog, setOpenRoleDialog] = useState(false);
+  const [roleFormErrors, setRoleFormErrors] = useState<FormErrors>({});
 
   // Role edit state
   const [editingRolePermissions, setEditingRolePermissions] = useState<
@@ -294,16 +307,57 @@ export const AdminUsersClient = () => {
     }
   };
 
-  const handleCreateUser = async () => {
-    if (
-      !newUserName.trim() ||
-      !newUserEmail.trim() ||
-      !newUserPassword.trim()
-    ) {
-      setMessage("Name, email, and password are required.");
-      setMessageType("error");
-      return;
+  // Validation functions
+  const validateUserForm = (): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+
+    if (!newUserName.trim()) {
+      errors.name = "Full name is required";
+      isValid = false;
+    } else if (newUserName.trim().length < 2) {
+      errors.name = "Name must be at least 2 characters";
+      isValid = false;
     }
+
+    if (!newUserEmail.trim()) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail.trim())) {
+      errors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    if (!newUserPassword.trim()) {
+      errors.password = "Password is required";
+      isValid = false;
+    } else if (newUserPassword.trim().length < 8) {
+      errors.password = "Password must be at least 8 characters";
+      isValid = false;
+    }
+
+    setUserFormErrors(errors);
+    return isValid;
+  };
+
+  const validateRoleForm = (): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+
+    if (!roleName.trim()) {
+      errors.roleName = "Role name is required";
+      isValid = false;
+    } else if (roleName.trim().length < 2) {
+      errors.roleName = "Role name must be at least 2 characters";
+      isValid = false;
+    }
+
+    setRoleFormErrors(errors);
+    return isValid;
+  };
+
+  const handleCreateUser = async () => {
+    if (!validateUserForm()) return;
 
     setCreatingUser(true);
     try {
@@ -324,6 +378,7 @@ export const AdminUsersClient = () => {
       setNewUserEmail("");
       setNewUserPassword("");
       setNewUserRoleIds([]);
+      setUserFormErrors({});
       setOpenUserDialog(false);
       await refetch();
     } catch (error) {
@@ -336,11 +391,7 @@ export const AdminUsersClient = () => {
   };
 
   const handleCreateRole = async () => {
-    if (!roleName.trim()) {
-      setMessage("Role name is required.");
-      setMessageType("error");
-      return;
-    }
+    if (!validateRoleForm()) return;
 
     setCreatingRole(true);
     try {
@@ -352,6 +403,7 @@ export const AdminUsersClient = () => {
       setMessageType("success");
       setRoleName("");
       setRoleDescription("");
+      setRoleFormErrors({});
       setOpenRoleDialog(false);
       await loadRoles();
     } catch (error) {
@@ -520,6 +572,19 @@ export const AdminUsersClient = () => {
   const getChipBackground = () =>
     isDarkMode ? "rgba(255,255,255,0.1)" : "#f0ebe3";
 
+  // Helper to clear form errors when user types
+  const clearUserFieldError = (field: keyof FormErrors) => {
+    if (userFormErrors[field]) {
+      setUserFormErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const clearRoleFieldError = (field: keyof FormErrors) => {
+    if (roleFormErrors[field]) {
+      setRoleFormErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   return (
     <Stack spacing={{ xs: 2, md: 3 }}>
       {message && (
@@ -579,7 +644,7 @@ export const AdminUsersClient = () => {
           />
         </Tabs>
 
-        {/* Users Tab - Now with Accordion */}
+        {/* Users Tab - with Accordion */}
         <TabPanel value={tabValue} index={0}>
           <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 2 }}>
             <Stack
@@ -832,7 +897,6 @@ export const AdminUsersClient = () => {
                         <Stack spacing={2}>
                           <Divider sx={{ borderColor: getBorderColor() }} />
 
-                          {/* User Details Grid */}
                           <Grid container spacing={2}>
                             <Grid size={{ xs: 12, md: 6 }}>
                               <Stack spacing={1.5}>
@@ -1049,7 +1113,6 @@ export const AdminUsersClient = () => {
 
                           <Divider sx={{ borderColor: getBorderColor() }} />
 
-                          {/* Actions */}
                           <Stack
                             direction={{ xs: "column", sm: "row" }}
                             spacing={1.5}
@@ -1107,9 +1170,8 @@ export const AdminUsersClient = () => {
           </Box>
         </TabPanel>
 
-        {/* Roles Tab - unchanged */}
+        {/* Roles Tab */}
         <TabPanel value={tabValue} index={1}>
-          {/* ... Roles tab content remains the same ... */}
           <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 2 }}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -1256,7 +1318,6 @@ export const AdminUsersClient = () => {
                       </AccordionSummary>
                       <AccordionDetails sx={{ pt: 0, px: { xs: 1.5, md: 2 } }}>
                         <Stack spacing={2}>
-                          {/* Permission Search */}
                           {isExpanded && (
                             <Grid container spacing={1.5} sx={{ mb: 1 }}>
                               <Grid size={{ xs: 12, md: 6 }}>
@@ -1465,7 +1526,6 @@ export const AdminUsersClient = () => {
                             </Grid>
                           )}
 
-                          {/* Permissions List */}
                           <List
                             dense
                             sx={{
@@ -1592,7 +1652,6 @@ export const AdminUsersClient = () => {
                             )}
                           </List>
 
-                          {/* Save Button */}
                           {hasChanges && (
                             <Button
                               variant="contained"
@@ -1630,10 +1689,13 @@ export const AdminUsersClient = () => {
         </TabPanel>
       </Paper>
 
-      {/* Add User Dialog - unchanged */}
+      {/* Add User Dialog with Validation Errors */}
       <Dialog
         open={openUserDialog}
-        onClose={() => setOpenUserDialog(false)}
+        onClose={() => {
+          setOpenUserDialog(false);
+          setUserFormErrors({});
+        }}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -1656,7 +1718,10 @@ export const AdminUsersClient = () => {
             </Typography>
             <IconButton
               size="small"
-              onClick={() => setOpenUserDialog(false)}
+              onClick={() => {
+                setOpenUserDialog(false);
+                setUserFormErrors({});
+              }}
               sx={{ color: getSecondaryTextColor() }}
             >
               <FontAwesomeIcon icon={faTimes} size="sm" />
@@ -1668,16 +1733,31 @@ export const AdminUsersClient = () => {
             <TextField
               label="Full Name *"
               value={newUserName}
-              onChange={(e) => setNewUserName(e.target.value)}
+              onChange={(e) => {
+                setNewUserName(e.target.value);
+                clearUserFieldError("name");
+              }}
+              onBlur={() => {
+                if (!newUserName.trim() && !userFormErrors.name) {
+                  setUserFormErrors((prev) => ({
+                    ...prev,
+                    name: "Full name is required",
+                  }));
+                }
+              }}
               fullWidth
               size={isMobile ? "small" : "medium"}
+              error={!!userFormErrors.name}
+              helperText={userFormErrors.name}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
                   color: getTextColor(),
                 },
                 "& .MuiInputLabel-root": {
-                  color: getSecondaryTextColor(),
+                  color: userFormErrors.name
+                    ? "error.main"
+                    : getSecondaryTextColor(),
                 },
               }}
             />
@@ -1685,16 +1765,35 @@ export const AdminUsersClient = () => {
               label="Email *"
               type="email"
               value={newUserEmail}
-              onChange={(e) => setNewUserEmail(e.target.value)}
+              onChange={(e) => {
+                setNewUserEmail(e.target.value);
+                clearUserFieldError("email");
+              }}
+              onBlur={() => {
+                if (
+                  newUserEmail.trim() &&
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail.trim()) &&
+                  !userFormErrors.email
+                ) {
+                  setUserFormErrors((prev) => ({
+                    ...prev,
+                    email: "Please enter a valid email address",
+                  }));
+                }
+              }}
               fullWidth
               size={isMobile ? "small" : "medium"}
+              error={!!userFormErrors.email}
+              helperText={userFormErrors.email}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
                   color: getTextColor(),
                 },
                 "& .MuiInputLabel-root": {
-                  color: getSecondaryTextColor(),
+                  color: userFormErrors.email
+                    ? "error.main"
+                    : getSecondaryTextColor(),
                 },
               }}
             />
@@ -1702,16 +1801,35 @@ export const AdminUsersClient = () => {
               label="Password *"
               type="password"
               value={newUserPassword}
-              onChange={(e) => setNewUserPassword(e.target.value)}
+              onChange={(e) => {
+                setNewUserPassword(e.target.value);
+                clearUserFieldError("password");
+              }}
+              onBlur={() => {
+                if (
+                  newUserPassword.trim() &&
+                  newUserPassword.trim().length < 8 &&
+                  !userFormErrors.password
+                ) {
+                  setUserFormErrors((prev) => ({
+                    ...prev,
+                    password: "Password must be at least 8 characters",
+                  }));
+                }
+              }}
               fullWidth
               size={isMobile ? "small" : "medium"}
+              error={!!userFormErrors.password}
+              helperText={userFormErrors.password}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
                   color: getTextColor(),
                 },
                 "& .MuiInputLabel-root": {
-                  color: getSecondaryTextColor(),
+                  color: userFormErrors.password
+                    ? "error.main"
+                    : getSecondaryTextColor(),
                 },
               }}
             />
@@ -1766,7 +1884,10 @@ export const AdminUsersClient = () => {
         </DialogContent>
         <DialogActions sx={{ p: { xs: 2, md: 3 } }}>
           <Button
-            onClick={() => setOpenUserDialog(false)}
+            onClick={() => {
+              setOpenUserDialog(false);
+              setUserFormErrors({});
+            }}
             sx={{ textTransform: "none", color: getSecondaryTextColor() }}
           >
             Cancel
@@ -1796,10 +1917,13 @@ export const AdminUsersClient = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Add Role Dialog */}
+      {/* Add Role Dialog with Validation Errors */}
       <Dialog
         open={openRoleDialog}
-        onClose={() => setOpenRoleDialog(false)}
+        onClose={() => {
+          setOpenRoleDialog(false);
+          setRoleFormErrors({});
+        }}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -1822,7 +1946,10 @@ export const AdminUsersClient = () => {
             </Typography>
             <IconButton
               size="small"
-              onClick={() => setOpenRoleDialog(false)}
+              onClick={() => {
+                setOpenRoleDialog(false);
+                setRoleFormErrors({});
+              }}
               sx={{ color: getSecondaryTextColor() }}
             >
               <FontAwesomeIcon icon={faTimes} size="sm" />
@@ -1834,36 +1961,58 @@ export const AdminUsersClient = () => {
             <TextField
               label="Role Name *"
               value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
+              onChange={(e) => {
+                setRoleName(e.target.value);
+                clearRoleFieldError("roleName");
+              }}
+              onBlur={() => {
+                if (!roleName.trim() && !roleFormErrors.roleName) {
+                  setRoleFormErrors((prev) => ({
+                    ...prev,
+                    roleName: "Role name is required",
+                  }));
+                }
+              }}
               fullWidth
               size={isMobile ? "small" : "medium"}
               placeholder="e.g., Sales Manager"
+              error={!!roleFormErrors.roleName}
+              helperText={roleFormErrors.roleName}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
                   color: getTextColor(),
                 },
                 "& .MuiInputLabel-root": {
-                  color: getSecondaryTextColor(),
+                  color: roleFormErrors.roleName
+                    ? "error.main"
+                    : getSecondaryTextColor(),
                 },
               }}
             />
             <TextField
               label="Description (optional)"
               value={roleDescription}
-              onChange={(e) => setRoleDescription(e.target.value)}
+              onChange={(e) => {
+                setRoleDescription(e.target.value);
+                clearRoleFieldError("roleDescription");
+              }}
               fullWidth
               size={isMobile ? "small" : "medium"}
               multiline
               minRows={2}
               placeholder="Describe the role's responsibilities..."
+              error={!!roleFormErrors.roleDescription}
+              helperText={roleFormErrors.roleDescription}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
                   color: getTextColor(),
                 },
                 "& .MuiInputLabel-root": {
-                  color: getSecondaryTextColor(),
+                  color: roleFormErrors.roleDescription
+                    ? "error.main"
+                    : getSecondaryTextColor(),
                 },
               }}
             />
@@ -1871,7 +2020,10 @@ export const AdminUsersClient = () => {
         </DialogContent>
         <DialogActions sx={{ p: { xs: 2, md: 3 } }}>
           <Button
-            onClick={() => setOpenRoleDialog(false)}
+            onClick={() => {
+              setOpenRoleDialog(false);
+              setRoleFormErrors({});
+            }}
             sx={{ textTransform: "none", color: getSecondaryTextColor() }}
           >
             Cancel
