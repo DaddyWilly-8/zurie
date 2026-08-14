@@ -18,6 +18,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  useMediaQuery,
+  Paper,
+  IconButton,
 } from "@mui/material";
 import React, { useState } from "react";
 import Image from "next/image";
@@ -33,6 +36,7 @@ import {
   faFire,
   faCircle,
   faExclamationTriangle,
+  faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
@@ -59,6 +63,8 @@ export const ProductsTable = ({
 }: ProductsTableProps) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
@@ -97,6 +103,10 @@ export const ProductsTable = ({
     isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
   const getHoverIconColor = () => (isDarkMode ? "#ffffff" : "#171512");
   const getPriceColor = () => (isDarkMode ? "#ffffff" : "inherit");
+  const getCardBackground = () =>
+    isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper";
+  const getHoverBackgroundColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.06)" : "action.hover";
 
   const getStockLabel = (item: AdminProduct) => {
     const status =
@@ -204,6 +214,473 @@ export const ProductsTable = ({
     }
   };
 
+  // Mobile card view
+  if (isMobile) {
+    return (
+      <>
+        <Stack spacing={2}>
+          {products.map((item) => {
+            const categoryKey = String(
+              (item as AdminProduct & { categoryId?: string }).categoryId ??
+                item.category_id ??
+                "",
+            );
+            const categoryLabel =
+              categoryLabelByValue.get(categoryKey) ?? "Uncategorized";
+            const imageUrls = getProductImageUrls(item);
+            const imageEntries = getProductImageEntries(item);
+            const productId = String(item.id);
+            const isExpanded = expandedProductId === productId;
+
+            return (
+              <Paper
+                key={item.id}
+                sx={{
+                  p: 2,
+                  border: `1px solid ${getBorderColor()}`,
+                  bgcolor: getCardBackground(),
+                  borderRadius: 1,
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    borderColor: getTextColor(),
+                    bgcolor: getHoverBackgroundColor(),
+                  },
+                }}
+              >
+                <Stack spacing={1.5}>
+                  {/* Product Header */}
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 1,
+                        overflow: "hidden",
+                        bgcolor: getBackgroundColor(),
+                        border: `1px solid ${getBorderColor()}`,
+                        position: "relative",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Image
+                        src={imageUrls[0] ?? "/images/products/fallback.png"}
+                        alt={item.name}
+                        fill
+                        sizes="56px"
+                        style={{ objectFit: "cover" }}
+                        priority={false}
+                      />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        fontWeight={600}
+                        sx={{ color: getTextColor(), fontSize: "0.9rem" }}
+                        noWrap
+                      >
+                        {item.name}
+                      </Typography>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.55rem",
+                          }}
+                        >
+                          {item.slug}
+                        </Typography>
+                        <Chip
+                          label={item.status ?? "draft"}
+                          size="small"
+                          color={getStatusColor(item.status ?? "draft")}
+                          sx={{
+                            fontSize: "0.45rem",
+                            height: 16,
+                            fontWeight: 500,
+                          }}
+                        />
+                      </Stack>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setExpandedProductId((current) =>
+                          current === productId ? null : productId,
+                        )
+                      }
+                      sx={{
+                        transform: isExpanded
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                        transition: "transform 0.3s ease",
+                        color: getSecondaryTextColor(),
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faChevronDown} size="sm" />
+                    </IconButton>
+                  </Stack>
+
+                  {/* Quick Info */}
+                  <Grid container spacing={1}>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: getSecondaryTextColor(),
+                          fontSize: "0.55rem",
+                        }}
+                      >
+                        Category
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: getTextColor(),
+                          fontWeight: 500,
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        {categoryLabel}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: getSecondaryTextColor(),
+                          fontSize: "0.55rem",
+                        }}
+                      >
+                        Price
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: getTextColor(),
+                          fontWeight: 600,
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        {formatBaseCurrencyInCurrency(
+                          item.price,
+                          currency,
+                          rates,
+                        )}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: getSecondaryTextColor(),
+                          fontSize: "0.55rem",
+                        }}
+                      >
+                        Stock
+                      </Typography>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Chip
+                          label={getStockLabel(item)}
+                          size="small"
+                          color={getStockColor(item)}
+                          sx={{
+                            fontSize: "0.45rem",
+                            height: 16,
+                            fontWeight: 500,
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.55rem",
+                          }}
+                        >
+                          Qty: {getStockQuantity(item)}
+                        </Typography>
+                      </Stack>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: getSecondaryTextColor(),
+                          fontSize: "0.55rem",
+                        }}
+                      >
+                        Flags
+                      </Typography>
+                      <Stack direction="row" spacing={0.3} flexWrap="wrap">
+                        {item.featured && (
+                          <Chip
+                            icon={<FontAwesomeIcon icon={faStar} size="xs" />}
+                            label="Featured"
+                            size="small"
+                            sx={{
+                              fontSize: "0.4rem",
+                              height: 16,
+                              bgcolor: isDarkMode
+                                ? "rgba(255,152,0,0.2)"
+                                : "#fff3e0",
+                              fontWeight: 500,
+                            }}
+                          />
+                        )}
+                        {item.best_seller && (
+                          <Chip
+                            icon={<FontAwesomeIcon icon={faFire} size="xs" />}
+                            label="Best Seller"
+                            size="small"
+                            sx={{
+                              fontSize: "0.4rem",
+                              height: 16,
+                              bgcolor: isDarkMode
+                                ? "rgba(244,67,54,0.2)"
+                                : "#fce4ec",
+                              fontWeight: 500,
+                            }}
+                          />
+                        )}
+                        {item.new_arrival && (
+                          <Chip
+                            icon={<FontAwesomeIcon icon={faCircle} size="xs" />}
+                            label="New"
+                            size="small"
+                            sx={{
+                              fontSize: "0.4rem",
+                              height: 16,
+                              bgcolor: isDarkMode
+                                ? "rgba(76,175,80,0.2)"
+                                : "#e8f5e9",
+                              fontWeight: 500,
+                            }}
+                          />
+                        )}
+                      </Stack>
+                    </Grid>
+                  </Grid>
+
+                  {/* Actions */}
+                  <Divider sx={{ borderColor: getBorderColor() }} />
+                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => onEdit(String(productId))}
+                      startIcon={<FontAwesomeIcon icon={faPencil} size="sm" />}
+                      sx={{
+                        textTransform: "none",
+                        borderRadius: 1,
+                        borderColor: getBorderColor(),
+                        color: getTextColor(),
+                        fontSize: "0.6rem",
+                        "&:hover": {
+                          borderColor: getTextColor(),
+                          bgcolor: getHoverBackgroundColor(),
+                        },
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => onDuplicate(String(productId))}
+                      startIcon={<FontAwesomeIcon icon={faClone} size="sm" />}
+                      sx={{
+                        textTransform: "none",
+                        borderRadius: 1,
+                        borderColor: getBorderColor(),
+                        color: getTextColor(),
+                        fontSize: "0.6rem",
+                        "&:hover": {
+                          borderColor: getTextColor(),
+                          bgcolor: getHoverBackgroundColor(),
+                        },
+                      }}
+                    >
+                      Duplicate
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={() => handleDeleteClick(item)}
+                      startIcon={<FontAwesomeIcon icon={faTrash} size="sm" />}
+                      sx={{
+                        textTransform: "none",
+                        borderRadius: 1,
+                        borderColor: getBorderColor(),
+                        color: getSecondaryTextColor(),
+                        fontSize: "0.6rem",
+                        "&:hover": {
+                          borderColor: "#d32f2f",
+                          color: "#d32f2f",
+                          bgcolor: isDarkMode
+                            ? "rgba(244,67,54,0.15)"
+                            : "#fce4ec",
+                        },
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </Stack>
+
+                  {/* Expanded Images */}
+                  {isExpanded && (
+                    <>
+                      <Divider sx={{ borderColor: getBorderColor() }} />
+                      <Stack spacing={1}>
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: getSecondaryTextColor(),
+                              fontWeight: 500,
+                            }}
+                          >
+                            Images ({imageEntries.length})
+                          </Typography>
+                          <Button
+                            component="label"
+                            size="small"
+                            variant="outlined"
+                            startIcon={
+                              <FontAwesomeIcon icon={faImage} size="sm" />
+                            }
+                            sx={{
+                              borderRadius: 1,
+                              textTransform: "none",
+                              borderColor: getBorderColor(),
+                              color: getTextColor(),
+                              fontSize: "0.55rem",
+                              "&:hover": {
+                                borderColor: getTextColor(),
+                                bgcolor: getHoverBackgroundColor(),
+                              },
+                            }}
+                          >
+                            Upload
+                            <input
+                              hidden
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(event) => {
+                                const files = Array.from(
+                                  event.target.files ?? [],
+                                );
+                                if (!files.length) return;
+                                void onUploadImages(productId, files);
+                                event.target.value = "";
+                              }}
+                            />
+                          </Button>
+                        </Stack>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                          {imageEntries.length ? (
+                            imageEntries.map((imageEntry, index) => (
+                              <Box
+                                key={`${imageEntry.id || imageEntry.url}-${index}`}
+                                sx={{
+                                  width: 64,
+                                  height: 64,
+                                  borderRadius: 1,
+                                  overflow: "hidden",
+                                  border: `1px solid ${getBorderColor()}`,
+                                  position: "relative",
+                                  bgcolor: isDarkMode
+                                    ? "rgba(255,255,255,0.05)"
+                                    : "#ffffff",
+                                }}
+                              >
+                                <Image
+                                  src={imageEntry.url}
+                                  alt={`${item.name} image ${index + 1}`}
+                                  fill
+                                  sizes="64px"
+                                  style={{ objectFit: "cover" }}
+                                  priority={false}
+                                />
+                                {imageEntry.id && (
+                                  <Box
+                                    component="span"
+                                    onClick={() =>
+                                      handleDeleteImageClick(
+                                        productId,
+                                        imageEntry.id,
+                                        imageEntry.url,
+                                      )
+                                    }
+                                    sx={{
+                                      position: "absolute",
+                                      top: 2,
+                                      right: 2,
+                                      bgcolor: isDarkMode
+                                        ? "rgba(0,0,0,0.7)"
+                                        : "rgba(0,0,0,0.55)",
+                                      color: "common.white",
+                                      width: 18,
+                                      height: 18,
+                                      borderRadius: 0.5,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      cursor: "pointer",
+                                      transition: "all 0.2s ease",
+                                      "&:hover": {
+                                        bgcolor: "rgba(211, 47, 47, 0.85)",
+                                      },
+                                    }}
+                                  >
+                                    <FontAwesomeIcon icon={faTrash} size="xs" />
+                                  </Box>
+                                )}
+                              </Box>
+                            ))
+                          ) : (
+                            <Typography
+                              variant="caption"
+                              sx={{ color: getSecondaryTextColor() }}
+                            >
+                              No images
+                            </Typography>
+                          )}
+                        </Box>
+                      </Stack>
+                    </>
+                  )}
+                </Stack>
+              </Paper>
+            );
+          })}
+        </Stack>
+
+        {/* Dialogs */}
+        <DeleteProductDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
+          productName={productToDelete?.name}
+          isDarkMode={isDarkMode}
+        />
+        <DeleteImageDialog
+          open={deleteImageDialogOpen}
+          onClose={() => setDeleteImageDialogOpen(false)}
+          onConfirm={handleConfirmDeleteImage}
+          isDeleting={isDeleting}
+          isDarkMode={isDarkMode}
+        />
+      </>
+    );
+  }
+
+  // Tablet and Desktop view - Accordion
   return (
     <>
       <Box sx={{ width: "100%" }} mt={1}>
@@ -770,142 +1247,189 @@ export const ProductsTable = ({
         })}
       </Box>
 
-      {/* Delete Product Confirmation Dialog */}
-      <Dialog
+      {/* Dialogs */}
+      <DeleteProductDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            p: 1,
-          },
-        }}
-      >
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#d32f2f",
-            }}
-          >
-            <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
-          </Box>
-          <Typography component="span" variant="h6" fontWeight={600}>
-            Delete Product
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            Are you sure you want to delete{" "}
-            <strong>{productToDelete?.name}</strong>? This action cannot be
-            undone and will permanently remove the product from your store.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button
-            onClick={() => setDeleteDialogOpen(false)}
-            sx={{
-              textTransform: "none",
-              color: "text.secondary",
-              "&:hover": {
-                bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
-              },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            disabled={isDeleting}
-            variant="contained"
-            color="error"
-            sx={{
-              textTransform: "none",
-              "&:disabled": {
-                opacity: 0.6,
-              },
-            }}
-          >
-            {isDeleting ? "Deleting..." : "Delete Product"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Image Confirmation Dialog */}
-      <Dialog
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+        productName={productToDelete?.name}
+        isDarkMode={isDarkMode}
+      />
+      <DeleteImageDialog
         open={deleteImageDialogOpen}
         onClose={() => setDeleteImageDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            p: 1,
-          },
-        }}
-      >
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#d32f2f",
-            }}
-          >
-            <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
-          </Box>
-          <Typography component="span" variant="h6" fontWeight={600}>
-            Remove Image
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            Are you sure you want to remove this image? This action cannot be
-            undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button
-            onClick={() => setDeleteImageDialogOpen(false)}
-            sx={{
-              textTransform: "none",
-              color: "text.secondary",
-              "&:hover": {
-                bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
-              },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmDeleteImage}
-            disabled={isDeleting}
-            variant="contained"
-            color="error"
-            sx={{
-              textTransform: "none",
-              "&:disabled": {
-                opacity: 0.6,
-              },
-            }}
-          >
-            {isDeleting ? "Removing..." : "Remove Image"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmDeleteImage}
+        isDeleting={isDeleting}
+        isDarkMode={isDarkMode}
+      />
     </>
   );
 };
+
+// Delete Product Dialog Component
+const DeleteProductDialog = ({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+  productName,
+  isDarkMode,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+  productName?: string;
+  isDarkMode: boolean;
+}) => (
+  <Dialog
+    open={open}
+    onClose={onClose}
+    maxWidth="sm"
+    fullWidth
+    PaperProps={{
+      sx: {
+        borderRadius: 2,
+        p: 1,
+      },
+    }}
+  >
+    <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#d32f2f",
+        }}
+      >
+        <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+      </Box>
+      <Typography component="span" variant="h6" fontWeight={600}>
+        Delete Product
+      </Typography>
+    </DialogTitle>
+    <DialogContent>
+      <DialogContentText sx={{ mb: 2 }}>
+        Are you sure you want to delete{" "}
+        <strong>{productName || "this product"}</strong>? This action cannot be
+        undone and will permanently remove the product from your store.
+      </DialogContentText>
+    </DialogContent>
+    <DialogActions sx={{ p: 2, pt: 0 }}>
+      <Button
+        onClick={onClose}
+        sx={{
+          textTransform: "none",
+          color: "text.secondary",
+          "&:hover": {
+            bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
+          },
+        }}
+      >
+        Cancel
+      </Button>
+      <Button
+        onClick={onConfirm}
+        disabled={isDeleting}
+        variant="contained"
+        color="error"
+        sx={{
+          textTransform: "none",
+          "&:disabled": {
+            opacity: 0.6,
+          },
+        }}
+      >
+        {isDeleting ? "Deleting..." : "Delete Product"}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
+// Delete Image Dialog Component
+const DeleteImageDialog = ({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+  isDarkMode,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+  isDarkMode: boolean;
+}) => (
+  <Dialog
+    open={open}
+    onClose={onClose}
+    maxWidth="sm"
+    fullWidth
+    PaperProps={{
+      sx: {
+        borderRadius: 2,
+        p: 1,
+      },
+    }}
+  >
+    <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          bgcolor: isDarkMode ? "rgba(211,47,47,0.15)" : "#fce4ec",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#d32f2f",
+        }}
+      >
+        <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+      </Box>
+      <Typography component="span" variant="h6" fontWeight={600}>
+        Remove Image
+      </Typography>
+    </DialogTitle>
+    <DialogContent>
+      <DialogContentText sx={{ mb: 2 }}>
+        Are you sure you want to remove this image? This action cannot be
+        undone.
+      </DialogContentText>
+    </DialogContent>
+    <DialogActions sx={{ p: 2, pt: 0 }}>
+      <Button
+        onClick={onClose}
+        sx={{
+          textTransform: "none",
+          color: "text.secondary",
+          "&:hover": {
+            bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover",
+          },
+        }}
+      >
+        Cancel
+      </Button>
+      <Button
+        onClick={onConfirm}
+        disabled={isDeleting}
+        variant="contained"
+        color="error"
+        sx={{
+          textTransform: "none",
+          "&:disabled": {
+            opacity: 0.6,
+          },
+        }}
+      >
+        {isDeleting ? "Removing..." : "Remove Image"}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);

@@ -10,6 +10,11 @@ import {
   TextField,
   Typography,
   Stack,
+  Paper,
+  Divider,
+  useTheme,
+  useMediaQuery,
+  Grid,
 } from "@mui/material";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
@@ -55,18 +60,30 @@ const STATUS_COLORS: Record<
 const TERMINAL_STATUSES = ["delivered", "cancelled"];
 
 export const OrdersTable = ({ rows, onStatusChange }: Props) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
 
+  const getBorderColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
+  const getTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
+  const getSecondaryTextColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
+  const getCardBackground = () =>
+    isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper";
+  const getHoverBackgroundColor = () =>
+    isDarkMode ? "rgba(255,255,255,0.03)" : "action.hover";
+
   const getAvailableStatuses = (currentStatus: string): string[] => {
-    // If terminal, no statuses available
     if (TERMINAL_STATUSES.includes(currentStatus)) {
       return [];
     }
 
     const currentIndex = ALL_STATUSES.indexOf(currentStatus);
-    // Return all statuses from current position to the end
-    // Including current status so they can keep it same
     return ALL_STATUSES.slice(currentIndex);
   };
 
@@ -74,7 +91,6 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
     return TERMINAL_STATUSES.includes(status);
   };
 
-  // Helper to check if a status is before the current one (should be disabled)
   const isStatusBeforeCurrent = (
     status: string,
     currentStatus: string,
@@ -84,6 +100,218 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
     return statusIndex < currentIndex;
   };
 
+  // Mobile card layout
+  if (isMobile) {
+    return (
+      <Stack spacing={2}>
+        {rows.map((row) => {
+          const availableStatuses = getAvailableStatuses(row.status);
+          const isTerminal = isTerminalStatus(row.status);
+
+          return (
+            <Paper
+              key={row.id}
+              sx={{
+                p: 2.5,
+                border: `1px solid ${getBorderColor()}`,
+                bgcolor: getCardBackground(),
+                borderRadius: 1,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  borderColor: getTextColor(),
+                  bgcolor: getHoverBackgroundColor(),
+                },
+              }}
+            >
+              <Stack spacing={2}>
+                {/* Order Header */}
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="flex-start"
+                >
+                  <Box>
+                    <Typography
+                      fontWeight={600}
+                      sx={{ color: getTextColor(), fontSize: "0.95rem" }}
+                    >
+                      Order #{row.order_number}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: getSecondaryTextColor(),
+                        fontSize: "0.65rem",
+                      }}
+                    >
+                      {new Date(row.created_at).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={STATUS_LABELS[row.status] || row.status}
+                    size="small"
+                    color={STATUS_COLORS[row.status] || "default"}
+                    sx={{
+                      fontSize: "0.55rem",
+                      fontWeight: 500,
+                      minWidth: 60,
+                    }}
+                  />
+                </Stack>
+
+                <Divider sx={{ borderColor: getBorderColor() }} />
+
+                {/* Customer Info */}
+                <Grid container spacing={1.5}>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: getSecondaryTextColor(),
+                        fontSize: "0.55rem",
+                      }}
+                    >
+                      Customer
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: getTextColor(), fontWeight: 500 }}
+                    >
+                      {row.customer_name}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: getSecondaryTextColor(),
+                        fontSize: "0.55rem",
+                      }}
+                    >
+                      WhatsApp
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: getTextColor() }}>
+                      {row.whatsapp_number || "-"}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: getSecondaryTextColor(),
+                        fontSize: "0.55rem",
+                      }}
+                    >
+                      Phone
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: getTextColor() }}>
+                      {row.customer_phone || "No phone"}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: getSecondaryTextColor(),
+                        fontSize: "0.55rem",
+                      }}
+                    >
+                      Total
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: getTextColor(), fontWeight: 600 }}
+                    >
+                      {formatBaseCurrencyInCurrency(
+                        row.total_amount,
+                        currency,
+                        rates,
+                      )}
+                    </Typography>
+                  </Grid>
+                </Grid>
+
+                <Divider sx={{ borderColor: getBorderColor() }} />
+
+                {/* Status Update */}
+                <Stack direction="row" spacing={1} alignItems="center">
+                  {!isTerminal && availableStatuses.length > 0 ? (
+                    <TextField
+                      select
+                      size="small"
+                      value={row.status}
+                      onChange={(event) => {
+                        if (event.target.value !== row.status) {
+                          onStatusChange(row.order_number, event.target.value);
+                        }
+                      }}
+                      fullWidth
+                      sx={{
+                        "& .MuiSelect-select": {
+                          fontSize: "0.75rem",
+                        },
+                        "& .MuiOutlinedInput-root": {
+                          bgcolor: getCardBackground(),
+                        },
+                      }}
+                    >
+                      {availableStatuses.map((status) => {
+                        const isBeforeCurrent = isStatusBeforeCurrent(
+                          status,
+                          row.status,
+                        );
+                        return (
+                          <MenuItem
+                            key={status}
+                            value={status}
+                            disabled={isBeforeCurrent}
+                            sx={{
+                              color: isBeforeCurrent
+                                ? "text.disabled"
+                                : "inherit",
+                              opacity: isBeforeCurrent ? 0.5 : 1,
+                            }}
+                          >
+                            {STATUS_LABELS[status] || status}
+                            {status === row.status && " ✓"}
+                            {isBeforeCurrent && " (locked)"}
+                          </MenuItem>
+                        );
+                      })}
+                    </TextField>
+                  ) : (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: getSecondaryTextColor(),
+                        fontStyle: "italic",
+                      }}
+                    >
+                      {row.status === "delivered"
+                        ? "✅ Delivered"
+                        : row.status === "cancelled"
+                          ? "❌ Cancelled"
+                          : "No updates available"}
+                    </Typography>
+                  )}
+                </Stack>
+              </Stack>
+            </Paper>
+          );
+        })}
+
+        {rows.length === 0 ? (
+          <Box sx={{ py: 6, textAlign: "center" }}>
+            <Typography sx={{ color: getSecondaryTextColor() }}>
+              No orders found.
+            </Typography>
+          </Box>
+        ) : null}
+      </Stack>
+    );
+  }
+
+  // Tablet and Desktop table view
   return (
     <Box
       sx={{

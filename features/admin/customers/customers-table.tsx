@@ -14,7 +14,6 @@ import {
   Stack,
   Divider,
   Paper,
-  Grid,
 } from "@mui/material";
 import type { AdminCustomerRow } from "./types";
 
@@ -30,9 +29,7 @@ export const CustomersTable = ({ rows, onView }: Props) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Dynamic styles
   const getBorderColor = () =>
     isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
   const getHeaderBackgroundColor = () =>
@@ -48,116 +45,110 @@ export const CustomersTable = ({ rows, onView }: Props) => {
   const getCardBackground = () =>
     isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper";
 
-  // Card layout for mobile and tablet
-  if (isMobile || isTablet) {
+  if (isMobile) {
     return (
-      <Grid container spacing={2}>
+      <Stack spacing={2}>
         {rows.map((row) => (
-          <Grid size={{ xs: 12, sm: 6 }} key={row.id}>
-            <Paper
-              sx={{
-                p: 2.5,
-                border: `1px solid ${getBorderColor()}`,
-                bgcolor: getCardBackground(),
-                borderRadius: 1,
-                transition: "all 0.3s ease",
-                height: "100%",
-                "&:hover": {
-                  borderColor: getTextColor(),
-                  bgcolor: getHoverBackgroundColor(),
-                },
-              }}
-            >
-              <Stack spacing={1.5}>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="flex-start"
+          <Paper
+            key={row.id}
+            sx={{
+              p: 2,
+              border: `1px solid ${getBorderColor()}`,
+              bgcolor: getCardBackground(),
+              borderRadius: 1,
+              transition: "all 0.3s ease",
+              "&:hover": {
+                borderColor: getTextColor(),
+                bgcolor: getHoverBackgroundColor(),
+              },
+            }}
+          >
+            <Stack spacing={1.5}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="flex-start"
+              >
+                <Typography
+                  fontWeight={600}
+                  sx={{ color: getTextColor(), fontSize: "1rem" }}
                 >
-                  <Typography
-                    fontWeight={600}
-                    sx={{ color: getTextColor(), fontSize: "0.95rem" }}
-                  >
-                    {row.name}
-                  </Typography>
-                  <Chip
-                    label={row.phone ?? "-"}
-                    size="small"
-                    sx={{
-                      fontSize: "0.55rem",
-                      bgcolor: getChipBackgroundColor(),
-                      color: getChipTextColor(),
-                      fontWeight: 500,
-                      transition: "all 0.3s ease",
-                    }}
-                  />
-                </Stack>
-
-                <Divider sx={{ borderColor: getBorderColor() }} />
-
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: getSecondaryTextColor(),
-                      fontSize: "0.65rem",
-                    }}
-                  >
-                    Joined:{" "}
-                    {getCreatedAt(row)
-                      ? new Date(getCreatedAt(row)).toLocaleDateString()
-                      : "-"}
-                  </Typography>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => onView(row.id)}
-                    sx={{
-                      borderRadius: 0,
-                      textTransform: "none",
-                      borderColor: getBorderColor(),
-                      color: getTextColor(),
-                      fontSize: "0.6rem",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        borderColor: getTextColor(),
-                        bgcolor: isDarkMode
-                          ? "rgba(255,255,255,0.05)"
-                          : "#f8f6f2",
-                      },
-                    }}
-                  >
-                    View
-                  </Button>
-                </Stack>
+                  {row.name || "Unknown"}
+                </Typography>
+                <Chip
+                  label={row.phone ?? "-"}
+                  size="small"
+                  sx={{
+                    fontSize: "0.55rem",
+                    bgcolor: getChipBackgroundColor(),
+                    color: getChipTextColor(),
+                    fontWeight: 500,
+                    transition: "all 0.3s ease",
+                  }}
+                />
               </Stack>
-            </Paper>
-          </Grid>
+
+              <Divider sx={{ borderColor: getBorderColor() }} />
+
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: getSecondaryTextColor(),
+                    fontSize: "0.65rem",
+                  }}
+                >
+                  Joined:{" "}
+                  {getCreatedAt(row)
+                    ? new Date(getCreatedAt(row)).toLocaleDateString()
+                    : "-"}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onView(row.id)}
+                  sx={{
+                    borderRadius: 0,
+                    textTransform: "none",
+                    borderColor: getBorderColor(),
+                    color: getTextColor(),
+                    fontSize: "0.6rem",
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      borderColor: getTextColor(),
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.05)"
+                        : "#f8f6f2",
+                    },
+                  }}
+                >
+                  View
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
         ))}
 
         {rows.length === 0 ? (
-          <Grid size={{ xs: 12 }}>
-            <Box sx={{ py: 6, textAlign: "center" }}>
-              <Typography
-                sx={{
-                  color: getSecondaryTextColor(),
-                  transition: "color 0.3s ease",
-                }}
-              >
-                No customers found.
-              </Typography>
-            </Box>
-          </Grid>
+          <Box sx={{ py: 6, textAlign: "center" }}>
+            <Typography
+              sx={{
+                color: getSecondaryTextColor(),
+                transition: "color 0.3s ease",
+              }}
+            >
+              No customers found.
+            </Typography>
+          </Box>
         ) : null}
-      </Grid>
+      </Stack>
     );
   }
 
-  // Desktop view - show table
   return (
     <Card
       sx={{
@@ -240,14 +231,13 @@ export const CustomersTable = ({ rows, onView }: Props) => {
             >
               <TableCell>
                 <Typography
-                  fontWeight={500}
                   sx={{
                     color: getTextColor(),
                     transition: "color 0.3s ease",
                     fontSize: "0.9rem",
                   }}
                 >
-                  {row.name}
+                  {row.name || "Unknown"}
                 </Typography>
               </TableCell>
               <TableCell>
