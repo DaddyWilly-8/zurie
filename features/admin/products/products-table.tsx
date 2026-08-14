@@ -67,7 +67,6 @@ export const ProductsTable = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
@@ -822,13 +821,14 @@ export const ProductsTable = ({
                   px: 3,
                   py: 1,
                   flexDirection: "row-reverse",
-                  ".MuiAccordionSummary-content": {
+                  "& .MuiAccordionSummary-content": {
                     alignItems: "center",
+                    cursor: "pointer",
                     "&.Mui-expanded": {
                       margin: "12px 0",
                     },
                   },
-                  ".MuiAccordionSummary-expandIconWrapper": {
+                  "& .MuiAccordionSummary-expandIconWrapper": {
                     borderRadius: 1,
                     border: 1,
                     borderColor: getBorderColor(),
@@ -854,19 +854,13 @@ export const ProductsTable = ({
                   alignItems="center"
                   spacing={1}
                   sx={{
-                    cursor: "pointer",
                     width: "100%",
-                    "&:hover": {
-                      bgcolor: isDarkMode
-                        ? "rgba(255,255,255,0.03)"
-                        : "action.hover",
-                    },
                   }}
                   paddingLeft={2}
                   paddingRight={2}
                 >
                   {/* Product Image */}
-                  <Grid size={{ xs: 4, md: 1.5 }}>
+                  <Grid size={{ xs: 3, md: 1.5 }}>
                     <Box
                       sx={{
                         width: 48,
@@ -890,7 +884,7 @@ export const ProductsTable = ({
                   </Grid>
 
                   {/* Product Name */}
-                  <Grid size={{ xs: 8, md: 2.5 }}>
+                  <Grid size={{ xs: 9, md: 2.5 }}>
                     <Tooltip title="Product Name">
                       <Typography
                         variant="h5"
@@ -925,6 +919,7 @@ export const ProductsTable = ({
                           fontSize: "0.5rem",
                           height: 16,
                           fontWeight: 500,
+                          color: isDarkMode ? "#ffffff" : undefined,
                         }}
                       />
                     </Stack>
@@ -999,6 +994,7 @@ export const ProductsTable = ({
                             fontSize: "0.5rem",
                             height: 18,
                             fontWeight: 500,
+                            color: isDarkMode ? "#ffffff" : undefined,
                           }}
                         />
                         <Typography
@@ -1026,6 +1022,7 @@ export const ProductsTable = ({
                             bgcolor: isDarkMode
                               ? "rgba(255,152,0,0.2)"
                               : "#fff3e0",
+                            color: isDarkMode ? "#ffb74d" : "#e65100",
                             fontWeight: 500,
                           }}
                         />
@@ -1041,6 +1038,7 @@ export const ProductsTable = ({
                             bgcolor: isDarkMode
                               ? "rgba(244,67,54,0.2)"
                               : "#fce4ec",
+                            color: isDarkMode ? "#ef9a9a" : "#c62828",
                             fontWeight: 500,
                           }}
                         />
@@ -1056,6 +1054,7 @@ export const ProductsTable = ({
                             bgcolor: isDarkMode
                               ? "rgba(76,175,80,0.2)"
                               : "#e8f5e9",
+                            color: isDarkMode ? "#81c784" : "#2e7d32",
                             fontWeight: 500,
                           }}
                         />
