@@ -39,6 +39,7 @@ import {
   AccordionDetails,
   InputAdornment,
   useMediaQuery,
+  Divider,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -53,6 +54,10 @@ import {
   faTimesCircle,
   faChevronDown,
   faSave,
+  faEnvelope,
+  faPhone,
+  faCalendar,
+  faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { userActions } from "@/features/admin/users";
 
@@ -147,6 +152,7 @@ export const AdminUsersClient = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   const {
     data: rows = [],
@@ -506,6 +512,14 @@ export const AdminUsersClient = () => {
     setTabValue(newValue);
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getChipBackground = () =>
+    isDarkMode ? "rgba(255,255,255,0.1)" : "#f0ebe3";
+
   return (
     <Stack spacing={{ xs: 2, md: 3 }}>
       {message && (
@@ -565,7 +579,7 @@ export const AdminUsersClient = () => {
           />
         </Tabs>
 
-        {/* Users Tab */}
+        {/* Users Tab - Now with Accordion */}
         <TabPanel value={tabValue} index={0}>
           <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 2 }}>
             <Stack
@@ -654,61 +668,171 @@ export const AdminUsersClient = () => {
                 </Typography>
               </Box>
             ) : (
-              <>
-                <Grid container spacing={2}>
-                  {paginatedRows.map((row) => (
-                    <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={row.id}>
-                      <Card
+              <Stack spacing={2}>
+                {paginatedRows.map((row) => {
+                  const isExpanded = expandedUserId === row.id;
+
+                  return (
+                    <Accordion
+                      key={row.id}
+                      expanded={isExpanded}
+                      onChange={() =>
+                        setExpandedUserId(isExpanded ? null : row.id)
+                      }
+                      sx={{
+                        border: `1px solid ${getBorderColor()}`,
+                        borderRadius: 1,
+                        boxShadow: "none",
+                        bgcolor: getCardBackground(),
+                        "&:hover": {
+                          bgcolor: getHoverBackgroundColor(),
+                        },
+                        "&.Mui-expanded": {
+                          bgcolor: getAccordionBackground(),
+                        },
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={
+                          <FontAwesomeIcon icon={faChevronDown} size="sm" />
+                        }
                         sx={{
-                          border: `1px solid ${getBorderColor()}`,
-                          boxShadow: "none",
-                          borderRadius: 2,
-                          bgcolor: getCardBackground(),
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            borderColor: getTextColor(),
-                            boxShadow: isDarkMode
-                              ? "0 4px 12px rgba(0,0,0,0.4)"
-                              : "0 4px 12px rgba(0,0,0,0.05)",
+                          "& .MuiAccordionSummary-content": {
+                            alignItems: "center",
                           },
+                          px: { xs: 1.5, md: 2 },
+                          py: { xs: 0.5, md: 1 },
                         }}
                       >
-                        <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          sx={{ width: "100%", pr: 1 }}
+                        >
                           <Stack
-                            direction="row"
-                            justifyContent="space-between"
-                            alignItems="flex-start"
+                            direction={{ xs: "column", sm: "row" }}
+                            spacing={{ xs: 0.5, sm: 2 }}
+                            alignItems={{ xs: "flex-start", sm: "center" }}
+                            sx={{ flex: 1, minWidth: 0 }}
                           >
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              spacing={1}
+                            >
+                              <Box
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: "50%",
+                                  bgcolor: isDarkMode
+                                    ? "rgba(255,255,255,0.1)"
+                                    : "#f0ebe3",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <FontAwesomeIcon
+                                  icon={faUser}
+                                  size="sm"
+                                  style={{
+                                    color: isDarkMode
+                                      ? "rgba(255,255,255,0.6)"
+                                      : "#666",
+                                  }}
+                                />
+                              </Box>
                               <Typography
                                 fontWeight={600}
+                                color={getTextColor()}
                                 sx={{
-                                  color: getTextColor(),
-                                  fontSize: { xs: "0.9rem", md: "0.95rem" },
+                                  fontSize: { xs: "0.9rem", md: "1rem" },
                                   wordBreak: "break-word",
                                 }}
                               >
                                 {row.full_name || row.name}
                               </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: getSecondaryTextColor(),
-                                  fontSize: "0.7rem",
-                                  display: "block",
-                                  wordBreak: "break-word",
-                                }}
-                              >
-                                {row.email}
-                              </Typography>
-                            </Box>
+                            </Stack>
+                            <Typography
+                              variant="caption"
+                              color={getSecondaryTextColor()}
+                              sx={{
+                                fontSize: { xs: "0.6rem", md: "0.7rem" },
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faEnvelope} size="xs" />
+                              {row.email}
+                            </Typography>
+                          </Stack>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                            flexShrink={0}
+                          >
+                            <Stack direction="row" spacing={0.5}>
+                              {(row.roleNames || []).length > 0 ? (
+                                (row.roleNames || [])
+                                  .slice(0, 2)
+                                  .map((roleName: string) => (
+                                    <Chip
+                                      key={roleName}
+                                      label={formatRoleLabel(roleName)}
+                                      color={getRoleColor(roleName)}
+                                      size="small"
+                                      sx={{
+                                        fontSize: {
+                                          xs: "0.45rem",
+                                          sm: "0.55rem",
+                                        },
+                                        fontWeight: 500,
+                                        color: isDarkMode
+                                          ? "#ffffff"
+                                          : undefined,
+                                        height: { xs: 18, sm: 22 },
+                                      }}
+                                    />
+                                  ))
+                              ) : (
+                                <Chip
+                                  label="No roles"
+                                  size="small"
+                                  sx={{
+                                    fontSize: "0.5rem",
+                                    fontWeight: 500,
+                                    color: getSecondaryTextColor(),
+                                    height: 18,
+                                  }}
+                                />
+                              )}
+                              {(row.roleNames || []).length > 2 && (
+                                <Chip
+                                  label={`+${(row.roleNames || []).length - 2}`}
+                                  size="small"
+                                  sx={{
+                                    fontSize: "0.5rem",
+                                    fontWeight: 500,
+                                    height: 18,
+                                    bgcolor: getChipBackground(),
+                                    color: getTextColor(),
+                                  }}
+                                />
+                              )}
+                            </Stack>
                             <IconButton
                               size="small"
-                              onClick={() => handleEditUser(row)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(row);
+                              }}
                               sx={{
                                 color: getSecondaryTextColor(),
-                                flexShrink: 0,
-                                ml: 1,
                                 "&:hover": {
                                   color: getTextColor(),
                                   bgcolor: getHoverBackgroundColor(),
@@ -718,77 +842,290 @@ export const AdminUsersClient = () => {
                               <FontAwesomeIcon icon={faEdit} size="sm" />
                             </IconButton>
                           </Stack>
+                        </Stack>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ pt: 0, px: { xs: 1.5, md: 2 } }}>
+                        <Stack spacing={2}>
+                          <Divider sx={{ borderColor: getBorderColor() }} />
 
-                          <Stack
-                            direction="row"
-                            flexWrap="wrap"
-                            spacing={0.5}
-                            sx={{ mt: 1.5 }}
-                          >
-                            {(row.roleNames || []).length > 0 ? (
-                              (row.roleNames || []).map((roleName: string) => (
-                                <Chip
-                                  key={roleName}
-                                  label={formatRoleLabel(roleName)}
-                                  color={getRoleColor(roleName)}
-                                  size="small"
+                          {/* User Details Grid */}
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <Stack spacing={1.5}>
+                                <Typography
+                                  variant="caption"
                                   sx={{
-                                    fontSize: { xs: "0.5rem", sm: "0.55rem" },
-                                    fontWeight: 500,
-                                    color: isDarkMode ? "#ffffff" : undefined,
-                                    height: { xs: 20, sm: 24 },
+                                    fontWeight: 600,
+                                    color: getSecondaryTextColor(),
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    fontSize: "0.65rem",
                                   }}
-                                />
-                              ))
-                            ) : (
-                              <Chip
-                                label="No roles"
-                                size="small"
-                                sx={{
-                                  fontSize: "0.55rem",
-                                  fontWeight: 500,
-                                  color: getSecondaryTextColor(),
-                                }}
-                              />
-                            )}
-                          </Stack>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
+                                >
+                                  Personal Information
+                                </Typography>
 
-                {filteredRows.length > USERS_PAGE_SIZE && (
-                  <Stack
-                    direction="row"
-                    justifyContent="flex-end"
-                    sx={{ mt: 3 }}
-                  >
-                    <Pagination
-                      count={totalPages}
-                      page={page}
-                      onChange={(_, value) => setPage(value)}
-                      size={isMobile ? "small" : "medium"}
-                      sx={{
-                        "& .MuiPaginationItem-root": {
-                          color: getTextColor(),
-                        },
-                        "& .Mui-selected": {
-                          bgcolor: isDarkMode
-                            ? "rgba(255,255,255,0.15)"
-                            : "action.selected",
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
-              </>
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  alignItems="center"
+                                >
+                                  <Box
+                                    sx={{
+                                      width: 20,
+                                      color: getSecondaryTextColor(),
+                                    }}
+                                  >
+                                    <FontAwesomeIcon icon={faUser} size="sm" />
+                                  </Box>
+                                  <Box>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        fontSize: "0.6rem",
+                                        color: getSecondaryTextColor(),
+                                      }}
+                                    >
+                                      Full Name
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        color: getTextColor(),
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      {row.full_name || row.name}
+                                    </Typography>
+                                  </Box>
+                                </Stack>
+
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  alignItems="center"
+                                >
+                                  <Box
+                                    sx={{
+                                      width: 20,
+                                      color: getSecondaryTextColor(),
+                                    }}
+                                  >
+                                    <FontAwesomeIcon
+                                      icon={faEnvelope}
+                                      size="sm"
+                                    />
+                                  </Box>
+                                  <Box>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        fontSize: "0.6rem",
+                                        color: getSecondaryTextColor(),
+                                      }}
+                                    >
+                                      Email
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ color: getTextColor() }}
+                                    >
+                                      {row.email}
+                                    </Typography>
+                                  </Box>
+                                </Stack>
+
+                                {row.phone && (
+                                  <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    alignItems="center"
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 20,
+                                        color: getSecondaryTextColor(),
+                                      }}
+                                    >
+                                      <FontAwesomeIcon
+                                        icon={faPhone}
+                                        size="sm"
+                                      />
+                                    </Box>
+                                    <Box>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          fontSize: "0.6rem",
+                                          color: getSecondaryTextColor(),
+                                        }}
+                                      >
+                                        Phone
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ color: getTextColor() }}
+                                      >
+                                        {row.phone}
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
+                                )}
+
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  alignItems="center"
+                                >
+                                  <Box
+                                    sx={{
+                                      width: 20,
+                                      color: getSecondaryTextColor(),
+                                    }}
+                                  >
+                                    <FontAwesomeIcon
+                                      icon={faCalendar}
+                                      size="sm"
+                                    />
+                                  </Box>
+                                  <Box>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        fontSize: "0.6rem",
+                                        color: getSecondaryTextColor(),
+                                      }}
+                                    >
+                                      Joined
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ color: getTextColor() }}
+                                    >
+                                      {formatDate(row.created_at)}
+                                    </Typography>
+                                  </Box>
+                                </Stack>
+                              </Stack>
+                            </Grid>
+
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <Stack spacing={1.5}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: getSecondaryTextColor(),
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    fontSize: "0.65rem",
+                                  }}
+                                >
+                                  Roles
+                                </Typography>
+
+                                <Stack
+                                  direction="row"
+                                  spacing={0.5}
+                                  flexWrap="wrap"
+                                >
+                                  {(row.roleNames || []).length > 0 ? (
+                                    (row.roleNames || []).map(
+                                      (roleName: string) => (
+                                        <Chip
+                                          key={roleName}
+                                          label={formatRoleLabel(roleName)}
+                                          color={getRoleColor(roleName)}
+                                          size="small"
+                                          sx={{
+                                            fontSize: "0.6rem",
+                                            fontWeight: 500,
+                                            color: isDarkMode
+                                              ? "#ffffff"
+                                              : undefined,
+                                          }}
+                                        />
+                                      ),
+                                    )
+                                  ) : (
+                                    <Chip
+                                      label="No roles assigned"
+                                      size="small"
+                                      sx={{
+                                        fontSize: "0.6rem",
+                                        fontWeight: 500,
+                                        color: getSecondaryTextColor(),
+                                      }}
+                                    />
+                                  )}
+                                </Stack>
+                              </Stack>
+                            </Grid>
+                          </Grid>
+
+                          <Divider sx={{ borderColor: getBorderColor() }} />
+
+                          {/* Actions */}
+                          <Stack
+                            direction={{ xs: "column", sm: "row" }}
+                            spacing={1.5}
+                            justifyContent="flex-end"
+                          >
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => handleEditUser(row)}
+                              startIcon={
+                                <FontAwesomeIcon icon={faEdit} size="sm" />
+                              }
+                              sx={{
+                                textTransform: "none",
+                                borderRadius: 1,
+                                borderColor: getBorderColor(),
+                                color: getTextColor(),
+                                "&:hover": {
+                                  borderColor: getTextColor(),
+                                  bgcolor: getHoverBackgroundColor(),
+                                },
+                              }}
+                            >
+                              Edit Roles
+                            </Button>
+                          </Stack>
+                        </Stack>
+                      </AccordionDetails>
+                    </Accordion>
+                  );
+                })}
+              </Stack>
+            )}
+
+            {filteredRows.length > USERS_PAGE_SIZE && (
+              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={(_, value) => setPage(value)}
+                  size={isMobile ? "small" : "medium"}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      color: getTextColor(),
+                    },
+                    "& .Mui-selected": {
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.15)"
+                        : "action.selected",
+                    },
+                  }}
+                />
+              </Stack>
             )}
           </Box>
         </TabPanel>
 
-        {/* Roles Tab */}
+        {/* Roles Tab - unchanged */}
         <TabPanel value={tabValue} index={1}>
+          {/* ... Roles tab content remains the same ... */}
           <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 2 }}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -1309,7 +1646,7 @@ export const AdminUsersClient = () => {
         </TabPanel>
       </Paper>
 
-      {/* Add User Dialog */}
+      {/* Add User Dialog - unchanged */}
       <Dialog
         open={openUserDialog}
         onClose={() => setOpenUserDialog(false)}
