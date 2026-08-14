@@ -30,17 +30,8 @@ import type { AdminOrderRow } from "./types";
 type Props = {
   rows: AdminOrderRow[];
   onStatusChange: (id: string, nextStatus: string) => Promise<void>;
+  onCancelOrder?: (id: string) => Promise<void>;
 };
-
-// All possible statuses in order
-const ALL_STATUSES = [
-  "new",
-  "confirmed",
-  "processing",
-  "ready_for_delivery",
-  "delivered",
-  "cancelled",
-];
 
 const STATUS_LABELS: Record<string, string> = {
   new: "New",
@@ -85,16 +76,24 @@ const STATUS_TRANSITIONS: Record<string, string> = {
   ready_for_delivery: "delivered",
 };
 
-export const OrdersTable = ({ rows, onStatusChange }: Props) => {
+// Statuses where cancellation is allowed
+const CANCELLABLE_STATUSES = [
+  "new",
+  "confirmed",
+  "processing",
+  "ready_for_delivery",
+];
+
+export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<"status" | "cancel">("status");
   const [pendingOrderId, setPendingOrderId] = useState<string>("");
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingCurrentStatus, setPendingCurrentStatus] = useState<string>("");
@@ -128,6 +127,10 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
     return TERMINAL_STATUSES.includes(status);
   };
 
+  const canCancelOrder = (status: string): boolean => {
+    return CANCELLABLE_STATUSES.includes(status);
+  };
+
   const handleStatusChange = (
     orderId: string,
     currentStatus: string,
@@ -148,39 +151,70 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
       return;
     }
 
+    setDialogType("status");
     setPendingOrderId(orderId);
     setPendingStatus(newStatus);
     setPendingCurrentStatus(currentStatus);
     setDialogOpen(true);
   };
 
-  const handleConfirmStatusChange = async () => {
-    if (pendingOrderId && pendingStatus) {
-      try {
+  const handleCancelOrder = (orderId: string, currentStatus: string) => {
+    if (!canCancelOrder(currentStatus)) {
+      setSnackbarMessage(
+        `Order cannot be cancelled from '${currentStatus}' status.`,
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setDialogType("cancel");
+    setPendingOrderId(orderId);
+    setPendingStatus("cancelled");
+    setPendingCurrentStatus(currentStatus);
+    setDialogOpen(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!pendingOrderId) return;
+
+    try {
+      if (dialogType === "cancel") {
+        if (onCancelOrder) {
+          await onCancelOrder(pendingOrderId);
+          setSnackbarMessage("Order cancelled successfully.");
+          setSnackbarSeverity("success");
+          setSnackbarOpen(true);
+        } else {
+          setSnackbarMessage("Cancel order functionality is not available.");
+          setSnackbarSeverity("error");
+          setSnackbarOpen(true);
+        }
+      } else if (dialogType === "status" && pendingStatus) {
         await onStatusChange(pendingOrderId, pendingStatus);
         setSnackbarMessage(
           `Order status updated to ${STATUS_LABELS[pendingStatus]}`,
         );
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
-      } catch (error) {
-        // Display the error message from the API
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Failed to update order status. Please try again.";
-        setSnackbarMessage(errorMessage);
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
       }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to perform action. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
+
     setDialogOpen(false);
     setPendingOrderId("");
     setPendingStatus("");
     setPendingCurrentStatus("");
   };
 
-  const handleCancelStatusChange = () => {
+  const handleCancelAction = () => {
     setDialogOpen(false);
     setPendingOrderId("");
     setPendingStatus("");
@@ -200,6 +234,7 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
             const isTerminal = isTerminalStatus(row.status);
             const nextStatus = getNextValidStatus(row.status);
             const hasValidTransition = nextStatus !== null;
+            const cancellable = canCancelOrder(row.status);
 
             return (
               <Paper
@@ -332,9 +367,9 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
 
                   <Divider sx={{ borderColor: getBorderColor() }} />
 
-                  {/* Status Update - Show only next valid status */}
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    {!isTerminal && hasValidTransition ? (
+                  {/* Actions */}
+                  <Stack direction="row" spacing={1}>
+                    {!isTerminal && hasValidTransition && (
                       <Button
                         variant="contained"
                         size="small"
@@ -358,24 +393,56 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
                         sx={{
                           textTransform: "none",
                           borderRadius: 1,
-                          fontSize: "0.75rem",
+                          fontSize: "0.7rem",
+                          flex: 1,
                         }}
                       >
                         Move to {STATUS_LABELS[nextStatus]}
                       </Button>
-                    ) : (
+                    )}
+                    {cancellable && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        onClick={() =>
+                          handleCancelOrder(row.order_number, row.status)
+                        }
+                        fullWidth={!hasValidTransition}
+                        sx={{
+                          textTransform: "none",
+                          borderRadius: 1,
+                          fontSize: "0.7rem",
+                          flex: hasValidTransition ? 0.5 : 1,
+                          borderColor: "error.main",
+                          color: "error.main",
+                          "&:hover": {
+                            borderColor: "error.dark",
+                            bgcolor: isDarkMode
+                              ? "rgba(244,67,54,0.15)"
+                              : "#fce4ec",
+                          },
+                        }}
+                      >
+                        Cancel Order
+                      </Button>
+                    )}
+                    {isTerminal && (
                       <Typography
                         variant="caption"
                         sx={{
                           color: getSecondaryTextColor(),
                           fontStyle: "italic",
+                          textAlign: "center",
+                          width: "100%",
+                          py: 1,
                         }}
                       >
                         {row.status === "delivered"
                           ? "✅ Delivered"
                           : row.status === "cancelled"
                             ? "❌ Cancelled"
-                            : "No updates available"}
+                            : "Complete"}
                       </Typography>
                     )}
                   </Stack>
@@ -394,10 +461,11 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
         </Stack>
 
         {/* Confirmation Dialog */}
-        <StatusChangeDialog
+        <ActionConfirmationDialog
           open={dialogOpen}
-          onClose={handleCancelStatusChange}
-          onConfirm={handleConfirmStatusChange}
+          onClose={handleCancelAction}
+          onConfirm={handleConfirmAction}
+          type={dialogType}
           status={pendingStatus}
           currentStatus={pendingCurrentStatus}
           isDarkMode={isDarkMode}
@@ -444,7 +512,7 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
               <TableCell sx={{ fontWeight: 600 }}>Total</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -452,6 +520,7 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
               const isTerminal = isTerminalStatus(row.status);
               const nextStatus = getNextValidStatus(row.status);
               const hasValidTransition = nextStatus !== null;
+              const cancellable = canCancelOrder(row.status);
 
               return (
                 <TableRow key={row.id} hover>
@@ -494,51 +563,79 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
                     />
                   </TableCell>
                   <TableCell>
-                    {!isTerminal && hasValidTransition ? (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        color={
-                          STATUS_COLORS[nextStatus] as
-                            | "primary"
-                            | "secondary"
-                            | "error"
-                            | "info"
-                            | "success"
-                            | "warning"
-                        }
-                        onClick={() =>
-                          handleStatusChange(
-                            row.order_number,
-                            row.status,
-                            nextStatus,
-                          )
-                        }
-                        sx={{
-                          textTransform: "none",
-                          borderRadius: 1,
-                          fontSize: "0.65rem",
-                          whiteSpace: "nowrap",
-                          minWidth: 120,
-                        }}
-                      >
-                        → {STATUS_LABELS[nextStatus]}
-                      </Button>
-                    ) : (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: getSecondaryTextColor(),
-                          fontStyle: "italic",
-                        }}
-                      >
-                        {row.status === "delivered"
-                          ? "✅ Delivered"
-                          : row.status === "cancelled"
-                            ? "❌ Cancelled"
-                            : "Complete"}
-                      </Typography>
-                    )}
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      {!isTerminal && hasValidTransition && (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color={
+                            STATUS_COLORS[nextStatus] as
+                              | "primary"
+                              | "secondary"
+                              | "error"
+                              | "info"
+                              | "success"
+                              | "warning"
+                          }
+                          onClick={() =>
+                            handleStatusChange(
+                              row.order_number,
+                              row.status,
+                              nextStatus,
+                            )
+                          }
+                          sx={{
+                            textTransform: "none",
+                            borderRadius: 1,
+                            fontSize: "0.65rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          → {STATUS_LABELS[nextStatus]}
+                        </Button>
+                      )}
+                      {cancellable && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          color="error"
+                          onClick={() =>
+                            handleCancelOrder(row.order_number, row.status)
+                          }
+                          sx={{
+                            textTransform: "none",
+                            borderRadius: 1,
+                            fontSize: "0.65rem",
+                            whiteSpace: "nowrap",
+                            borderColor: "error.main",
+                            color: "error.main",
+                            "&:hover": {
+                              borderColor: "error.dark",
+                              bgcolor: isDarkMode
+                                ? "rgba(244,67,54,0.15)"
+                                : "#fce4ec",
+                            },
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      {isTerminal && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: getSecondaryTextColor(),
+                            fontStyle: "italic",
+                          }}
+                        >
+                          {row.status === "delivered"
+                            ? "✅ Delivered"
+                            : row.status === "cancelled"
+                              ? "❌ Cancelled"
+                              : "Complete"}
+                        </Typography>
+                      )}
+                    </Stack>
                   </TableCell>
                 </TableRow>
               );
@@ -560,10 +657,11 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
       </Box>
 
       {/* Confirmation Dialog */}
-      <StatusChangeDialog
+      <ActionConfirmationDialog
         open={dialogOpen}
-        onClose={handleCancelStatusChange}
-        onConfirm={handleConfirmStatusChange}
+        onClose={handleCancelAction}
+        onConfirm={handleConfirmAction}
+        type={dialogType}
         status={pendingStatus}
         currentStatus={pendingCurrentStatus}
         isDarkMode={isDarkMode}
@@ -588,11 +686,12 @@ export const OrdersTable = ({ rows, onStatusChange }: Props) => {
   );
 };
 
-// Status Change Confirmation Dialog Component
-const StatusChangeDialog = ({
+// Action Confirmation Dialog Component
+const ActionConfirmationDialog = ({
   open,
   onClose,
   onConfirm,
+  type,
   status,
   currentStatus,
   isDarkMode,
@@ -600,6 +699,7 @@ const StatusChangeDialog = ({
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  type: "status" | "cancel";
   status: string;
   currentStatus: string;
   isDarkMode: boolean;
@@ -611,11 +711,15 @@ const StatusChangeDialog = ({
   const getSecondaryTextColor = () =>
     isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
 
+  const isCancel = type === "cancel";
   const isTerminal = status === "delivered" || status === "cancelled";
   const statusLabel = STATUS_LABELS[status] || status;
   const currentStatusLabel = STATUS_LABELS[currentStatus] || currentStatus;
   const statusColor = STATUS_COLORS[status] || "primary";
-  const description = STATUS_DESCRIPTIONS[status] || "Update the order status.";
+  const description = isCancel
+    ? "This will cancel the order and restock the items. This action is final and cannot be undone."
+    : STATUS_DESCRIPTIONS[status] || "Update the order status.";
+  const title = isCancel ? "Cancel Order" : "Update Order Status";
 
   return (
     <Dialog
@@ -634,9 +738,9 @@ const StatusChangeDialog = ({
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         <Chip
-          label={statusLabel}
+          label={isCancel ? "Cancel" : statusLabel}
           size="medium"
-          color={statusColor}
+          color={isCancel ? "error" : statusColor}
           sx={{ fontWeight: 600, fontSize: "0.8rem" }}
         />
         <Typography
@@ -644,16 +748,29 @@ const StatusChangeDialog = ({
           fontWeight={600}
           sx={{ color: getTextColor() }}
         >
-          Update Order Status
+          {title}
         </Typography>
       </DialogTitle>
       <DialogContent>
         <DialogContentText sx={{ mb: 2, color: getSecondaryTextColor() }}>
-          Are you sure you want to update the order status from{" "}
-          <strong style={{ color: getTextColor() }}>
-            {currentStatusLabel}
-          </strong>{" "}
-          to <strong style={{ color: getTextColor() }}>{statusLabel}</strong>?
+          {isCancel ? (
+            <>
+              Are you sure you want to cancel order from{" "}
+              <strong style={{ color: getTextColor() }}>
+                {currentStatusLabel}
+              </strong>
+              ?
+            </>
+          ) : (
+            <>
+              Are you sure you want to update the order status from{" "}
+              <strong style={{ color: getTextColor() }}>
+                {currentStatusLabel}
+              </strong>{" "}
+              to{" "}
+              <strong style={{ color: getTextColor() }}>{statusLabel}</strong>?
+            </>
+          )}
         </DialogContentText>
         <Box
           sx={{
@@ -666,7 +783,7 @@ const StatusChangeDialog = ({
           <Typography variant="body2" sx={{ color: getTextColor() }}>
             {description}
           </Typography>
-          {isTerminal && (
+          {(isTerminal || isCancel) && (
             <Typography
               variant="caption"
               sx={{
@@ -697,12 +814,12 @@ const StatusChangeDialog = ({
         <Button
           onClick={onConfirm}
           variant="contained"
-          color={isTerminal ? "error" : "primary"}
+          color={isCancel ? "error" : "primary"}
           sx={{
             textTransform: "none",
           }}
         >
-          Confirm Update
+          {isCancel ? "Confirm Cancel" : "Confirm Update"}
         </Button>
       </DialogActions>
     </Dialog>
