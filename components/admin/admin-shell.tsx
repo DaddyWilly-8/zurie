@@ -59,11 +59,7 @@ const links: AdminNavLink[] = [
   { href: "/admin/products", label: "Products", icon: faBoxArchive },
   { href: "/admin/categories", label: "Categories", icon: faLayerGroup },
   { href: "/admin/orders", label: "Orders", icon: faBoxesPacking },
-  { href: "/admin/enquiries", label: "Enquiries", icon: faEnvelope },
   { href: "/admin/customers", label: "Customers", icon: faUsers },
-  { href: "/admin/homepage", label: "Homepage", icon: faFileLines },
-  { href: "/admin/content", label: "Content", icon: faFileLines },
-  { href: "/admin/media", label: "Media", icon: faImage },
   { href: "/admin/settings", label: "Settings", icon: faGear },
   { href: "/admin/users", label: "Admin Users", icon: faUserShield },
   { href: "/admin/activity", label: "Activity", icon: faChartLine },
@@ -115,7 +111,9 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
       <Divider />
       <List sx={{ px: 1, py: 1 }}>
         {links.map((link) => {
-          const selected = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
+          const selected =
+            currentPath === link.href ||
+            currentPath.startsWith(`${link.href}/`);
           return (
             <ListItemButton
               key={link.href}
@@ -125,7 +123,12 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
               onClick={() => setMobileOpen(false)}
               sx={{ borderRadius: 1.5, mb: 0.5 }}
             >
-              <Box sx={{ width: 22, color: selected ? "primary.main" : "text.secondary" }}>
+              <Box
+                sx={{
+                  width: 22,
+                  color: selected ? "primary.main" : "text.secondary",
+                }}
+              >
                 <FontAwesomeIcon icon={link.icon} size="sm" />
               </Box>
               <ListItemText primary={link.label} />
@@ -141,7 +144,9 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
           component={Link}
           href="/"
           sx={{ mb: 1, justifyContent: "flex-start" }}
-          startIcon={<FontAwesomeIcon icon={faArrowUpRightFromSquare} size="sm" />}
+          startIcon={
+            <FontAwesomeIcon icon={faArrowUpRightFromSquare} size="sm" />
+          }
         >
           View Storefront
         </Button>
@@ -159,7 +164,13 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        bgcolor: "background.default",
+      }}
+    >
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -200,7 +211,10 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
                 "&::-webkit-scrollbar": { height: 4 },
               }}
             >
-              <Breadcrumbs aria-label="breadcrumb" sx={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}>
+              <Breadcrumbs
+                aria-label="breadcrumb"
+                sx={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}
+              >
                 {breadcrumbs.map((item) => (
                   <Link key={item.href} href={item.href}>
                     {item.label}
@@ -210,19 +224,31 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
             </Box>
           </Box>
 
-          <Stack direction="row" spacing={1.2} alignItems="center" sx={{ ml: 0, flexShrink: 0 }}>
+          <Stack
+            direction="row"
+            spacing={1.2}
+            alignItems="center"
+            sx={{ ml: 0, flexShrink: 0 }}
+          >
             <IconButton
-              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                mode === "dark" ? "Switch to light mode" : "Switch to dark mode"
+              }
               onClick={toggleMode}
               sx={{ color: "text.secondary" }}
             >
-              <FontAwesomeIcon icon={mode === "dark" ? faSun : faMoon} fontSize={14} />
+              <FontAwesomeIcon
+                icon={mode === "dark" ? faSun : faMoon}
+                fontSize={14}
+              />
             </IconButton>
 
             <Select
               size="small"
               value={currency}
-              onChange={(event) => setCurrency(event.target.value as CurrencyCode)}
+              onChange={(event) =>
+                setCurrency(event.target.value as CurrencyCode)
+              }
               variant="standard"
               disableUnderline
               sx={{
@@ -248,7 +274,10 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
         </Toolbar>
       </AppBar>
 
-      <Box component="nav" sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>
+      <Box
+        component="nav"
+        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+      >
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -256,7 +285,11 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: MOBILE_DRAWER_WIDTH, maxWidth: DRAWER_WIDTH },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: MOBILE_DRAWER_WIDTH,
+              maxWidth: DRAWER_WIDTH,
+            },
           }}
         >
           {drawer}
@@ -288,7 +321,9 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
           overflowX: "hidden",
         }}
       >
-        <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>{children}</Box>
+        <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );
