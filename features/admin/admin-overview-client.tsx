@@ -11,11 +11,16 @@ import {
   Stack,
   Typography,
   Divider,
-  LinearProgress,
   Chip,
   Skeleton,
   Paper,
   useTheme,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
@@ -32,12 +37,15 @@ import {
   faArrowDown,
   faEye,
   faShoppingCart,
-  faStore,
+  faClock,
+  faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   dashboardService,
   type DashboardOverview,
 } from "@/services/dashboard/dashboard.service";
+import { useCurrencyStore } from "@/hooks/use-currency-store";
+import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 
 type StatCardProps = {
   label: string;
@@ -247,9 +255,103 @@ const emptyOverview: DashboardOverview = {
   lowStockProducts: [],
 };
 
+// Mock recent orders for display
+const mockRecentOrders = [
+  {
+    id: "1",
+    orderNumber: "ORD-001",
+    customerName: "Jane Doe",
+    totalAmount: 440.0,
+    status: "new",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    orderNumber: "ORD-002",
+    customerName: "John Smith",
+    totalAmount: 320.0,
+    status: "confirmed",
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: "3",
+    orderNumber: "ORD-003",
+    customerName: "Sarah Johnson",
+    totalAmount: 560.0,
+    status: "processing",
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+  },
+];
+
+// Mock recently added products
+const mockRecentProducts = [
+  {
+    id: "1",
+    name: "Lumière Tote",
+    category: "Tote Bags",
+    price: 480.0,
+    status: "published",
+    stock_count: 12,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    name: "Aria Crossbody",
+    category: "Crossbody Bags",
+    price: 320.0,
+    status: "published",
+    stock_count: 8,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: "3",
+    name: "Noir Shoulder Bag",
+    category: "Shoulder Bags",
+    price: 410.0,
+    status: "draft",
+    stock_count: 0,
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+  },
+];
+
+const getStatusColor = (status: string) => {
+  const colors: Record<
+    string,
+    "primary" | "success" | "warning" | "error" | "info" | "default"
+  > = {
+    new: "primary",
+    confirmed: "info",
+    processing: "warning",
+    ready_for_delivery: "success",
+    delivered: "success",
+    cancelled: "error",
+    published: "success",
+    draft: "warning",
+    archived: "error",
+  };
+  return colors[status] || "default";
+};
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    new: "New",
+    confirmed: "Confirmed",
+    processing: "Processing",
+    ready_for_delivery: "Ready for Delivery",
+    delivered: "Delivered",
+    cancelled: "Cancelled",
+    published: "Published",
+    draft: "Draft",
+    archived: "Archived",
+  };
+  return labels[status] || status;
+};
+
 export const AdminOverviewClient = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const currency = useCurrencyStore((state) => state.currency);
+  const rates = useCurrencyStore((state) => state.rates);
 
   const {
     data: overview = emptyOverview,
@@ -259,6 +361,10 @@ export const AdminOverviewClient = () => {
     queryKey: ["admin-overview"],
     queryFn: () => dashboardService.getOverview(),
   });
+
+  // Use mock data until backend is ready
+  const recentOrders = mockRecentOrders;
+  const recentProducts = mockRecentProducts;
 
   // Dynamic styles for dark mode
   const getBorderColor = () =>
@@ -343,18 +449,6 @@ export const AdminOverviewClient = () => {
     },
   } as const;
 
-  const recentProducts = overview?.recentProducts ?? [];
-  const lowStockProducts = overview?.lowStockProducts ?? [];
-
-  // Calculate stock percentage for progress bar
-  const stockPercentage =
-    (overview?.totalProducts ?? 0) > 0
-      ? Math.round(
-          ((overview?.productsInStock ?? 0) / (overview?.totalProducts ?? 1)) *
-            100,
-        )
-      : 0;
-
   return (
     <Stack spacing={4} sx={{ pb: 2 }}>
       {/* Header */}
@@ -384,44 +478,6 @@ export const AdminOverviewClient = () => {
             today.
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1.5}>
-          <Button
-            component={Link}
-            href="/admin/products"
-            variant="contained"
-            startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
-            sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              bgcolor: isDarkMode ? "#ffffff" : "#171512",
-              color: isDarkMode ? "#171512" : "#ffffff",
-              "&:hover": {
-                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
-              },
-              boxShadow: "none",
-            }}
-          >
-            Add Product
-          </Button>
-          <Button
-            component={Link}
-            href="/admin/orders"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faEye} size="sm" />}
-            sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              borderColor: getBorderColor(),
-              color: getTextColor(),
-              "&:hover": {
-                borderColor: getTextColor(),
-                bgcolor: getHoverBgColor(),
-              },
-            }}
-          >
-            View Orders
-          </Button>
-        </Stack>
       </Stack>
 
       {/* Stats Grid */}
@@ -505,83 +561,8 @@ export const AdminOverviewClient = () => {
         </Box>
       )}
 
-      {/* Quick Actions */}
-      <Paper
-        sx={{
-          p: 2.5,
-          border: `1px solid ${getBorderColor()}`,
-          borderRadius: 2,
-          boxShadow: "none",
-          bgcolor: getBgColor(),
-        }}
-      >
-        <Typography
-          variant="overline"
-          sx={{
-            letterSpacing: "0.38em",
-            color: getSecondaryTextColor(),
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            mb: 2,
-            display: "block",
-          }}
-        >
-          Quick Actions
-        </Typography>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, minmax(0, 1fr))",
-              lg: "repeat(4, minmax(0, 1fr))",
-            },
-            gap: 1.5,
-          }}
-        >
-          <Button
-            component={Link}
-            href="/admin/products"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faBoxArchive} size="sm" />}
-            sx={actionButtonSx}
-          >
-            View Products
-          </Button>
-          <Button
-            component={Link}
-            href="/admin/categories"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faTags} size="sm" />}
-            sx={actionButtonSx}
-          >
-            View Categories
-          </Button>
-          <Button
-            component={Link}
-            href="/admin/homepage"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faEye} size="sm" />}
-            sx={actionButtonSx}
-          >
-            Manage Homepage
-          </Button>
-          <Button
-            component={Link}
-            href="/admin/orders"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faShoppingCart} size="sm" />}
-            sx={actionButtonSx}
-          >
-            View Orders
-          </Button>
-        </Box>
-      </Paper>
-
-      {/* Recent Activity Section */}
+      {/* Recent Activity Grid */}
       <Grid container spacing={3}>
-        {/* Recently Added Products */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
@@ -759,7 +740,7 @@ export const AdminOverviewClient = () => {
           </Card>
         </Grid>
 
-        {/* Low Stock Products */}
+        {/* Recent Orders */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
@@ -783,46 +764,53 @@ export const AdminOverviewClient = () => {
                       width: 36,
                       height: 36,
                       borderRadius: 1.5,
-                      bgcolor: isDarkMode ? "rgba(239,83,80,0.15)" : "#fce4ec",
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.08)"
+                        : "primary.light",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: isDarkMode ? "#ef5350" : "#d32f2f",
+                      color: isDarkMode ? "#ffffff" : "primary.main",
                     }}
                   >
-                    <FontAwesomeIcon icon={faCircleXmark} size="sm" />
+                    <FontAwesomeIcon icon={faClock} size="sm" />
                   </Box>
                   <Typography
                     variant="h6"
                     fontWeight={600}
                     sx={{ color: getTextColor(), fontSize: "1rem" }}
                   >
-                    Low Stock Alerts
+                    Recent Orders
                   </Typography>
                 </Stack>
-                <Chip
-                  label={lowStockProducts.length}
+                <Button
+                  component={Link}
+                  href="/admin/orders"
                   size="small"
-                  color="error"
+                  endIcon={<FontAwesomeIcon icon={faArrowRight} size="xs" />}
                   sx={{
+                    textTransform: "none",
+                    color: getSecondaryTextColor(),
                     fontSize: "0.7rem",
-                    fontWeight: 600,
-                    bgcolor: isDarkMode ? "rgba(239,83,80,0.2)" : undefined,
-                    color: isDarkMode ? "#ef5350" : undefined,
+                    "&:hover": { color: getTextColor() },
                   }}
-                />
+                >
+                  View All
+                </Button>
               </Stack>
 
               <Divider sx={{ borderColor: getBorderColor(), mb: 2 }} />
 
-              {lowStockProducts.length === 0 ? (
+              {recentOrders.length === 0 ? (
                 <Box sx={{ py: 4, textAlign: "center" }}>
                   <Box
                     sx={{
                       width: 60,
                       height: 60,
                       borderRadius: "50%",
-                      bgcolor: isDarkMode ? "rgba(76,175,80,0.15)" : "#e8f5e9",
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.05)"
+                        : "#f8f6f2",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -831,239 +819,272 @@ export const AdminOverviewClient = () => {
                     }}
                   >
                     <FontAwesomeIcon
-                      icon={faCircleCheck}
+                      icon={faShoppingCart}
                       size="lg"
-                      style={{ color: isDarkMode ? "#81c784" : "#2e7d32" }}
+                      style={{ color: getSecondaryTextColor() }}
                     />
                   </Box>
                   <Typography
-                    sx={{ color: getTextColor(), fontSize: "0.9rem" }}
+                    sx={{ color: getSecondaryTextColor(), fontSize: "0.9rem" }}
                   >
-                    All products have sufficient stock!
+                    No orders yet.
                   </Typography>
                   <Typography
                     sx={{ color: getSecondaryTextColor(), fontSize: "0.75rem" }}
                   >
-                    No low stock alerts at this time.
+                    When customers place orders, they will appear here.
                   </Typography>
                 </Box>
               ) : (
-                <Stack spacing={1}>
-                  {lowStockProducts.map((item) => (
-                    <Stack
-                      key={item.id}
-                      component={Link}
-                      href={`/admin/products/${item.id}`}
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      sx={{
-                        textDecoration: "none",
-                        color: "inherit",
-                        px: 1.5,
-                        py: 1.2,
-                        borderRadius: 1.5,
-                        border: `1px solid ${isDarkMode ? "rgba(239,83,80,0.2)" : "#ffebee"}`,
-                        bgcolor: isDarkMode
-                          ? "rgba(239,83,80,0.08)"
-                          : "#fff5f5",
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          bgcolor: isDarkMode
-                            ? "rgba(239,83,80,0.15)"
-                            : "#ffebee",
-                          borderColor: isDarkMode
-                            ? "rgba(239,83,80,0.3)"
-                            : "#ffcdd2",
-                        },
-                      }}
-                    >
-                      <Stack spacing={0.3}>
-                        <Typography
-                          sx={{
-                            color: getTextColor(),
-                            fontWeight: 500,
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          {item.name}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            color: isDarkMode ? "#ef9a9a" : "error.main",
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Only {item.stock_count} left in stock
-                        </Typography>
-                      </Stack>
-                      <Button
-                        size="small"
-                        component={Link}
-                        href={`/admin/products/${item.id}`}
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow
                         sx={{
-                          textTransform: "none",
-                          borderRadius: 1,
-                          borderColor: getBorderColor(),
-                          color: getTextColor(),
-                          fontSize: "0.65rem",
-                          "&:hover": {
-                            borderColor: getTextColor(),
-                            bgcolor: getHoverBgColor(),
-                          },
+                          bgcolor: isDarkMode
+                            ? "rgba(255,255,255,0.03)"
+                            : "#f8f6f2",
                         }}
-                        variant="outlined"
                       >
-                        Restock
-                      </Button>
-                    </Stack>
-                  ))}
-                </Stack>
+                        <TableCell
+                          sx={{
+                            fontWeight: 600,
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.2em",
+                          }}
+                        >
+                          Order
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontWeight: 600,
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.2em",
+                          }}
+                        >
+                          Customer
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontWeight: 600,
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.2em",
+                          }}
+                        >
+                          Total
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontWeight: 600,
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.2em",
+                          }}
+                        >
+                          Status
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            fontWeight: 600,
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.2em",
+                          }}
+                        >
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {recentOrders.map((order) => (
+                        <TableRow
+                          key={order.id}
+                          hover
+                          sx={{
+                            "&:hover": {
+                              bgcolor: getHoverBgColor(),
+                            },
+                          }}
+                        >
+                          <TableCell>
+                            <Typography
+                              sx={{
+                                fontWeight: 500,
+                                color: getTextColor(),
+                                fontSize: "0.8rem",
+                              }}
+                            >
+                              {order.orderNumber}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              spacing={1}
+                            >
+                              <Box
+                                sx={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: "50%",
+                                  bgcolor: isDarkMode
+                                    ? "rgba(255,255,255,0.08)"
+                                    : "#f0ebe3",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: getSecondaryTextColor(),
+                                }}
+                              >
+                                <FontAwesomeIcon icon={faUser} size="xs" />
+                              </Box>
+                              <Typography
+                                sx={{
+                                  color: getTextColor(),
+                                  fontSize: "0.8rem",
+                                }}
+                              >
+                                {order.customerName}
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              sx={{
+                                fontWeight: 600,
+                                color: getTextColor(),
+                                fontSize: "0.8rem",
+                              }}
+                            >
+                              {formatBaseCurrencyInCurrency(
+                                order.totalAmount,
+                                currency,
+                                rates,
+                              )}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={getStatusLabel(order.status)}
+                              size="small"
+                              color={getStatusColor(order.status)}
+                              sx={{
+                                fontSize: "0.55rem",
+                                height: 20,
+                                fontWeight: 500,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              component={Link}
+                              href={`/admin/orders/${order.orderNumber}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                textTransform: "none",
+                                borderRadius: 1,
+                                borderColor: getBorderColor(),
+                                color: getTextColor(),
+                                fontSize: "0.6rem",
+                                "&:hover": {
+                                  borderColor: getTextColor(),
+                                  bgcolor: getHoverBgColor(),
+                                },
+                              }}
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               )}
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Stock Overview Progress */}
-      <Card
+      {/* Quick Actions */}
+      <Paper
         sx={{
+          p: 2.5,
           border: `1px solid ${getBorderColor()}`,
           borderRadius: 2,
           boxShadow: "none",
-          bgcolor: getCardBgColor(),
+          bgcolor: getBgColor(),
         }}
       >
-        <CardContent sx={{ p: 2.5 }}>
-          <Stack spacing={2}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Stack direction="row" alignItems="center" spacing={1.5}>
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 1.5,
-                    bgcolor: isDarkMode
-                      ? "rgba(255,255,255,0.08)"
-                      : "primary.light",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: isDarkMode ? "#ffffff" : "primary.main",
-                  }}
-                >
-                  <FontAwesomeIcon icon={faStore} size="sm" />
-                </Box>
-                <Typography
-                  variant="h6"
-                  fontWeight={600}
-                  sx={{ color: getTextColor(), fontSize: "1rem" }}
-                >
-                  Inventory Overview
-                </Typography>
-              </Stack>
-              <Typography
-                sx={{
-                  color: getSecondaryTextColor(),
-                  fontSize: "0.85rem",
-                  fontWeight: 500,
-                }}
-              >
-                {stockPercentage}% Stocked
-              </Typography>
-            </Stack>
+        <Typography
+          variant="overline"
+          sx={{
+            letterSpacing: "0.38em",
+            color: getSecondaryTextColor(),
+            fontSize: "0.7rem",
+            fontWeight: 600,
+            mb: 2,
+            display: "block",
+          }}
+        >
+          Quick Actions
+        </Typography>
 
-            <LinearProgress
-              variant="determinate"
-              value={stockPercentage}
-              sx={{
-                height: 8,
-                borderRadius: 4,
-                bgcolor: isDarkMode ? "rgba(255,255,255,0.08)" : "#f0ebe3",
-                "& .MuiLinearProgress-bar": {
-                  borderRadius: 4,
-                  bgcolor:
-                    stockPercentage > 70
-                      ? isDarkMode
-                        ? "#66bb6a"
-                        : "#2e7d32"
-                      : stockPercentage > 40
-                        ? isDarkMode
-                          ? "#ffa726"
-                          : "#ed6c02"
-                        : isDarkMode
-                          ? "#ef5350"
-                          : "#d32f2f",
-                },
-              }}
-            />
-
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              sx={{ mt: 0.5 }}
-            >
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      bgcolor: isDarkMode ? "#66bb6a" : "#2e7d32",
-                    }}
-                  />
-                  <Typography
-                    sx={{ color: getSecondaryTextColor(), fontSize: "0.7rem" }}
-                  >
-                    In Stock ({overview?.productsInStock ?? 0})
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      bgcolor: isDarkMode ? "#ffa726" : "#ed6c02",
-                    }}
-                  />
-                  <Typography
-                    sx={{ color: getSecondaryTextColor(), fontSize: "0.7rem" }}
-                  >
-                    Low Stock ({lowStockProducts.length})
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      bgcolor: isDarkMode ? "#ef5350" : "#d32f2f",
-                    }}
-                  />
-                  <Typography
-                    sx={{ color: getSecondaryTextColor(), fontSize: "0.7rem" }}
-                  >
-                    Out of Stock ({overview?.productsOutOfStock ?? 0})
-                  </Typography>
-                </Box>
-              </Stack>
-              <Typography
-                sx={{ color: getSecondaryTextColor(), fontSize: "0.7rem" }}
-              >
-                Total: {overview?.totalProducts ?? 0}
-              </Typography>
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              lg: "repeat(4, minmax(0, 1fr))",
+            },
+            gap: 1.5,
+          }}
+        >
+          <Button
+            component={Link}
+            href="/admin/products"
+            variant="outlined"
+            startIcon={<FontAwesomeIcon icon={faBoxArchive} size="sm" />}
+            sx={actionButtonSx}
+          >
+            View Products
+          </Button>
+          <Button
+            component={Link}
+            href="/admin/categories"
+            variant="outlined"
+            startIcon={<FontAwesomeIcon icon={faTags} size="sm" />}
+            sx={actionButtonSx}
+          >
+            View Categories
+          </Button>
+          <Button
+            component={Link}
+            href="/admin/homepage"
+            variant="outlined"
+            startIcon={<FontAwesomeIcon icon={faEye} size="sm" />}
+            sx={actionButtonSx}
+          >
+            Manage Homepage
+          </Button>
+          <Button
+            component={Link}
+            href="/admin/orders"
+            variant="outlined"
+            startIcon={<FontAwesomeIcon icon={faShoppingCart} size="sm" />}
+            sx={actionButtonSx}
+          >
+            View Orders
+          </Button>
+        </Box>
+      </Paper>
     </Stack>
   );
 };
