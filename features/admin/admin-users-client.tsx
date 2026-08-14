@@ -38,6 +38,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   InputAdornment,
+  useMediaQuery,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -71,7 +72,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`users-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ py: { xs: 1.5, md: 3 } }}>{children}</Box>}
     </div>
   );
 }
@@ -79,6 +80,8 @@ function TabPanel(props: TabPanelProps) {
 export const AdminUsersClient = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
   // Dynamic styles
   const getBorderColor = () =>
@@ -196,7 +199,6 @@ export const AdminUsersClient = () => {
     loadPermissions();
   }, []);
 
-  // Filter permissions based on search
   const getFilteredPermissions = () => {
     if (!permissionSearch.trim()) return permissions;
 
@@ -232,24 +234,18 @@ export const AdminUsersClient = () => {
   ) => {
     setSavingPermissions(true);
     try {
-      // Find the original role to get current permissions
       const originalRole = roles.find((r) => r.id === roleId);
       const originalPerms = originalRole?.permissions || [];
 
-      // Find which permissions are NEW (to be added)
       const permissionsToAdd = permissionKeys.filter(
         (key) => !originalPerms.includes(key),
       );
-
-      // Find which permissions are REMOVED
       const permissionsToRemove = originalPerms.filter(
         (key) => !permissionKeys.includes(key),
       );
 
-      // Get permission IDs
       const allPermissions = permissions;
 
-      // Handle removals first
       for (const permissionKey of permissionsToRemove) {
         const permission = allPermissions.find((p) => p.key === permissionKey);
         if (permission) {
@@ -264,7 +260,6 @@ export const AdminUsersClient = () => {
         }
       }
 
-      // Handle additions
       const permissionIds = permissionsToAdd
         .map((key) => allPermissions.find((p) => p.key === key)?.id)
         .filter((id): id is number => id !== undefined);
@@ -364,7 +359,6 @@ export const AdminUsersClient = () => {
 
   const handleEditUser = (user: AdminUserRow) => {
     setEditingUser(user);
-    // Map role names to role IDs
     const roleNames = user.roleNames || [];
     const roleIds = roleNames
       .map((roleName: string) => {
@@ -513,7 +507,7 @@ export const AdminUsersClient = () => {
   };
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={{ xs: 2, md: 3 }}>
       {message && (
         <Alert
           severity={messageType}
@@ -531,20 +525,24 @@ export const AdminUsersClient = () => {
           boxShadow: "none",
           bgcolor: getCardBackground(),
           transition: "all 0.3s ease",
+          overflow: "hidden",
         }}
       >
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
+          variant={isMobile ? "fullWidth" : "standard"}
           sx={{
             borderBottom: 1,
             borderColor: getBorderColor(),
-            px: 2,
+            px: { xs: 1, md: 2 },
             "& .MuiTab-root": {
               textTransform: "none",
               fontWeight: 500,
-              fontSize: "0.875rem",
-              py: 2,
+              fontSize: { xs: "0.75rem", md: "0.875rem" },
+              py: { xs: 1.5, md: 2 },
+              px: { xs: 1.5, md: 3 },
+              minHeight: { xs: 40, md: 48 },
               color: getSecondaryTextColor(),
               "&.Mui-selected": {
                 color: getTextColor(),
@@ -569,11 +567,12 @@ export const AdminUsersClient = () => {
 
         {/* Users Tab */}
         <TabPanel value={tabValue} index={0}>
-          <Box sx={{ px: 2, pb: 2 }}>
+          <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 2 }}>
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"
-              alignItems="center"
+              alignItems={{ xs: "stretch", sm: "center" }}
+              spacing={{ xs: 2, sm: 0 }}
               sx={{ mb: 3 }}
             >
               <TextField
@@ -581,8 +580,9 @@ export const AdminUsersClient = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 size="small"
+                fullWidth={isMobile}
                 sx={{
-                  maxWidth: 400,
+                  maxWidth: { xs: "100%", sm: 400 },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
                     bgcolor: getInputBackground(),
@@ -597,13 +597,15 @@ export const AdminUsersClient = () => {
                 }}
                 InputProps={{
                   startAdornment: (
-                    <FontAwesomeIcon
-                      icon={faSearch}
-                      style={{
-                        marginRight: 12,
-                        color: isDarkMode ? "rgba(255,255,255,0.5)" : "#999",
-                      }}
-                    />
+                    <InputAdornment position="start">
+                      <FontAwesomeIcon
+                        icon={faSearch}
+                        style={{
+                          color: isDarkMode ? "rgba(255,255,255,0.5)" : "#999",
+                          fontSize: 14,
+                        }}
+                      />
+                    </InputAdornment>
                   ),
                 }}
               />
@@ -611,6 +613,7 @@ export const AdminUsersClient = () => {
                 variant="contained"
                 startIcon={<FontAwesomeIcon icon={faUserPlus} size="sm" />}
                 onClick={() => setOpenUserDialog(true)}
+                fullWidth={isMobile}
                 sx={{
                   borderRadius: 2,
                   textTransform: "none",
@@ -654,7 +657,7 @@ export const AdminUsersClient = () => {
               <>
                 <Grid container spacing={2}>
                   {paginatedRows.map((row) => (
-                    <Grid size={{ xs: 12, md: 6, lg: 4 }} key={row.id}>
+                    <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={row.id}>
                       <Card
                         sx={{
                           border: `1px solid ${getBorderColor()}`,
@@ -670,18 +673,19 @@ export const AdminUsersClient = () => {
                           },
                         }}
                       >
-                        <CardContent sx={{ p: 2.5 }}>
+                        <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
                           <Stack
                             direction="row"
                             justifyContent="space-between"
                             alignItems="flex-start"
                           >
-                            <Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Typography
                                 fontWeight={600}
                                 sx={{
                                   color: getTextColor(),
-                                  fontSize: "0.95rem",
+                                  fontSize: { xs: "0.9rem", md: "0.95rem" },
+                                  wordBreak: "break-word",
                                 }}
                               >
                                 {row.full_name || row.name}
@@ -692,6 +696,7 @@ export const AdminUsersClient = () => {
                                   color: getSecondaryTextColor(),
                                   fontSize: "0.7rem",
                                   display: "block",
+                                  wordBreak: "break-word",
                                 }}
                               >
                                 {row.email}
@@ -702,6 +707,8 @@ export const AdminUsersClient = () => {
                               onClick={() => handleEditUser(row)}
                               sx={{
                                 color: getSecondaryTextColor(),
+                                flexShrink: 0,
+                                ml: 1,
                                 "&:hover": {
                                   color: getTextColor(),
                                   bgcolor: getHoverBackgroundColor(),
@@ -714,44 +721,36 @@ export const AdminUsersClient = () => {
 
                           <Stack
                             direction="row"
-                            justifyContent="space-between"
-                            alignItems="center"
+                            flexWrap="wrap"
+                            spacing={0.5}
+                            sx={{ mt: 1.5 }}
                           >
-                            <Stack
-                              direction="row"
-                              spacing={0.5}
-                              flexWrap="wrap"
-                            >
-                              {(row.roleNames || []).length > 0 ? (
-                                (row.roleNames || []).map(
-                                  (roleName: string) => (
-                                    <Chip
-                                      key={roleName}
-                                      label={formatRoleLabel(roleName)}
-                                      color={getRoleColor(roleName)}
-                                      size="small"
-                                      sx={{
-                                        fontSize: "0.55rem",
-                                        fontWeight: 500,
-                                        color: isDarkMode
-                                          ? "#ffffff"
-                                          : undefined,
-                                      }}
-                                    />
-                                  ),
-                                )
-                              ) : (
+                            {(row.roleNames || []).length > 0 ? (
+                              (row.roleNames || []).map((roleName: string) => (
                                 <Chip
-                                  label="No roles"
+                                  key={roleName}
+                                  label={formatRoleLabel(roleName)}
+                                  color={getRoleColor(roleName)}
                                   size="small"
                                   sx={{
-                                    fontSize: "0.55rem",
+                                    fontSize: { xs: "0.5rem", sm: "0.55rem" },
                                     fontWeight: 500,
-                                    color: getSecondaryTextColor(),
+                                    color: isDarkMode ? "#ffffff" : undefined,
+                                    height: { xs: 20, sm: 24 },
                                   }}
                                 />
-                              )}
-                            </Stack>
+                              ))
+                            ) : (
+                              <Chip
+                                label="No roles"
+                                size="small"
+                                sx={{
+                                  fontSize: "0.55rem",
+                                  fontWeight: 500,
+                                  color: getSecondaryTextColor(),
+                                }}
+                              />
+                            )}
                           </Stack>
                         </CardContent>
                       </Card>
@@ -769,6 +768,7 @@ export const AdminUsersClient = () => {
                       count={totalPages}
                       page={page}
                       onChange={(_, value) => setPage(value)}
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         "& .MuiPaginationItem-root": {
                           color: getTextColor(),
@@ -787,13 +787,14 @@ export const AdminUsersClient = () => {
           </Box>
         </TabPanel>
 
-        {/* Roles Tab - with Permission Search */}
+        {/* Roles Tab */}
         <TabPanel value={tabValue} index={1}>
-          <Box sx={{ px: 2, pb: 2 }}>
+          <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 2 }}>
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"
-              alignItems="center"
+              alignItems={{ xs: "stretch", sm: "center" }}
+              spacing={{ xs: 2, sm: 0 }}
               sx={{ mb: 3 }}
             >
               <Typography variant="h6" fontWeight={600} color={getTextColor()}>
@@ -803,6 +804,7 @@ export const AdminUsersClient = () => {
                 variant="contained"
                 startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
                 onClick={() => setOpenRoleDialog(true)}
+                fullWidth={isMobile}
                 sx={{
                   borderRadius: 2,
                   textTransform: "none",
@@ -871,23 +873,26 @@ export const AdminUsersClient = () => {
                           "& .MuiAccordionSummary-content": {
                             alignItems: "center",
                           },
+                          px: { xs: 1.5, md: 2 },
+                          py: { xs: 0.5, md: 1 },
                         }}
                       >
                         <Stack
                           direction="row"
                           justifyContent="space-between"
                           alignItems="center"
-                          sx={{ width: "100%", pr: 2 }}
+                          sx={{ width: "100%", pr: 1 }}
                         >
                           <Stack
-                            direction="row"
-                            spacing={2}
-                            alignItems="center"
+                            direction={{ xs: "column", sm: "row" }}
+                            spacing={{ xs: 0.5, sm: 2 }}
+                            alignItems={{ xs: "flex-start", sm: "center" }}
                           >
                             <Typography
                               variant="subtitle1"
                               fontWeight={600}
                               color={getTextColor()}
+                              sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}
                             >
                               {formatRoleLabel(role.name)}
                             </Typography>
@@ -895,6 +900,9 @@ export const AdminUsersClient = () => {
                               <Typography
                                 variant="caption"
                                 color={getSecondaryTextColor()}
+                                sx={{
+                                  fontSize: { xs: "0.6rem", md: "0.7rem" },
+                                }}
                               >
                                 {role.description}
                               </Typography>
@@ -903,11 +911,12 @@ export const AdminUsersClient = () => {
                               label={`${currentPerms.length} permissions`}
                               size="small"
                               sx={{
-                                fontSize: "0.6rem",
+                                fontSize: { xs: "0.5rem", md: "0.6rem" },
                                 bgcolor: isDarkMode
                                   ? "rgba(255,255,255,0.1)"
                                   : "#f0ebe3",
                                 color: getTextColor(),
+                                height: { xs: 18, md: 24 },
                               }}
                             />
                           </Stack>
@@ -916,16 +925,19 @@ export const AdminUsersClient = () => {
                               label="Unsaved changes"
                               size="small"
                               color="warning"
-                              sx={{ fontSize: "0.6rem" }}
+                              sx={{
+                                fontSize: { xs: "0.5rem", md: "0.6rem" },
+                                height: { xs: 18, md: 24 },
+                              }}
                             />
                           )}
                         </Stack>
                       </AccordionSummary>
-                      <AccordionDetails sx={{ pt: 0 }}>
+                      <AccordionDetails sx={{ pt: 0, px: { xs: 1.5, md: 2 } }}>
                         <Stack spacing={2}>
                           {/* Permission Search */}
                           {isExpanded && (
-                            <Grid container spacing={2} sx={{ mb: 2 }}>
+                            <Grid container spacing={1.5} sx={{ mb: 1 }}>
                               <Grid size={{ xs: 12, md: 6 }}>
                                 <TextField
                                   placeholder="Search permissions..."
@@ -943,6 +955,10 @@ export const AdminUsersClient = () => {
                                     },
                                     "& .MuiInputBase-input": {
                                       color: getTextColor(),
+                                      fontSize: {
+                                        xs: "0.8rem",
+                                        md: "0.875rem",
+                                      },
                                     },
                                   }}
                                   InputProps={{
@@ -979,9 +995,12 @@ export const AdminUsersClient = () => {
                               </Grid>
                               <Grid size={{ xs: 12, md: 6 }}>
                                 <Stack
-                                  direction="row"
-                                  spacing={1.5}
-                                  alignItems="center"
+                                  direction={{ xs: "column", sm: "row" }}
+                                  spacing={{ xs: 1, sm: 1.5 }}
+                                  alignItems={{
+                                    xs: "flex-start",
+                                    sm: "center",
+                                  }}
                                   sx={{
                                     height: "100%",
                                     flexWrap: "wrap",
@@ -998,6 +1017,7 @@ export const AdminUsersClient = () => {
                                       fontWeight: 500,
                                       color: getSecondaryTextColor(),
                                       whiteSpace: "nowrap",
+                                      fontSize: { xs: "0.6rem", md: "0.7rem" },
                                     }}
                                   >
                                     Quick Actions:
@@ -1023,9 +1043,14 @@ export const AdminUsersClient = () => {
                                     sx={{
                                       textTransform: "none",
                                       borderRadius: 1,
-                                      fontSize: "0.65rem",
+                                      fontSize: {
+                                        xs: "0.55rem",
+                                        md: "0.65rem",
+                                      },
                                       borderColor: getBorderColor(),
                                       color: getTextColor(),
+                                      px: { xs: 1, md: 1.5 },
+                                      py: { xs: 0.5, md: 0.5 },
                                       "&:hover": {
                                         borderColor: getTextColor(),
                                         bgcolor: getHoverBackgroundColor(),
@@ -1057,9 +1082,14 @@ export const AdminUsersClient = () => {
                                     sx={{
                                       textTransform: "none",
                                       borderRadius: 1,
-                                      fontSize: "0.65rem",
+                                      fontSize: {
+                                        xs: "0.55rem",
+                                        md: "0.65rem",
+                                      },
                                       color: "error.main",
                                       borderColor: "error.main",
+                                      px: { xs: 1, md: 1.5 },
+                                      py: { xs: 0.5, md: 0.5 },
                                       "&:hover": {
                                         borderColor: "error.dark",
                                         bgcolor: isDarkMode
@@ -1081,7 +1111,8 @@ export const AdminUsersClient = () => {
                                         : "default"
                                     }
                                     sx={{
-                                      fontSize: "0.55rem",
+                                      fontSize: { xs: "0.5rem", md: "0.55rem" },
+                                      height: { xs: 18, md: 24 },
                                       bgcolor:
                                         isDarkMode && currentPerms.length > 0
                                           ? "rgba(25,118,210,0.2)"
@@ -1098,7 +1129,11 @@ export const AdminUsersClient = () => {
                                       size="small"
                                       variant="outlined"
                                       sx={{
-                                        fontSize: "0.55rem",
+                                        fontSize: {
+                                          xs: "0.5rem",
+                                          md: "0.55rem",
+                                        },
+                                        height: { xs: 18, md: 24 },
                                         borderColor: getBorderColor(),
                                         color: getSecondaryTextColor(),
                                       }}
@@ -1113,7 +1148,7 @@ export const AdminUsersClient = () => {
                           <List
                             dense
                             sx={{
-                              maxHeight: 300,
+                              maxHeight: { xs: 200, md: 300 },
                               overflow: "auto",
                               bgcolor: isDarkMode
                                 ? "rgba(255,255,255,0.03)"
@@ -1142,9 +1177,12 @@ export const AdminUsersClient = () => {
                                       bgcolor: getListItemHover(),
                                     },
                                     color: getTextColor(),
+                                    py: { xs: 0.5, md: 0.75 },
                                   }}
                                 >
-                                  <ListItemIcon sx={{ minWidth: 40 }}>
+                                  <ListItemIcon
+                                    sx={{ minWidth: { xs: 32, md: 40 } }}
+                                  >
                                     <Checkbox
                                       edge="start"
                                       checked={currentPerms.includes(
@@ -1152,6 +1190,7 @@ export const AdminUsersClient = () => {
                                       )}
                                       tabIndex={-1}
                                       disableRipple
+                                      size={isMobile ? "small" : "medium"}
                                       sx={{
                                         color: isDarkMode
                                           ? "rgba(255,255,255,0.5)"
@@ -1167,15 +1206,30 @@ export const AdminUsersClient = () => {
                                   <ListItemText
                                     primary={
                                       <Box component="span">
-                                        {permission.key.replace(/_/g, " ")}
+                                        <Typography
+                                          component="span"
+                                          sx={{
+                                            fontSize: {
+                                              xs: "0.75rem",
+                                              md: "0.85rem",
+                                            },
+                                            color: getPermissionText(),
+                                            fontWeight: 500,
+                                          }}
+                                        >
+                                          {permission.key.replace(/_/g, " ")}
+                                        </Typography>
                                         {permissionSearch && (
                                           <Chip
                                             label="Match"
                                             size="small"
                                             sx={{
-                                              ml: 1,
-                                              fontSize: "0.5rem",
-                                              height: 16,
+                                              ml: 0.5,
+                                              fontSize: {
+                                                xs: "0.4rem",
+                                                md: "0.5rem",
+                                              },
+                                              height: { xs: 14, md: 16 },
                                               bgcolor: isDarkMode
                                                 ? "rgba(255,255,255,0.1)"
                                                 : "#f0ebe3",
@@ -1185,16 +1239,23 @@ export const AdminUsersClient = () => {
                                         )}
                                       </Box>
                                     }
-                                    secondary={permission.description}
-                                    primaryTypographyProps={{
-                                      fontSize: "0.85rem",
-                                      color: getPermissionText(),
-                                      fontWeight: 500,
-                                    }}
-                                    secondaryTypographyProps={{
-                                      fontSize: "0.7rem",
-                                      color: getPermissionDescription(),
-                                    }}
+                                    secondary={
+                                      <Typography
+                                        component="span"
+                                        variant="caption"
+                                        sx={{
+                                          fontSize: {
+                                            xs: "0.6rem",
+                                            md: "0.7rem",
+                                          },
+                                          color: getPermissionDescription(),
+                                          display: "block",
+                                          mt: 0.25,
+                                        }}
+                                      >
+                                        {permission.description}
+                                      </Typography>
+                                    }
                                   />
                                 </ListItem>
                               ))
@@ -1221,8 +1282,9 @@ export const AdminUsersClient = () => {
                                 handleSaveRolePermissionsFromAccordion(role.id)
                               }
                               disabled={savingPermissions}
+                              fullWidth={isMobile}
                               sx={{
-                                alignSelf: "flex-end",
+                                alignSelf: { xs: "stretch", sm: "flex-end" },
                                 textTransform: "none",
                                 bgcolor: isDarkMode ? "#ffffff" : "#171512",
                                 color: isDarkMode ? "#171512" : "#ffffff",
@@ -1258,10 +1320,11 @@ export const AdminUsersClient = () => {
             borderRadius: 2,
             bgcolor: getDialogBackground(),
             border: `1px solid ${getBorderColor()}`,
+            m: { xs: 1, md: 2 },
           },
         }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ p: { xs: 2, md: 3 } }}>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -1279,14 +1342,14 @@ export const AdminUsersClient = () => {
             </IconButton>
           </Stack>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ p: { xs: 2, md: 3 } }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Full Name *"
               value={newUserName}
               onChange={(e) => setNewUserName(e.target.value)}
               fullWidth
-              size="small"
+              size={isMobile ? "small" : "medium"}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
@@ -1303,7 +1366,7 @@ export const AdminUsersClient = () => {
               value={newUserEmail}
               onChange={(e) => setNewUserEmail(e.target.value)}
               fullWidth
-              size="small"
+              size={isMobile ? "small" : "medium"}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
@@ -1320,7 +1383,7 @@ export const AdminUsersClient = () => {
               value={newUserPassword}
               onChange={(e) => setNewUserPassword(e.target.value)}
               fullWidth
-              size="small"
+              size={isMobile ? "small" : "medium"}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),
@@ -1331,7 +1394,7 @@ export const AdminUsersClient = () => {
                 },
               }}
             />
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size={isMobile ? "small" : "medium"}>
               <InputLabel sx={{ color: getSecondaryTextColor() }}>
                 Roles
               </InputLabel>
@@ -1361,6 +1424,8 @@ export const AdminUsersClient = () => {
                             bgcolor: isDarkMode
                               ? "rgba(255,255,255,0.15)"
                               : undefined,
+                            fontSize: "0.6rem",
+                            height: 20,
                           }}
                         />
                       ) : null;
@@ -1378,7 +1443,7 @@ export const AdminUsersClient = () => {
             </FormControl>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ p: { xs: 2, md: 3 } }}>
           <Button
             onClick={() => setOpenUserDialog(false)}
             sx={{ textTransform: "none", color: getSecondaryTextColor() }}
@@ -1421,10 +1486,11 @@ export const AdminUsersClient = () => {
             borderRadius: 2,
             bgcolor: getDialogBackground(),
             border: `1px solid ${getBorderColor()}`,
+            m: { xs: 1, md: 2 },
           },
         }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ p: { xs: 2, md: 3 } }}>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -1442,14 +1508,14 @@ export const AdminUsersClient = () => {
             </IconButton>
           </Stack>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ p: { xs: 2, md: 3 } }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Role Name *"
               value={roleName}
               onChange={(e) => setRoleName(e.target.value)}
               fullWidth
-              size="small"
+              size={isMobile ? "small" : "medium"}
               placeholder="e.g., Sales Manager"
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -1466,7 +1532,7 @@ export const AdminUsersClient = () => {
               value={roleDescription}
               onChange={(e) => setRoleDescription(e.target.value)}
               fullWidth
-              size="small"
+              size={isMobile ? "small" : "medium"}
               multiline
               minRows={2}
               placeholder="Describe the role's responsibilities..."
@@ -1482,7 +1548,7 @@ export const AdminUsersClient = () => {
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ p: { xs: 2, md: 3 } }}>
           <Button
             onClick={() => setOpenRoleDialog(false)}
             sx={{ textTransform: "none", color: getSecondaryTextColor() }}
@@ -1525,10 +1591,11 @@ export const AdminUsersClient = () => {
             borderRadius: 2,
             bgcolor: getDialogBackground(),
             border: `1px solid ${getBorderColor()}`,
+            m: { xs: 1, md: 2 },
           },
         }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ p: { xs: 2, md: 3 } }}>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -1546,13 +1613,14 @@ export const AdminUsersClient = () => {
             </IconButton>
           </Stack>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ p: { xs: 2, md: 3 } }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             {editingUser && (
               <Typography
                 variant="subtitle1"
                 fontWeight={600}
                 color={getTextColor()}
+                sx={{ fontSize: { xs: "0.95rem", md: "1rem" } }}
               >
                 {editingUser.full_name || editingUser.name}
               </Typography>
@@ -1566,6 +1634,8 @@ export const AdminUsersClient = () => {
                 bgcolor: isDarkMode ? "rgba(255,255,255,0.03)" : "transparent",
                 borderRadius: 1,
                 border: isDarkMode ? `1px solid ${getBorderColor()}` : "none",
+                maxHeight: 300,
+                overflow: "auto",
               }}
             >
               {roles.map((role) => (
@@ -1586,14 +1656,16 @@ export const AdminUsersClient = () => {
                       bgcolor: getListItemHover(),
                     },
                     color: getTextColor(),
+                    py: { xs: 0.5, md: 0.75 },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 40 }}>
+                  <ListItemIcon sx={{ minWidth: { xs: 32, md: 40 } }}>
                     <Checkbox
                       edge="start"
                       checked={editingUserRoleIds.includes(role.id)}
                       tabIndex={-1}
                       disableRipple
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         color: isDarkMode ? "rgba(255,255,255,0.5)" : undefined,
                         "&.Mui-checked": {
@@ -1606,12 +1678,12 @@ export const AdminUsersClient = () => {
                     primary={formatRoleLabel(role.name)}
                     secondary={role.description}
                     primaryTypographyProps={{
-                      fontSize: "0.85rem",
+                      fontSize: { xs: "0.8rem", md: "0.85rem" },
                       color: getPermissionText(),
                       fontWeight: 500,
                     }}
                     secondaryTypographyProps={{
-                      fontSize: "0.7rem",
+                      fontSize: { xs: "0.6rem", md: "0.7rem" },
                       color: getPermissionDescription(),
                     }}
                   />
@@ -1620,9 +1692,7 @@ export const AdminUsersClient = () => {
             </List>
           </Stack>
         </DialogContent>
-        <DialogActions
-          sx={{ p: 2, borderTop: `1px solid ${getBorderColor()}` }}
-        >
+        <DialogActions sx={{ p: { xs: 2, md: 3 } }}>
           <Button
             onClick={() => setOpenUserEditDialog(false)}
             sx={{
