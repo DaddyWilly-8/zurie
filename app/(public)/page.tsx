@@ -65,7 +65,7 @@ export default async function HomePage() {
     ) ?? "/images/products/fallback.png";
 
   const featured =
-    featuredRows.length > 0 ? featuredRows.slice(0, 3) : products.slice(0, 3);
+    featuredRows.length > 0 ? featuredRows.slice(0, 4) : products.slice(0, 4);
   const bestSellers =
     bestSellerRows.length > 0
       ? bestSellerRows.slice(0, 3)
