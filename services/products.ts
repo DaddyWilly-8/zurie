@@ -39,8 +39,22 @@ type RawStorefrontProduct = Partial<Product> & {
   image_url?: string | null;
   imageUrls?: string[];
   image_urls?: string[];
-  images?: Array<{ id?: string | number; url?: string; alt?: string; alt_text?: string; isPrimary?: boolean; is_primary?: boolean }>;
-  product_images?: Array<{ id?: string | number; url?: string; alt?: string; alt_text?: string; isPrimary?: boolean; is_primary?: boolean }>;
+  images?: Array<{
+    id?: string | number;
+    url?: string;
+    alt?: string;
+    alt_text?: string;
+    isPrimary?: boolean;
+    is_primary?: boolean;
+  }>;
+  product_images?: Array<{
+    id?: string | number;
+    url?: string;
+    alt?: string;
+    alt_text?: string;
+    isPrimary?: boolean;
+    is_primary?: boolean;
+  }>;
   specifications?: string[];
   colors?: Array<{ name: string; hex: string }>;
   sizes?: string[];
@@ -55,7 +69,14 @@ const toNumber = (value: unknown, fallback = 0) => {
 };
 
 const normalizeImageRow = (
-  image: { id?: string | number; url?: string; alt?: string; alt_text?: string; isPrimary?: boolean; is_primary?: boolean },
+  image: {
+    id?: string | number;
+    url?: string;
+    alt?: string;
+    alt_text?: string;
+    isPrimary?: boolean;
+    is_primary?: boolean;
+  },
   index: number,
 ) => {
   const imageUrl = String(image.url ?? "").trim();
@@ -75,22 +96,41 @@ const normalizeStorefrontProduct = (row: RawStorefrontProduct): Product => {
   const name = String(row.name ?? "");
   const categoryPayload = row.category;
   const categoryObject =
-    categoryPayload && typeof categoryPayload === "object" && !Array.isArray(categoryPayload)
+    categoryPayload &&
+    typeof categoryPayload === "object" &&
+    !Array.isArray(categoryPayload)
       ? {
           id: String((categoryPayload as { id?: unknown }).id ?? ""),
           name: String((categoryPayload as { name?: unknown }).name ?? ""),
           slug: String((categoryPayload as { slug?: unknown }).slug ?? ""),
-          description: (categoryPayload as { description?: unknown }).description ?? null,
-          imageUrl: String(((categoryPayload as { imageUrl?: unknown }).imageUrl ?? (categoryPayload as { image_url?: unknown }).image_url ?? "") || ""),
-          visible: (categoryPayload as { visible?: unknown }).visible ?? (categoryPayload as { is_visible?: unknown }).is_visible ?? true,
-          sortOrder: (categoryPayload as { sortOrder?: unknown }).sortOrder ?? (categoryPayload as { sort_order?: unknown }).sort_order ?? 0,
+          description:
+            (categoryPayload as { description?: unknown }).description ?? null,
+          imageUrl: String(
+            ((categoryPayload as { imageUrl?: unknown }).imageUrl ??
+              (categoryPayload as { image_url?: unknown }).image_url ??
+              "") ||
+              "",
+          ),
+          visible:
+            (categoryPayload as { visible?: unknown }).visible ??
+            (categoryPayload as { is_visible?: unknown }).is_visible ??
+            true,
+          sortOrder:
+            (categoryPayload as { sortOrder?: unknown }).sortOrder ??
+            (categoryPayload as { sort_order?: unknown }).sort_order ??
+            0,
         }
       : undefined;
   const categoryId = row.categoryId ?? row.category_id ?? categoryObject?.id;
   const rawCategorySlug = String(
-    categoryObject?.slug ?? row.categorySlug ?? (typeof categoryPayload === "string" ? categoryPayload : "") ?? "",
+    categoryObject?.slug ??
+      row.categorySlug ??
+      (typeof categoryPayload === "string" ? categoryPayload : "") ??
+      "",
   ).trim();
-  const baseImageUrl = String(row.featuredImageUrl ?? row.imageUrl ?? row.image_url ?? "").trim();
+  const baseImageUrl = String(
+    row.featuredImageUrl ?? row.imageUrl ?? row.image_url ?? "",
+  ).trim();
   const imageUrlList = (row.imageUrls ?? row.image_urls ?? [])
     .map((url) => String(url ?? "").trim())
     .filter(Boolean);
@@ -105,15 +145,26 @@ const normalizeStorefrontProduct = (row: RawStorefrontProduct): Product => {
     isPrimary: index === 0,
   }));
 
-  const images = imageRows.length > 0
-    ? imageRows
-    : arrayImages.length > 0
-      ? arrayImages
-    : baseImageUrl
-      ? [{ id: undefined, url: baseImageUrl, alt: name || "Product image", isPrimary: true }]
-      : [];
+  const images =
+    imageRows.length > 0
+      ? imageRows
+      : arrayImages.length > 0
+        ? arrayImages
+        : baseImageUrl
+          ? [
+              {
+                id: undefined,
+                url: baseImageUrl,
+                alt: name || "Product image",
+                isPrimary: true,
+              },
+            ]
+          : [];
 
-  const stockCount = toNumber(row.stockCount ?? row.stock_count ?? row.quantity, 0);
+  const stockCount = toNumber(
+    row.stockCount ?? row.stock_count ?? row.quantity,
+    0,
+  );
   const inStock =
     typeof row.inStock === "boolean"
       ? row.inStock
@@ -147,7 +198,11 @@ const normalizeStorefrontProduct = (row: RawStorefrontProduct): Product => {
 };
 
 const getCategorySlugValue = (product: Product) => {
-  if (product.category && typeof product.category === "object" && !Array.isArray(product.category)) {
+  if (
+    product.category &&
+    typeof product.category === "object" &&
+    !Array.isArray(product.category)
+  ) {
     return String((product.category as { slug?: unknown }).slug ?? "").trim();
   }
 
@@ -155,14 +210,21 @@ const getCategorySlugValue = (product: Product) => {
 };
 
 const getCategoryIdValue = (product: Product) => {
-  if (product.category && typeof product.category === "object" && !Array.isArray(product.category)) {
+  if (
+    product.category &&
+    typeof product.category === "object" &&
+    !Array.isArray(product.category)
+  ) {
     return String((product.category as { id?: unknown }).id ?? "").trim();
   }
 
   return String(product.categoryId ?? "").trim();
 };
 
-const matchesStorefrontQuery = (product: Product, query: StorefrontProductQuery) => {
+const matchesStorefrontQuery = (
+  product: Product,
+  query: StorefrontProductQuery,
+) => {
   if (query.category) {
     const normalizedQuery = query.category.trim();
     const categorySlug = getCategorySlugValue(product);
@@ -181,8 +243,13 @@ const matchesStorefrontQuery = (product: Product, query: StorefrontProductQuery)
   return true;
 };
 
-const applyStorefrontQuery = (products: Product[], query: StorefrontProductQuery) => {
-  const filtered = products.filter((product) => matchesStorefrontQuery(product, query));
+const applyStorefrontQuery = (
+  products: Product[],
+  query: StorefrontProductQuery,
+) => {
+  const filtered = products.filter((product) =>
+    matchesStorefrontQuery(product, query),
+  );
 
   if (query.pageSize && query.pageSize > 0) {
     const page = query.page && query.page > 0 ? query.page : 1;
@@ -208,51 +275,86 @@ const resolveCategoryQueryValue = (
 
   const normalized = raw.toLowerCase();
   const match = categories.find((category) => {
-    const categorySlug = String(category.slug ?? "").trim().toLowerCase();
-    const categoryId = String(category.id ?? "").trim().toLowerCase();
+    const categorySlug = String(category.slug ?? "")
+      .trim()
+      .toLowerCase();
+    const categoryId = String(category.id ?? "")
+      .trim()
+      .toLowerCase();
     return categorySlug === normalized || categoryId === normalized;
   });
 
   return match ? String(match.id) : raw;
 };
 
-const enrichWithCategories = async <T extends Product>(products: T[], categories?: StorefrontCategory[]): Promise<T[]> => {
-  const categoryRows = categories ?? ((await getStorefrontCategories()) as StorefrontCategory[]);
-  const categoriesById = new Map(categoryRows.map((category) => [String(category.id), category]));
-  const categoriesBySlug = new Map(categoryRows.map((category) => [category.slug, category]));
+const enrichWithCategories = async <T extends Product>(
+  products: T[],
+  categories?: StorefrontCategory[],
+): Promise<T[]> => {
+  const categoryRows =
+    categories ?? ((await getStorefrontCategories()) as StorefrontCategory[]);
+  const categoriesById = new Map(
+    categoryRows.map((category) => [String(category.id), category]),
+  );
+  const categoriesBySlug = new Map(
+    categoryRows.map((category) => [category.slug, category]),
+  );
 
   return products.map((product) => {
     const productCategoryId = String(product.categoryId ?? "").trim();
     const productCategorySlug = String(
-      (product.category && typeof product.category === "object" && !Array.isArray(product.category)
+      (product.category &&
+      typeof product.category === "object" &&
+      !Array.isArray(product.category)
         ? (product.category as { slug?: unknown }).slug
-        : product.category ?? product.categorySlug ?? "") ?? "",
+        : (product.category ?? product.categorySlug ?? "")) ?? "",
     ).trim();
     const productCategoryObject =
-      product.category && typeof product.category === "object" && !Array.isArray(product.category)
+      product.category &&
+      typeof product.category === "object" &&
+      !Array.isArray(product.category)
         ? (product.category as StorefrontCategory)
         : undefined;
-    const matchedCategory = productCategoryObject ?? categoriesById.get(productCategoryId) ?? categoriesBySlug.get(productCategorySlug);
+    const matchedCategory =
+      productCategoryObject ??
+      categoriesById.get(productCategoryId) ??
+      categoriesBySlug.get(productCategorySlug);
 
     return {
       ...product,
       category: matchedCategory ?? product.category ?? productCategorySlug,
-      categoryId: product.categoryId ?? productCategoryObject?.id ?? matchedCategory?.id,
-      categorySlug: productCategoryObject?.slug ?? matchedCategory?.slug ?? productCategorySlug,
-      categoryLabel: productCategoryObject?.name ?? matchedCategory?.name ?? product.categoryLabel ?? "Uncategorized",
+      categoryId:
+        product.categoryId ?? productCategoryObject?.id ?? matchedCategory?.id,
+      categorySlug:
+        productCategoryObject?.slug ??
+        matchedCategory?.slug ??
+        productCategorySlug,
+      categoryLabel:
+        productCategoryObject?.name ??
+        matchedCategory?.name ??
+        product.categoryLabel ??
+        "Uncategorized",
     };
   });
 };
 
-export const getProducts = async (query: StorefrontProductQuery = {}): Promise<Product[]> => {
+export const getProducts = async (
+  query: StorefrontProductQuery = {},
+): Promise<Product[]> => {
   try {
-    const categories = (await getStorefrontCategories()) as StorefrontCategory[];
-    const resolvedCategory = resolveCategoryQueryValue(query.category, categories);
+    const categories =
+      (await getStorefrontCategories()) as StorefrontCategory[];
+    const resolvedCategory = resolveCategoryQueryValue(
+      query.category,
+      categories,
+    );
     const products = await productService.listStorefrontProducts({
       ...query,
       category: resolvedCategory,
     });
-    const normalizedProducts = (products as RawStorefrontProduct[]).map(normalizeStorefrontProduct);
+    const normalizedProducts = (products as RawStorefrontProduct[]).map(
+      normalizeStorefrontProduct,
+    );
     const enriched = await enrichWithCategories(normalizedProducts, categories);
     return applyStorefrontQuery(enriched, query);
   } catch {
@@ -264,7 +366,9 @@ export const getProductBySlug = async (
   slug: string,
 ): Promise<Product | null> => {
   try {
-    const rawProduct = (await productService.getProductBySlug(slug)) as RawStorefrontProduct | null;
+    const rawProduct = (await productService.getProductBySlug(
+      slug,
+    )) as RawStorefrontProduct | null;
     const product = rawProduct ? normalizeStorefrontProduct(rawProduct) : null;
     if (!product) return null;
     return (await enrichWithCategories([product]))[0] ?? product;

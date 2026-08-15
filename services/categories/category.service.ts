@@ -26,7 +26,11 @@ const normalizeCategory = (item: CategoryRecord): CategoryRecord => ({
 });
 
 const unwrapCategories = (
-  response: { data?: CategoryRecord[]; categories?: CategoryRecord[]; meta?: { count?: number } },
+  response: {
+    data?: CategoryRecord[];
+    categories?: CategoryRecord[];
+    meta?: { count?: number };
+  },
   onlyVisible: boolean,
 ) =>
   (response.categories ?? response.data ?? [])
@@ -44,41 +48,62 @@ export type AdminCategoryPayload = {
 export const categoryService = {
   listCategories() {
     return apiClient
-      .get<{ data?: CategoryRecord[]; categories?: CategoryRecord[]; meta?: { count?: number } }>(API_ENDPOINTS.categories.list)
+      .get<{
+        data?: CategoryRecord[];
+        categories?: CategoryRecord[];
+        meta?: { count?: number };
+      }>(API_ENDPOINTS.categories.list)
       .then((response) => unwrapCategories(response, true));
   },
 
   listAdminCategories() {
     return apiClient
-      .get<{ data?: CategoryRecord[]; categories?: CategoryRecord[]; meta?: { count?: number } }>(API_ENDPOINTS.categories.adminList)
+      .get<{
+        data?: CategoryRecord[];
+        categories?: CategoryRecord[];
+        meta?: { count?: number };
+      }>(API_ENDPOINTS.categories.adminList)
       .then((response) => unwrapCategories(response, false));
   },
 
   createCategory(payload: AdminCategoryPayload) {
-    return apiClient.post<{ success: boolean }>(API_ENDPOINTS.categories.list, payload);
+    return apiClient.post<{ success: boolean }>(
+      API_ENDPOINTS.categories.list,
+      payload,
+    );
   },
 
   updateCategory(id: string, payload: Partial<AdminCategoryPayload>) {
-    return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.categories.byId(id), payload);
+    return apiClient.patch<{ success: boolean }>(
+      API_ENDPOINTS.categories.byId(id),
+      payload,
+    );
   },
 
   deleteCategory(id: string) {
-    return apiClient.delete<{ success: boolean }>(API_ENDPOINTS.categories.byId(id));
+    return apiClient.delete<{ success: boolean }>(
+      API_ENDPOINTS.categories.byId(id),
+    );
   },
 
   uploadCategoryImage(id: string, image: File) {
     const formData = new FormData();
     formData.append("image", image);
 
-    return apiClient.request<{ success: boolean; data: CategoryRecord }>(API_ENDPOINTS.categories.image(id), {
-      method: "POST",
-      body: formData,
-      headers: {},
-    });
+    return apiClient.request<{ success: boolean; data: CategoryRecord }>(
+      API_ENDPOINTS.categories.image(id),
+      {
+        method: "POST",
+        body: formData,
+        headers: {},
+      },
+    );
   },
 
   removeCategoryImage(id: string) {
-    return apiClient.delete<{ success: boolean }>(API_ENDPOINTS.categories.image(id));
+    return apiClient.delete<{ success: boolean }>(
+      API_ENDPOINTS.categories.image(id),
+    );
   },
 };
 
