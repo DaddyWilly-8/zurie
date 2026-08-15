@@ -15,12 +15,7 @@ import {
   Skeleton,
   Paper,
   useTheme,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Avatar,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
@@ -39,17 +34,27 @@ import {
   faShoppingCart,
   faClock,
   faUser,
+  faUsers,
+  faDollarSign,
+  faMinus,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   dashboardService,
   type DashboardOverview,
+  type ApiProduct,
+  type ApiOrder,
+  type ApiCustomer,
 } from "@/services/dashboard/dashboard.service";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 type StatCardProps = {
   label: string;
-  value: number;
+  value: number | string;
   icon: IconProp;
   href: string;
   color?: string;
@@ -57,6 +62,7 @@ type StatCardProps = {
   trend?: "up" | "down" | "neutral";
   trendLabel?: string;
   isDarkMode: boolean;
+  loading?: boolean;
 };
 
 const StatCard = ({
@@ -69,8 +75,8 @@ const StatCard = ({
   trend,
   trendLabel,
   isDarkMode,
+  loading = false,
 }: StatCardProps) => {
-  // Adjust colors for dark mode
   const getIconBgColor = () => {
     if (isDarkMode) {
       return color ? `${color}25` : "rgba(255,255,255,0.08)";
@@ -93,19 +99,37 @@ const StatCard = ({
     return isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover";
   };
 
-  // Get trend icon
   const getTrendIcon = (): IconProp => {
     if (trend === "up") return faArrowUp;
     if (trend === "down") return faArrowDown;
-    return faChartLine;
+    return faMinus;
   };
 
-  // Get trend color
   const getTrendColor = () => {
     if (trend === "up") return isDarkMode ? "#66bb6a" : "#2e7d32";
     if (trend === "down") return isDarkMode ? "#ef5350" : "#d32f2f";
     return isDarkMode ? "rgba(255,255,255,0.5)" : "text.secondary";
   };
+
+  if (loading) {
+    return (
+      <Card
+        sx={{
+          height: "100%",
+          border: `1px solid ${getBorderColor()}`,
+          borderRadius: 2,
+          bgcolor: isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper",
+          p: 2.5,
+        }}
+      >
+        <Stack spacing={1.5}>
+          <Skeleton variant="circular" width={44} height={44} />
+          <Skeleton variant="text" width="60%" height={40} />
+          <Skeleton variant="text" width="80%" height={20} />
+        </Stack>
+      </Card>
+    );
+  }
 
   return (
     <Card
@@ -249,70 +273,11 @@ const emptyOverview: DashboardOverview = {
   productsInStock: 0,
   productsOutOfStock: 0,
   totalCategories: 0,
-  completedOrders: 0,
   newOrders: 0,
+  recentOrders: [],
   recentProducts: [],
-  lowStockProducts: [],
+  recentCustomers: [],
 };
-
-// Mock recent orders for display
-const mockRecentOrders = [
-  {
-    id: "1",
-    orderNumber: "ORD-001",
-    customerName: "Jane Doe",
-    totalAmount: 440.0,
-    status: "new",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    orderNumber: "ORD-002",
-    customerName: "John Smith",
-    totalAmount: 320.0,
-    status: "confirmed",
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: "3",
-    orderNumber: "ORD-003",
-    customerName: "Sarah Johnson",
-    totalAmount: 560.0,
-    status: "processing",
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-  },
-];
-
-// Mock recently added products
-const mockRecentProducts = [
-  {
-    id: "1",
-    name: "Lumière Tote",
-    category: "Tote Bags",
-    price: 480.0,
-    status: "published",
-    stock_count: 12,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Aria Crossbody",
-    category: "Crossbody Bags",
-    price: 320.0,
-    status: "published",
-    stock_count: 8,
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: "3",
-    name: "Noir Shoulder Bag",
-    category: "Shoulder Bags",
-    price: 410.0,
-    status: "draft",
-    stock_count: 0,
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-  },
-];
 
 const getStatusColor = (status: string) => {
   const colors: Record<
@@ -362,11 +327,18 @@ export const AdminOverviewClient = () => {
     queryFn: () => dashboardService.getOverview(),
   });
 
-  // Use mock data until backend is ready
-  const recentOrders = mockRecentOrders;
-  const recentProducts = mockRecentProducts;
+  const recentOrders: ApiOrder[] = overview?.recentOrders ?? [];
+  const recentProducts: ApiProduct[] = overview?.recentProducts ?? [];
+  const recentCustomers: ApiCustomer[] = overview?.recentCustomers ?? [];
 
-  // Dynamic styles for dark mode
+  // Calculate additional metrics
+  const totalRevenue = recentOrders.reduce(
+    (sum, order) => sum + order.totalAmount,
+    0,
+  );
+  const averageOrderValue =
+    recentOrders.length > 0 ? totalRevenue / recentOrders.length : 0;
+
   const getBorderColor = () =>
     isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
   const getBgColor = () =>
@@ -450,8 +422,8 @@ export const AdminOverviewClient = () => {
   } as const;
 
   return (
-    <Stack spacing={4} sx={{ pb: 2 }}>
-      {/* Header */}
+    <Stack spacing={3} sx={{ pb: 2 }}>
+      {/* Header with Quick Actions */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
@@ -478,6 +450,44 @@ export const AdminOverviewClient = () => {
             today.
           </Typography>
         </Box>
+        <Stack direction="row" spacing={1.5}>
+          <Button
+            component={Link}
+            href="/admin/products/new"
+            variant="contained"
+            startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: "none",
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+              },
+              boxShadow: "none",
+            }}
+          >
+            Add Product
+          </Button>
+          <Button
+            component={Link}
+            href="/admin/orders"
+            variant="outlined"
+            startIcon={<FontAwesomeIcon icon={faEye} size="sm" />}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: "none",
+              borderColor: getBorderColor(),
+              color: getTextColor(),
+              "&:hover": {
+                borderColor: getTextColor(),
+                bgcolor: getHoverBgColor(),
+              },
+            }}
+          >
+            View Orders
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Stats Grid */}
@@ -487,47 +497,14 @@ export const AdminOverviewClient = () => {
         <Grid container spacing={2.5}>
           {[1, 2, 3, 4, 5].map((index) => (
             <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-              <Card
-                sx={{
-                  p: 2.5,
-                  borderRadius: 2,
-                  border: `1px solid ${getBorderColor()}`,
-                  bgcolor: getBgColor(),
-                }}
-              >
-                <Stack spacing={1.5}>
-                  <Skeleton
-                    variant="circular"
-                    width={44}
-                    height={44}
-                    sx={{
-                      bgcolor: isDarkMode
-                        ? "rgba(255,255,255,0.08)"
-                        : undefined,
-                    }}
-                  />
-                  <Skeleton
-                    variant="text"
-                    width="60%"
-                    height={40}
-                    sx={{
-                      bgcolor: isDarkMode
-                        ? "rgba(255,255,255,0.08)"
-                        : undefined,
-                    }}
-                  />
-                  <Skeleton
-                    variant="text"
-                    width="80%"
-                    height={20}
-                    sx={{
-                      bgcolor: isDarkMode
-                        ? "rgba(255,255,255,0.08)"
-                        : undefined,
-                    }}
-                  />
-                </Stack>
-              </Card>
+              <StatCard
+                label="Loading"
+                value={0}
+                icon={faBoxArchive}
+                href="#"
+                isDarkMode={isDarkMode}
+                loading={true}
+              />
             </Grid>
           ))}
         </Grid>
@@ -561,9 +538,223 @@ export const AdminOverviewClient = () => {
         </Box>
       )}
 
+      {/* Quick Stats Row */}
+      {!isLoading && !isError && (
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card
+              sx={{
+                border: `1px solid ${getBorderColor()}`,
+                borderRadius: 2,
+                boxShadow: "none",
+                bgcolor: getCardBgColor(),
+                p: 2.5,
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    bgcolor: isDarkMode ? "rgba(255,215,0,0.15)" : "#fff8e1",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#f9a825",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faDollarSign} size="lg" />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      color: getSecondaryTextColor(),
+                      fontSize: "0.7rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.3em",
+                    }}
+                  >
+                    Total Revenue
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: getTextColor(),
+                      fontSize: "1.25rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {formatBaseCurrencyInCurrency(
+                      totalRevenue,
+                      currency,
+                      rates,
+                    )}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card
+              sx={{
+                border: `1px solid ${getBorderColor()}`,
+                borderRadius: 2,
+                boxShadow: "none",
+                bgcolor: getCardBgColor(),
+                p: 2.5,
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    bgcolor: isDarkMode ? "rgba(33,150,243,0.15)" : "#e3f2fd",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1976d2",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faShoppingCart} size="lg" />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      color: getSecondaryTextColor(),
+                      fontSize: "0.7rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.3em",
+                    }}
+                  >
+                    Avg Order Value
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: getTextColor(),
+                      fontSize: "1.25rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {formatBaseCurrencyInCurrency(
+                      averageOrderValue,
+                      currency,
+                      rates,
+                    )}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card
+              sx={{
+                border: `1px solid ${getBorderColor()}`,
+                borderRadius: 2,
+                boxShadow: "none",
+                bgcolor: getCardBgColor(),
+                p: 2.5,
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    bgcolor: isDarkMode ? "rgba(76,175,80,0.15)" : "#e8f5e9",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#388e3c",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faUsers} size="lg" />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      color: getSecondaryTextColor(),
+                      fontSize: "0.7rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.3em",
+                    }}
+                  >
+                    Customers
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: getTextColor(),
+                      fontSize: "1.25rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {recentCustomers.length}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card
+              sx={{
+                border: `1px solid ${getBorderColor()}`,
+                borderRadius: 2,
+                boxShadow: "none",
+                bgcolor: getCardBgColor(),
+                p: 2.5,
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    bgcolor: isDarkMode ? "rgba(255,152,0,0.15)" : "#fff3e0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#e65100",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faArrowUp} size="lg" />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      color: getSecondaryTextColor(),
+                      fontSize: "0.7rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.3em",
+                    }}
+                  >
+                    Total Orders
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: getTextColor(),
+                      fontSize: "1.25rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {recentOrders.length}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
       {/* Recent Activity Grid */}
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 6 }}>
+        {/* Recent Products */}
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card
             sx={{
               border: `1px solid ${getBorderColor()}`,
@@ -602,7 +793,7 @@ export const AdminOverviewClient = () => {
                     fontWeight={600}
                     sx={{ color: getTextColor(), fontSize: "1rem" }}
                   >
-                    Recently Added Products
+                    Recent Products
                   </Typography>
                 </Stack>
                 <Button
@@ -628,44 +819,23 @@ export const AdminOverviewClient = () => {
                   <Typography
                     sx={{ color: getSecondaryTextColor(), fontSize: "0.9rem" }}
                   >
-                    No products added yet.
+                    No products yet.
                   </Typography>
-                  <Button
-                    component={Link}
-                    href="/admin/products"
-                    size="small"
-                    startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
-                    sx={{
-                      mt: 1.5,
-                      textTransform: "none",
-                      borderRadius: 1.5,
-                      bgcolor: isDarkMode ? "#ffffff" : "#171512",
-                      color: isDarkMode ? "#171512" : "#ffffff",
-                      "&:hover": {
-                        bgcolor: isDarkMode
-                          ? "rgba(255,255,255,0.9)"
-                          : "#2d2a26",
-                      },
-                    }}
-                  >
-                    Add Your First Product
-                  </Button>
                 </Box>
               ) : (
-                <Stack spacing={1}>
-                  {recentProducts.map((item, index) => (
+                <Stack spacing={1.5}>
+                  {recentProducts.slice(0, 4).map((item) => (
                     <Stack
                       key={item.id}
                       component={Link}
                       href={`/admin/products/${item.id}`}
                       direction="row"
-                      justifyContent="space-between"
                       alignItems="center"
+                      spacing={2}
                       sx={{
                         textDecoration: "none",
                         color: "inherit",
-                        px: 1.5,
-                        py: 1.2,
+                        p: 1.5,
                         borderRadius: 1.5,
                         border: `1px solid transparent`,
                         transition: "all 0.2s ease",
@@ -675,63 +845,107 @@ export const AdminOverviewClient = () => {
                         },
                       }}
                     >
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Box
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 1,
+                          bgcolor: isDarkMode
+                            ? "rgba(255,255,255,0.05)"
+                            : "#f8f6f2",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          overflow: "hidden",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {item.imageUrls && item.imageUrls.length > 0 ? (
+                          <Box
+                            component="img"
+                            src={item.imageUrls[0]}
+                            alt={item.name}
+                            sx={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
+                        ) : (
+                          <FontAwesomeIcon
+                            icon={faBoxArchive}
+                            style={{
+                              color: getSecondaryTextColor(),
+                              fontSize: 20,
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Box flex={1} minWidth={0}>
+                        <Typography
                           sx={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: "50%",
-                            bgcolor: isDarkMode
-                              ? "rgba(255,255,255,0.08)"
-                              : "primary.light",
                             color: getTextColor(),
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "0.7rem",
-                            fontWeight: 600,
+                            fontWeight: 500,
+                            fontSize: "0.85rem",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
-                          {index + 1}
-                        </Box>
-                        <Box>
-                          <Typography
+                          {item.name}
+                        </Typography>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          sx={{ mt: 0.5 }}
+                        >
+                          <Chip
+                            label={
+                              item.quantity && item.quantity > 0
+                                ? `${item.quantity} in stock`
+                                : "Out of stock"
+                            }
+                            size="small"
+                            color={
+                              item.quantity && item.quantity > 0
+                                ? "success"
+                                : "error"
+                            }
                             sx={{
-                              color: getTextColor(),
+                              fontSize: "0.5rem",
+                              height: 18,
                               fontWeight: 500,
-                              fontSize: "0.9rem",
                             }}
-                          >
-                            {item.name}
-                          </Typography>
-                          <Typography
-                            sx={{
-                              color: getSecondaryTextColor(),
-                              fontSize: "0.75rem",
-                            }}
-                          >
-                            Stock: {item.stock_count ?? 0}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Chip
-                        label={
-                          item.stock_count && item.stock_count > 0
-                            ? "In Stock"
-                            : "Out of Stock"
-                        }
-                        size="small"
-                        color={
-                          item.stock_count && item.stock_count > 0
-                            ? "success"
-                            : "error"
-                        }
+                          />
+                          {item.status && (
+                            <Chip
+                              label={getStatusLabel(item.status)}
+                              size="small"
+                              color={getStatusColor(item.status)}
+                              sx={{
+                                fontSize: "0.5rem",
+                                height: 18,
+                                fontWeight: 500,
+                              }}
+                            />
+                          )}
+                        </Stack>
+                      </Box>
+                      <Typography
                         sx={{
-                          fontSize: "0.55rem",
-                          height: 20,
-                          fontWeight: 500,
+                          color: getTextColor(),
+                          fontWeight: 600,
+                          fontSize: "0.85rem",
+                          whiteSpace: "nowrap",
                         }}
-                      />
+                      >
+                        {formatBaseCurrencyInCurrency(
+                          item.salePrice || item.price,
+                          currency,
+                          rates,
+                        )}
+                      </Typography>
                     </Stack>
                   ))}
                 </Stack>
@@ -741,7 +955,7 @@ export const AdminOverviewClient = () => {
         </Grid>
 
         {/* Recent Orders */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card
             sx={{
               border: `1px solid ${getBorderColor()}`,
@@ -803,209 +1017,242 @@ export const AdminOverviewClient = () => {
 
               {recentOrders.length === 0 ? (
                 <Box sx={{ py: 4, textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: "50%",
-                      bgcolor: isDarkMode
-                        ? "rgba(255,255,255,0.05)"
-                        : "#f8f6f2",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      mx: "auto",
-                      mb: 1.5,
-                    }}
-                  >
-                    <FontAwesomeIcon
-                      icon={faShoppingCart}
-                      size="lg"
-                      style={{ color: getSecondaryTextColor() }}
-                    />
-                  </Box>
                   <Typography
                     sx={{ color: getSecondaryTextColor(), fontSize: "0.9rem" }}
                   >
                     No orders yet.
                   </Typography>
-                  <Typography
-                    sx={{ color: getSecondaryTextColor(), fontSize: "0.75rem" }}
+                </Box>
+              ) : (
+                <Stack spacing={1.5}>
+                  {recentOrders.slice(0, 4).map((order) => (
+                    <Stack
+                      key={order.id}
+                      component={Link}
+                      href={`/admin/orders/${order.orderNumber}`}
+                      direction="row"
+                      alignItems="center"
+                      spacing={2}
+                      sx={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        border: `1px solid transparent`,
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: getHoverBgColor(),
+                          borderColor: getBorderColor(),
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          bgcolor: isDarkMode
+                            ? "rgba(255,255,255,0.05)"
+                            : "#f8f6f2",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <FontAwesomeIcon
+                          icon={faUser}
+                          style={{
+                            color: getSecondaryTextColor(),
+                            fontSize: 16,
+                          }}
+                        />
+                      </Box>
+                      <Box flex={1} minWidth={0}>
+                        <Typography
+                          sx={{
+                            color: getTextColor(),
+                            fontWeight: 500,
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.orderNumber}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: getSecondaryTextColor(),
+                            fontSize: "0.7rem",
+                          }}
+                        >
+                          {order.customerName} •{" "}
+                          {dayjs(order.createdAt).fromNow()}
+                        </Typography>
+                      </Box>
+                      <Stack alignItems="flex-end" spacing={0.5}>
+                        <Typography
+                          sx={{
+                            color: getTextColor(),
+                            fontWeight: 600,
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {formatBaseCurrencyInCurrency(
+                            order.totalAmount,
+                            currency,
+                            rates,
+                          )}
+                        </Typography>
+                        <Chip
+                          label={getStatusLabel(order.status)}
+                          size="small"
+                          color={getStatusColor(order.status)}
+                          sx={{
+                            fontSize: "0.5rem",
+                            height: 18,
+                            fontWeight: 500,
+                          }}
+                        />
+                      </Stack>
+                    </Stack>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Recent Customers */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card
+            sx={{
+              border: `1px solid ${getBorderColor()}`,
+              borderRadius: 2,
+              boxShadow: "none",
+              bgcolor: getCardBgColor(),
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mb: 2 }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 1.5,
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.08)"
+                        : "primary.light",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: isDarkMode ? "#ffffff" : "primary.main",
+                    }}
                   >
-                    When customers place orders, they will appear here.
+                    <FontAwesomeIcon icon={faUsers} size="sm" />
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    sx={{ color: getTextColor(), fontSize: "1rem" }}
+                  >
+                    Recent Customers
+                  </Typography>
+                </Stack>
+                <Button
+                  component={Link}
+                  href="/admin/customers"
+                  size="small"
+                  endIcon={<FontAwesomeIcon icon={faArrowRight} size="xs" />}
+                  sx={{
+                    textTransform: "none",
+                    color: getSecondaryTextColor(),
+                    fontSize: "0.7rem",
+                    "&:hover": { color: getTextColor() },
+                  }}
+                >
+                  View All
+                </Button>
+              </Stack>
+
+              <Divider sx={{ borderColor: getBorderColor(), mb: 2 }} />
+
+              {recentCustomers.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: "center" }}>
+                  <Typography
+                    sx={{ color: getSecondaryTextColor(), fontSize: "0.9rem" }}
+                  >
+                    No customers yet.
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow
+                <Stack spacing={1.5}>
+                  {recentCustomers.slice(0, 4).map((customer) => (
+                    <Stack
+                      key={customer.id}
+                      direction="row"
+                      alignItems="center"
+                      spacing={2}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        border: `1px solid transparent`,
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: getHoverBgColor(),
+                          borderColor: getBorderColor(),
+                        },
+                      }}
+                    >
+                      <Avatar
                         sx={{
+                          width: 40,
+                          height: 40,
                           bgcolor: isDarkMode
-                            ? "rgba(255,255,255,0.03)"
-                            : "#f8f6f2",
+                            ? "rgba(255,255,255,0.1)"
+                            : "primary.main",
+                          color: "#fff",
                         }}
                       >
-                        <TableCell
+                        {customer.name?.charAt(0) || "U"}
+                      </Avatar>
+                      <Box flex={1} minWidth={0}>
+                        <Typography
                           sx={{
-                            fontWeight: 600,
+                            color: getTextColor(),
+                            fontWeight: 500,
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {customer.name}
+                        </Typography>
+                        <Typography
+                          sx={{
                             color: getSecondaryTextColor(),
-                            fontSize: "0.65rem",
-                            letterSpacing: "0.2em",
+                            fontSize: "0.7rem",
                           }}
                         >
-                          Order
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            fontWeight: 600,
-                            color: getSecondaryTextColor(),
-                            fontSize: "0.65rem",
-                            letterSpacing: "0.2em",
-                          }}
-                        >
-                          Customer
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            fontWeight: 600,
-                            color: getSecondaryTextColor(),
-                            fontSize: "0.65rem",
-                            letterSpacing: "0.2em",
-                          }}
-                        >
-                          Total
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            fontWeight: 600,
-                            color: getSecondaryTextColor(),
-                            fontSize: "0.65rem",
-                            letterSpacing: "0.2em",
-                          }}
-                        >
-                          Status
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{
-                            fontWeight: 600,
-                            color: getSecondaryTextColor(),
-                            fontSize: "0.65rem",
-                            letterSpacing: "0.2em",
-                          }}
-                        >
-                          Action
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {recentOrders.map((order) => (
-                        <TableRow
-                          key={order.id}
-                          hover
-                          sx={{
-                            "&:hover": {
-                              bgcolor: getHoverBgColor(),
-                            },
-                          }}
-                        >
-                          <TableCell>
-                            <Typography
-                              sx={{
-                                fontWeight: 500,
-                                color: getTextColor(),
-                                fontSize: "0.8rem",
-                              }}
-                            >
-                              {order.orderNumber}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Stack
-                              direction="row"
-                              alignItems="center"
-                              spacing={1}
-                            >
-                              <Box
-                                sx={{
-                                  width: 24,
-                                  height: 24,
-                                  borderRadius: "50%",
-                                  bgcolor: isDarkMode
-                                    ? "rgba(255,255,255,0.08)"
-                                    : "#f0ebe3",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: getSecondaryTextColor(),
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faUser} size="xs" />
-                              </Box>
-                              <Typography
-                                sx={{
-                                  color: getTextColor(),
-                                  fontSize: "0.8rem",
-                                }}
-                              >
-                                {order.customerName}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            <Typography
-                              sx={{
-                                fontWeight: 600,
-                                color: getTextColor(),
-                                fontSize: "0.8rem",
-                              }}
-                            >
-                              {formatBaseCurrencyInCurrency(
-                                order.totalAmount,
-                                currency,
-                                rates,
-                              )}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={getStatusLabel(order.status)}
-                              size="small"
-                              color={getStatusColor(order.status)}
-                              sx={{
-                                fontSize: "0.55rem",
-                                height: 20,
-                                fontWeight: 500,
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button
-                              component={Link}
-                              href={`/admin/orders/${order.orderNumber}`}
-                              size="small"
-                              variant="outlined"
-                              sx={{
-                                textTransform: "none",
-                                borderRadius: 1,
-                                borderColor: getBorderColor(),
-                                color: getTextColor(),
-                                fontSize: "0.6rem",
-                                "&:hover": {
-                                  borderColor: getTextColor(),
-                                  bgcolor: getHoverBgColor(),
-                                },
-                              }}
-                            >
-                              View
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                          {customer.phone || "No phone"}
+                          {customer.email && ` • ${customer.email}`}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={{
+                          color: getSecondaryTextColor(),
+                          fontSize: "0.65rem",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {dayjs(customer.createdAt).fromNow()}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
               )}
             </CardContent>
           </Card>
@@ -1054,25 +1301,7 @@ export const AdminOverviewClient = () => {
             startIcon={<FontAwesomeIcon icon={faBoxArchive} size="sm" />}
             sx={actionButtonSx}
           >
-            View Products
-          </Button>
-          <Button
-            component={Link}
-            href="/admin/categories"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faTags} size="sm" />}
-            sx={actionButtonSx}
-          >
-            View Categories
-          </Button>
-          <Button
-            component={Link}
-            href="/admin/homepage"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faEye} size="sm" />}
-            sx={actionButtonSx}
-          >
-            Manage Homepage
+            Manage Products
           </Button>
           <Button
             component={Link}
@@ -1082,6 +1311,24 @@ export const AdminOverviewClient = () => {
             sx={actionButtonSx}
           >
             View Orders
+          </Button>
+          <Button
+            component={Link}
+            href="/admin/customers"
+            variant="outlined"
+            startIcon={<FontAwesomeIcon icon={faUsers} size="sm" />}
+            sx={actionButtonSx}
+          >
+            Customers
+          </Button>
+          <Button
+            component={Link}
+            href="/admin/analytics"
+            variant="outlined"
+            startIcon={<FontAwesomeIcon icon={faChartLine} size="sm" />}
+            sx={actionButtonSx}
+          >
+            Analytics
           </Button>
         </Box>
       </Paper>
