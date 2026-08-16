@@ -17,8 +17,6 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
-export const fetchCache = "force-no-store";
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
