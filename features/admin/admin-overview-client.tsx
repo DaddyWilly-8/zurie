@@ -36,7 +36,6 @@ import {
   faUser,
   faUsers,
   faDollarSign,
-  faMinus,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   dashboardService,
@@ -59,8 +58,6 @@ type StatCardProps = {
   href: string;
   color?: string;
   subtitle?: string;
-  trend?: "up" | "down" | "neutral";
-  trendLabel?: string;
   isDarkMode: boolean;
   loading?: boolean;
 };
@@ -72,8 +69,6 @@ const StatCard = ({
   href,
   color,
   subtitle,
-  trend,
-  trendLabel,
   isDarkMode,
   loading = false,
 }: StatCardProps) => {
@@ -97,18 +92,6 @@ const StatCard = ({
 
   const getHoverBgColor = () => {
     return isDarkMode ? "rgba(255,255,255,0.05)" : "action.hover";
-  };
-
-  const getTrendIcon = (): IconProp => {
-    if (trend === "up") return faArrowUp;
-    if (trend === "down") return faArrowDown;
-    return faMinus;
-  };
-
-  const getTrendColor = () => {
-    if (trend === "up") return isDarkMode ? "#66bb6a" : "#2e7d32";
-    if (trend === "down") return isDarkMode ? "#ef5350" : "#d32f2f";
-    return isDarkMode ? "rgba(255,255,255,0.5)" : "text.secondary";
   };
 
   if (loading) {
@@ -172,81 +155,61 @@ const StatCard = ({
       }}
     >
       <Stack spacing={1.5}>
+        {/* Icon pekee yake */}
+        <Box
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 1.5,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: getIconBgColor(),
+            color: getIconColor(),
+          }}
+        >
+          <FontAwesomeIcon icon={icon} size="lg" />
+        </Box>
+
+        {/* Label + Value inline, right-aligned */}
         <Stack
           direction="row"
           justifyContent="space-between"
-          alignItems="flex-start"
+          alignItems="baseline"
+          spacing={2}
         >
-          <Box
+          <Typography
             sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 1.5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: getIconBgColor(),
-              color: getIconColor(),
+              letterSpacing: "0.3em",
+              textTransform: "uppercase",
+              fontSize: "0.7rem",
+              color: isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary",
+              fontWeight: 500,
             }}
           >
-            <FontAwesomeIcon icon={icon} size="lg" />
-          </Box>
-          {trend && (
-            <Chip
-              icon={
-                <FontAwesomeIcon
-                  icon={getTrendIcon()}
-                  size="xs"
-                  style={{ color: getTrendColor() }}
-                />
-              }
-              label={trendLabel || `${trend === "up" ? "+" : ""}12%`}
-              size="small"
-              sx={{
-                fontSize: "0.6rem",
-                height: 22,
-                fontWeight: 500,
-                bgcolor: isDarkMode ? "rgba(255,255,255,0.08)" : undefined,
-                color: getTrendColor(),
-                borderColor: getTrendColor(),
-                "& .MuiChip-icon": {
-                  color: getTrendColor(),
-                },
-              }}
-              variant="outlined"
-            />
-          )}
+            {label}
+          </Typography>
+
+          <Typography
+            sx={{
+              fontSize: "2rem",
+              lineHeight: 1,
+              color: isDarkMode ? "#ffffff" : "text.primary",
+              fontWeight: 600,
+              textAlign: "right",
+            }}
+          >
+            {value ?? 0}
+          </Typography>
         </Stack>
 
-        <Typography
-          sx={{
-            fontSize: "2rem",
-            lineHeight: 1,
-            color: isDarkMode ? "#ffffff" : "text.primary",
-            fontWeight: 600,
-          }}
-        >
-          {value ?? 0}
-        </Typography>
-
-        <Typography
-          sx={{
-            letterSpacing: "0.3em",
-            textTransform: "uppercase",
-            fontSize: "0.7rem",
-            color: isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary",
-            fontWeight: 500,
-          }}
-        >
-          {label}
-        </Typography>
-
+        {/* Subtitle (right-aligned) */}
         {subtitle && (
           <Typography
             sx={{
               fontSize: "0.7rem",
               color: isDarkMode ? "rgba(255,255,255,0.5)" : "text.secondary",
-              mt: -0.5,
+              textAlign: "right",
             }}
           >
             {subtitle}
@@ -264,8 +227,6 @@ type StatItem = {
   href: string;
   color?: string;
   subtitle: string;
-  trend: "up" | "down" | "neutral";
-  trendLabel: string;
 };
 
 const emptyOverview: DashboardOverview = {
@@ -358,8 +319,6 @@ export const AdminOverviewClient = () => {
       icon: faBoxArchive,
       href: "/admin/products",
       subtitle: `${overview?.productsInStock ?? 0} in stock`,
-      trend: "up",
-      trendLabel: "+12%",
     },
     {
       label: "In Stock",
@@ -368,8 +327,6 @@ export const AdminOverviewClient = () => {
       href: "/admin/products?status=published",
       color: "#4caf50",
       subtitle: `${overview?.totalProducts > 0 ? Math.round(((overview.productsInStock ?? 0) / (overview.totalProducts ?? 1)) * 100) : 0}% of products`,
-      trend: "up",
-      trendLabel: "+5%",
     },
     {
       label: "Out of Stock",
@@ -378,8 +335,6 @@ export const AdminOverviewClient = () => {
       href: "/admin/products?status=out_of_stock",
       color: "#ef5350",
       subtitle: "Need restock",
-      trend: "down",
-      trendLabel: "-3%",
     },
     {
       label: "Categories",
@@ -387,8 +342,6 @@ export const AdminOverviewClient = () => {
       icon: faTags,
       href: "/admin/categories",
       subtitle: "Product categories",
-      trend: "neutral",
-      trendLabel: "Stable",
     },
     {
       label: "New Orders",
@@ -397,8 +350,6 @@ export const AdminOverviewClient = () => {
       href: "/admin/orders?status=new",
       color: "#42a5f5",
       subtitle: "Awaiting processing",
-      trend: "up",
-      trendLabel: "+8%",
     },
   ];
 
@@ -423,7 +374,7 @@ export const AdminOverviewClient = () => {
 
   return (
     <Stack spacing={3} sx={{ pb: 2 }}>
-      {/* Header with Quick Actions */}
+      {/* Header */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
@@ -450,44 +401,6 @@ export const AdminOverviewClient = () => {
             today.
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1.5}>
-          <Button
-            component={Link}
-            href="/admin/products/new"
-            variant="contained"
-            startIcon={<FontAwesomeIcon icon={faPlus} size="sm" />}
-            sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              bgcolor: isDarkMode ? "#ffffff" : "#171512",
-              color: isDarkMode ? "#171512" : "#ffffff",
-              "&:hover": {
-                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
-              },
-              boxShadow: "none",
-            }}
-          >
-            Add Product
-          </Button>
-          <Button
-            component={Link}
-            href="/admin/orders"
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faEye} size="sm" />}
-            sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              borderColor: getBorderColor(),
-              color: getTextColor(),
-              "&:hover": {
-                borderColor: getTextColor(),
-                bgcolor: getHoverBgColor(),
-              },
-            }}
-          >
-            View Orders
-          </Button>
-        </Stack>
       </Stack>
 
       {/* Stats Grid */}
@@ -530,8 +443,6 @@ export const AdminOverviewClient = () => {
               href={item.href}
               color={item.color}
               subtitle={item.subtitle}
-              trend={item.trend}
-              trendLabel={item.trendLabel}
               isDarkMode={isDarkMode}
             />
           ))}
@@ -722,7 +633,7 @@ export const AdminOverviewClient = () => {
                     color: "#e65100",
                   }}
                 >
-                  <FontAwesomeIcon icon={faArrowUp} size="lg" />
+                  <FontAwesomeIcon icon={faShoppingCart} size="lg" />
                 </Box>
                 <Box>
                   <Typography
