@@ -23,10 +23,10 @@ import {
   faClock,
   faStar,
 } from "@fortawesome/free-solid-svg-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getBrandContent } from "@/services/content";
 
-// Values data
+// Values data - static
 const values = [
   {
     icon: faGem,
@@ -51,15 +51,15 @@ const values = [
   },
 ];
 
-// Stats data
+// Stats data - static
 const stats = [
-  { value: "2018", label: "Founded" },
+  { value: "2026", label: "Founded" },
   { value: "12+", label: "Collections" },
   { value: "100%", label: "Handcrafted" },
   { value: "50+", label: "Artisans" },
 ];
 
-// Testimonials
+// Testimonials - static
 const testimonials = [
   {
     quote:
@@ -100,16 +100,41 @@ export default function AboutPage() {
   const aboutStatement =
     "We believe a bag should hold more than your essentials, it should hold your confidence.";
 
-  // Dynamic styles based on theme
-  const getBgColor = () => (isDarkMode ? "#0d0d0d" : "#f8f6f2");
-  const getCardHoverShadow = () =>
-    isDarkMode ? "0 8px 24px rgba(0,0,0,0.4)" : "0 8px 24px rgba(0,0,0,0.08)";
-  const getDividerColor = () =>
-    isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-  const getCardHoverBorder = () =>
-    isDarkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)";
-  const getIconBgColor = (color: string) =>
-    isDarkMode ? `${color}25` : `${color}15`;
+  // Memoized styles for better performance
+  const styles = useMemo(
+    () => ({
+      getBgColor: () => (isDarkMode ? "#0d0d0d" : "#f8f6f2"),
+      getCardHoverShadow: () =>
+        isDarkMode
+          ? "0 8px 24px rgba(0,0,0,0.4)"
+          : "0 8px 24px rgba(0,0,0,0.08)",
+      getDividerColor: () =>
+        isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+      getCardHoverBorder: () =>
+        isDarkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+      getIconBgColor: (color: string) =>
+        isDarkMode ? `${color}25` : `${color}15`,
+      getCardBg: () =>
+        isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper",
+      getBorderColor: () => (isDarkMode ? "rgba(255,255,255,0.12)" : "divider"),
+      getTextColor: () => (isDarkMode ? "#ffffff" : "text.primary"),
+      getSecondaryTextColor: () =>
+        isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary",
+    }),
+    [isDarkMode],
+  );
+
+  const {
+    getBgColor,
+    getCardHoverShadow,
+    getDividerColor,
+    getCardHoverBorder,
+    getIconBgColor,
+    getCardBg,
+    getBorderColor,
+    getTextColor,
+    getSecondaryTextColor,
+  } = styles;
 
   return (
     <Stack spacing={0}>
@@ -229,7 +254,7 @@ export default function AboutPage() {
                     fontFamily: "var(--font-playfair), serif",
                     fontSize: { xs: "2rem", md: "2.8rem" },
                     lineHeight: 1.1,
-                    color: "text.primary",
+                    color: getTextColor(),
                     mb: 2,
                   }}
                 >
@@ -239,7 +264,7 @@ export default function AboutPage() {
               </Box>
               <Typography
                 sx={{
-                  color: "text.secondary",
+                  color: getSecondaryTextColor(),
                   fontSize: { xs: "0.95rem", md: "1.05rem" },
                   lineHeight: 1.8,
                 }}
@@ -248,7 +273,7 @@ export default function AboutPage() {
               </Typography>
               <Typography
                 sx={{
-                  color: "text.secondary",
+                  color: getSecondaryTextColor(),
                   fontSize: { xs: "0.95rem", md: "1.05rem" },
                   lineHeight: 1.8,
                 }}
@@ -271,11 +296,13 @@ export default function AboutPage() {
                   fontSize: "0.7rem",
                   px: 3.5,
                   py: 1.2,
-                  borderColor: "text.primary",
-                  color: "text.primary",
+                  borderColor: getBorderColor(),
+                  color: getTextColor(),
                   "&:hover": {
-                    borderColor: "text.primary",
-                    bgcolor: "action.hover",
+                    borderColor: getTextColor(),
+                    bgcolor: isDarkMode
+                      ? "rgba(255,255,255,0.05)"
+                      : "action.hover",
                   },
                 }}
               >
@@ -405,7 +432,7 @@ export default function AboutPage() {
         </Container>
       </Box>
 
-      {/* Values Section */}
+      {/* Values Section - Dark Mode Support */}
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
         <Box sx={{ textAlign: "center", mb: 4.5 }}>
           <Typography
@@ -423,14 +450,14 @@ export default function AboutPage() {
               fontFamily: "var(--font-playfair), serif",
               fontSize: { xs: "2rem", md: "2.8rem" },
               lineHeight: 1.1,
-              color: "text.primary",
+              color: getTextColor(),
             }}
           >
             Designed with Purpose
           </Typography>
           <Typography
             sx={{
-              color: "text.secondary",
+              color: getSecondaryTextColor(),
               fontSize: "1rem",
               maxWidth: 500,
               mx: "auto",
@@ -448,11 +475,11 @@ export default function AboutPage() {
               <Card
                 sx={{
                   border: "1px solid",
-                  borderColor: "divider",
+                  borderColor: getBorderColor(),
                   borderRadius: 2,
                   boxShadow: "none",
                   height: "100%",
-                  bgcolor: "background.paper",
+                  bgcolor: getCardBg(),
                   transition:
                     "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
                   "&:hover": {
@@ -484,14 +511,14 @@ export default function AboutPage() {
                       fontWeight: 700,
                       fontSize: "1.1rem",
                       mb: 1,
-                      color: "text.primary",
+                      color: getTextColor(),
                     }}
                   >
                     {value.title}
                   </Typography>
                   <Typography
                     sx={{
-                      color: "text.secondary",
+                      color: getSecondaryTextColor(),
                       fontSize: "0.9rem",
                       lineHeight: 1.6,
                     }}
@@ -505,7 +532,7 @@ export default function AboutPage() {
         </Grid>
       </Container>
 
-      {/* Testimonials Section */}
+      {/* Testimonials Section - Dark Mode Support */}
       <Box
         sx={{
           width: "100%",
@@ -531,7 +558,7 @@ export default function AboutPage() {
                 fontFamily: "var(--font-playfair), serif",
                 fontSize: { xs: "2rem", md: "2.8rem" },
                 lineHeight: 1.1,
-                color: "text.primary",
+                color: getTextColor(),
               }}
             >
               The Zuriè Circle
@@ -543,11 +570,11 @@ export default function AboutPage() {
                 <Card
                   sx={{
                     border: "1px solid",
-                    borderColor: "divider",
+                    borderColor: getBorderColor(),
                     borderRadius: 2,
                     boxShadow: "none",
                     height: "100%",
-                    bgcolor: "background.paper",
+                    bgcolor: getCardBg(),
                     p: 2,
                     transition: "all 0.3s ease",
                     "&:hover": {
@@ -575,7 +602,7 @@ export default function AboutPage() {
                       sx={{
                         fontSize: "0.95rem",
                         lineHeight: 1.6,
-                        color: "text.secondary",
+                        color: getSecondaryTextColor(),
                         mb: 2,
                         fontStyle: "italic",
                       }}
@@ -610,14 +637,14 @@ export default function AboutPage() {
                           sx={{
                             fontWeight: 600,
                             fontSize: "0.85rem",
-                            color: "text.primary",
+                            color: getTextColor(),
                           }}
                         >
                           {testimonial.author}
                         </Typography>
                         <Typography
                           sx={{
-                            color: "text.secondary",
+                            color: getSecondaryTextColor(),
                             fontSize: "0.7rem",
                           }}
                         >
