@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
@@ -32,6 +32,7 @@ import {
   DialogActions,
   InputAdornment,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { useShopStore } from "@/hooks/use-shop-store";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
@@ -54,6 +55,7 @@ export const ProductDetailClient = ({
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
   const productImages = product.images ?? [];
   const [activeImage, setActiveImage] = useState(productImages[0]?.url ?? "");
@@ -67,6 +69,19 @@ export const ProductDetailClient = ({
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [openContactDialog, setOpenContactDialog] = useState(false);
 
+  // ── Hover Magnifier state ────────────────────────────────────────────────
+  const [isHovering, setIsHovering] = useState(false);
+  const [lensPosition, setLensPosition] = useState({ x: 0, y: 0 });
+  const [bgPosition, setBgPosition] = useState({ x: 0, y: 0 });
+  const imageRef = useRef<HTMLDivElement>(null);
+
+  // Full-screen zoom fallback (mobile / click)
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   const addToCart = useShopStore((state) => state.addToCart);
   const toggleWishlist = useShopStore((state) => state.toggleWishlist);
   const addRecentlyViewed = useShopStore((state) => state.addRecentlyViewed);
@@ -79,27 +94,110 @@ export const ProductDetailClient = ({
     .map((value) => String(value ?? "").trim())
     .filter(Boolean);
 
-  // Dynamic styles based on dark mode
+  // Dynamic styles
   const getBorderColor = () =>
     isDarkMode ? "rgba(255,255,255,0.12)" : "divider";
   const getBackgroundColor = () =>
     isDarkMode ? "rgba(255,255,255,0.05)" : "#f8f6f2";
   const getHoverBackgroundColor = () =>
     isDarkMode ? "rgba(255,255,255,0.08)" : "#f5f0ea";
-  const getTextColor = () =>
-    isDarkMode ? "rgba(255,255,255,0.7)" : "text.secondary";
   const getPrimaryTextColor = () => (isDarkMode ? "#ffffff" : "#171512");
   const getPaperBackground = () =>
     isDarkMode ? "rgba(255,255,255,0.03)" : "background.paper";
-  const getIconColor = () => (isDarkMode ? "rgba(255,255,255,0.5)" : "#999");
 
+  // ── Hover Magnifier handlers ─────────────────────────────────────────────
+  const LENS_SIZE = 160; // size of the square lens on the main image
+  const ZOOM_LEVEL = 2.4; // how much to magnify
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!imageRef.current || !isDesktop) return;
+
+      const rect = imageRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Keep lens inside the image bounds
+      const lensX = Math.max(
+        LENS_SIZE / 2,
+        Math.min(x, rect.width - LENS_SIZE / 2),
+      );
+      const lensY = Math.max(
+        LENS_SIZE / 2,
+        Math.min(y, rect.height - LENS_SIZE / 2),
+      );
+
+      setLensPosition({ x: lensX - LENS_SIZE / 2, y: lensY - LENS_SIZE / 2 });
+
+      // Background position for the magnified view
+      const bgX = (lensX / rect.width) * 100;
+      const bgY = (lensY / rect.height) * 100;
+      setBgPosition({ x: bgX, y: bgY });
+    },
+    [isDesktop],
+  );
+
+  const handleMouseEnter = () => {
+    if (isDesktop) setIsHovering(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+  };
+
+  // ── Full-screen zoom handlers (mobile fallback) ──────────────────────────
+  const openZoom = () => {
+    if (isDesktop) return; // desktop uses hover instead
+    setIsZoomOpen(true);
+    setZoomScale(1);
+    setZoomPosition({ x: 0, y: 0 });
+  };
+
+  const closeZoom = () => {
+    setIsZoomOpen(false);
+    setZoomScale(1);
+    setZoomPosition({ x: 0, y: 0 });
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoomScale((prev) => Math.min(Math.max(prev - e.deltaY * 0.0015, 1), 4));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomScale <= 1) return;
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - zoomPosition.x,
+      y: e.clientY - zoomPosition.y,
+    });
+  };
+
+  const handleMouseMoveZoom = (e: React.MouseEvent) => {
+    if (!isDragging || zoomScale <= 1) return;
+    setZoomPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  const handleDoubleClick = () => {
+    if (zoomScale > 1) {
+      setZoomScale(1);
+      setZoomPosition({ x: 0, y: 0 });
+    } else {
+      setZoomScale(2.5);
+    }
+  };
+
+  // ── Contact / Order handlers ─────────────────────────────────────────────
   const handleContactMethodChange = (
     _: React.MouseEvent<HTMLElement>,
     newMethod: ContactMethod | null,
   ) => {
-    if (newMethod !== null) {
-      setContactMethod(newMethod);
-    }
+    if (newMethod !== null) setContactMethod(newMethod);
   };
 
   const validateForm = () => {
@@ -109,9 +207,13 @@ export const ProductDetailClient = ({
       return false;
     }
 
-    if (contactMethod === "whatsapp") {
+    if (contactMethod === "whatsapp" || contactMethod === "phone") {
       if (!customerPhone.trim()) {
-        setSnackbarMessage("Please enter your WhatsApp number");
+        setSnackbarMessage(
+          contactMethod === "whatsapp"
+            ? "Please enter your WhatsApp number"
+            : "Please enter your phone number",
+        );
         setShowSnackbar(true);
         return false;
       }
@@ -134,22 +236,6 @@ export const ProductDetailClient = ({
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(customerEmail)) {
         setSnackbarMessage("Please enter a valid email address");
-        setShowSnackbar(true);
-        return false;
-      }
-    }
-
-    if (contactMethod === "phone") {
-      if (!customerPhone.trim()) {
-        setSnackbarMessage("Please enter your phone number");
-        setShowSnackbar(true);
-        return false;
-      }
-      const phoneDigits = customerPhone.replace(/\D/g, "");
-      if (phoneDigits.length < 10) {
-        setSnackbarMessage(
-          "Please enter a valid phone number (at least 10 digits)",
-        );
         setShowSnackbar(true);
         return false;
       }
@@ -251,10 +337,6 @@ export const ProductDetailClient = ({
     setOpenContactDialog(false);
   };
 
-  const handleOpenContactDialog = () => {
-    setOpenContactDialog(true);
-  };
-
   const getCheckoutButton = () => {
     switch (contactMethod) {
       case "whatsapp":
@@ -272,10 +354,7 @@ export const ProductDetailClient = ({
               textTransform: "uppercase",
               boxShadow: "none",
               bgcolor: "#25D366",
-              "&:hover": {
-                bgcolor: "#128C7E",
-                boxShadow: "none",
-              },
+              "&:hover": { bgcolor: "#128C7E", boxShadow: "none" },
             }}
           >
             Complete via WhatsApp
@@ -344,7 +423,7 @@ export const ProductDetailClient = ({
             label="WhatsApp Number *"
             placeholder="+255 123 456 789"
             value={customerPhone}
-            onChange={(event) => setCustomerPhone(event.target.value)}
+            onChange={(e) => setCustomerPhone(e.target.value)}
             fullWidth
             size="medium"
             required
@@ -359,9 +438,7 @@ export const ProductDetailClient = ({
               "& .MuiOutlinedInput-root": {
                 borderRadius: 1,
                 bgcolor: getBackgroundColor(),
-                "&:hover": {
-                  bgcolor: getHoverBackgroundColor(),
-                },
+                "&:hover": { bgcolor: getHoverBackgroundColor() },
               },
               "& .MuiInputBase-input": {
                 color: isDarkMode ? "#ffffff" : "inherit",
@@ -378,7 +455,7 @@ export const ProductDetailClient = ({
             label="Email Address *"
             placeholder="you@example.com"
             value={customerEmail}
-            onChange={(event) => setCustomerEmail(event.target.value)}
+            onChange={(e) => setCustomerEmail(e.target.value)}
             fullWidth
             size="medium"
             required
@@ -396,9 +473,7 @@ export const ProductDetailClient = ({
               "& .MuiOutlinedInput-root": {
                 borderRadius: 1,
                 bgcolor: getBackgroundColor(),
-                "&:hover": {
-                  bgcolor: getHoverBackgroundColor(),
-                },
+                "&:hover": { bgcolor: getHoverBackgroundColor() },
               },
               "& .MuiInputBase-input": {
                 color: isDarkMode ? "#ffffff" : "inherit",
@@ -415,7 +490,7 @@ export const ProductDetailClient = ({
             label="Phone Number *"
             placeholder="+255 123 456 789"
             value={customerPhone}
-            onChange={(event) => setCustomerPhone(event.target.value)}
+            onChange={(e) => setCustomerPhone(e.target.value)}
             fullWidth
             size="medium"
             required
@@ -432,9 +507,7 @@ export const ProductDetailClient = ({
               "& .MuiOutlinedInput-root": {
                 borderRadius: 1,
                 bgcolor: getBackgroundColor(),
-                "&:hover": {
-                  bgcolor: getHoverBackgroundColor(),
-                },
+                "&:hover": { bgcolor: getHoverBackgroundColor() },
               },
               "& .MuiInputBase-input": {
                 color: isDarkMode ? "#ffffff" : "inherit",
@@ -461,6 +534,7 @@ export const ProductDetailClient = ({
       />
 
       <Stack spacing={{ xs: 4, md: 5.5 }}>
+        {/* Breadcrumb */}
         <Typography
           component="div"
           sx={{
@@ -506,25 +580,89 @@ export const ProductDetailClient = ({
         </Typography>
 
         <Grid container spacing={{ xs: 3.2, md: 5.2 }}>
+          {/* ── Left column – Images + Hover Magnifier ───────────────────── */}
           <Grid size={{ xs: 12, md: 6.2 }}>
-            <Box
-              sx={{
-                position: "relative",
-                height: { xs: 380, sm: 520, md: 760 },
-                overflow: "hidden",
-                bgcolor: getPaperBackground(),
-                mb: 1.6,
-                borderRadius: 1,
-              }}
-            >
-              <Image
-                src={activeImage || "/images/products/fallback.png"}
-                alt={product.name}
-                fill
-                sizes="(max-width: 900px) 100vw, 55vw"
-                style={{ objectFit: "cover" }}
-              />
+            <Box sx={{ position: "relative" }}>
+              {/* Main image */}
+              <Box
+                ref={imageRef}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onMouseMove={handleMouseMove}
+                onClick={openZoom}
+                sx={{
+                  position: "relative",
+                  height: { xs: 380, sm: 520, md: 760 },
+                  overflow: "hidden",
+                  bgcolor: getPaperBackground(),
+                  mb: 1.6,
+                  borderRadius: 1,
+                  cursor: isDesktop ? "crosshair" : "zoom-in",
+                }}
+              >
+                <Image
+                  src={activeImage || "/images/products/fallback.png"}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 900px) 100vw, 55vw"
+                  style={{ objectFit: "cover" }}
+                  priority
+                />
+
+                {/* Lens that follows the cursor */}
+                {isHovering && isDesktop && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      left: lensPosition.x,
+                      top: lensPosition.y,
+                      width: LENS_SIZE,
+                      height: LENS_SIZE,
+                      border: "2px solid rgba(255,255,255,0.9)",
+                      boxShadow: "0 0 0 1px rgba(0,0,0,0.25)",
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                      pointerEvents: "none",
+                      zIndex: 5,
+                    }}
+                  />
+                )}
+              </Box>
+
+              {/* Magnified preview panel (desktop only) */}
+              {isHovering && isDesktop && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: "calc(100% + 24px)",
+                    width: 420,
+                    height: 520,
+                    borderRadius: 1,
+                    overflow: "hidden",
+                    border: `1px solid ${getBorderColor()}`,
+                    bgcolor: getPaperBackground(),
+                    zIndex: 20,
+                    boxShadow: isDarkMode
+                      ? "0 20px 40px rgba(0,0,0,0.5)"
+                      : "0 20px 40px rgba(0,0,0,0.12)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      backgroundImage: `url(${activeImage || "/images/products/fallback.png"})`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: `${ZOOM_LEVEL * 100}%`,
+                      backgroundPosition: `${bgPosition.x}% ${bgPosition.y}%`,
+                    }}
+                  />
+                </Box>
+              )}
             </Box>
+
+            {/* Thumbnail strip */}
             <Stack
               direction="row"
               spacing={1.25}
@@ -565,6 +703,7 @@ export const ProductDetailClient = ({
             </Stack>
           </Grid>
 
+          {/* ── Right column – Product info ──────────────────────────────── */}
           <Grid size={{ xs: 12, md: 5.8 }}>
             <Stack spacing={2.15}>
               <Typography
@@ -572,11 +711,12 @@ export const ProductDetailClient = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.28em",
                   fontSize: "0.66rem",
-                  color: isDarkMode ? "#b89a73" : "#b89a73",
+                  color: "#b89a73",
                 }}
               >
                 {categoryLabel}
               </Typography>
+
               <Typography
                 sx={{
                   fontFamily: "var(--font-playfair), serif",
@@ -587,6 +727,7 @@ export const ProductDetailClient = ({
               >
                 {product.name}
               </Typography>
+
               <Typography
                 sx={{
                   fontSize: { xs: "1.55rem", md: "1.9rem" },
@@ -625,6 +766,7 @@ export const ProductDetailClient = ({
                 {product.description}
               </Typography>
 
+              {/* Colour selector */}
               <Stack spacing={1.1} sx={{ pt: 1.1 }}>
                 <Typography
                   sx={{
@@ -670,6 +812,7 @@ export const ProductDetailClient = ({
                 </Stack>
               </Stack>
 
+              {/* Quantity */}
               <Stack spacing={1.05} sx={{ pt: 0.8 }}>
                 <Typography
                   sx={{
@@ -686,9 +829,7 @@ export const ProductDetailClient = ({
 
                 <Stack direction="row" spacing={0} alignItems="center">
                   <IconButton
-                    onClick={() =>
-                      setQuantity((current) => Math.max(1, current - 1))
-                    }
+                    onClick={() => setQuantity((c) => Math.max(1, c - 1))}
                     sx={{
                       width: 34,
                       height: 34,
@@ -716,7 +857,7 @@ export const ProductDetailClient = ({
                     {quantity}
                   </Box>
                   <IconButton
-                    onClick={() => setQuantity((current) => current + 1)}
+                    onClick={() => setQuantity((c) => c + 1)}
                     sx={{
                       width: 34,
                       height: 34,
@@ -731,6 +872,7 @@ export const ProductDetailClient = ({
                 </Stack>
               </Stack>
 
+              {/* Actions */}
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={1.25}
@@ -763,8 +905,9 @@ export const ProductDetailClient = ({
                 >
                   Add to Bag
                 </Button>
+
                 <Button
-                  onClick={handleOpenContactDialog}
+                  onClick={() => setOpenContactDialog(true)}
                   variant="outlined"
                   color="inherit"
                   sx={{
@@ -798,6 +941,7 @@ export const ProductDetailClient = ({
                 >
                   Buy
                 </Button>
+
                 <IconButton
                   aria-label="Add to wishlist"
                   onClick={() => toggleWishlist(product.id)}
@@ -820,6 +964,7 @@ export const ProductDetailClient = ({
 
               <Divider sx={{ borderColor: getBorderColor(), my: 2 }} />
 
+              {/* Specifications */}
               <Stack spacing={1.4}>
                 <Typography
                   sx={{
@@ -865,6 +1010,7 @@ export const ProductDetailClient = ({
                 )}
               </Stack>
 
+              {/* Trust badges */}
               <Grid container spacing={1.15} sx={{ pt: 1.2 }}>
                 {[
                   {
@@ -941,7 +1087,7 @@ export const ProductDetailClient = ({
         </Grid>
       </Stack>
 
-      {/* Contact Dialog */}
+      {/* ── Contact Dialog ─────────────────────────────────────────────────── */}
       <Dialog
         open={openContactDialog}
         onClose={() => setOpenContactDialog(false)}
@@ -1006,7 +1152,7 @@ export const ProductDetailClient = ({
               label="Your Name"
               placeholder="Enter your full name"
               value={customerName}
-              onChange={(event) => setCustomerName(event.target.value)}
+              onChange={(e) => setCustomerName(e.target.value)}
               fullWidth
               size="medium"
               required
@@ -1014,9 +1160,7 @@ export const ProductDetailClient = ({
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 1,
                   bgcolor: getBackgroundColor(),
-                  "&:hover": {
-                    bgcolor: getHoverBackgroundColor(),
-                  },
+                  "&:hover": { bgcolor: getHoverBackgroundColor() },
                 },
                 "& .MuiInputBase-input": {
                   color: isDarkMode ? "#ffffff" : "inherit",
@@ -1144,6 +1288,128 @@ export const ProductDetailClient = ({
         <DialogActions sx={{ p: 3, pt: 0 }}>
           {getCheckoutButton()}
         </DialogActions>
+      </Dialog>
+
+      {/* ── Full-screen Zoom (mobile fallback) ─────────────────────────────── */}
+      <Dialog
+        open={isZoomOpen}
+        onClose={closeZoom}
+        maxWidth={false}
+        fullWidth
+        PaperProps={{
+          sx: {
+            m: 0,
+            width: "100vw",
+            height: "100vh",
+            maxWidth: "100vw",
+            maxHeight: "100vh",
+            borderRadius: 0,
+            bgcolor: isDarkMode ? "#0d0d0d" : "#f8f6f2",
+            overflow: "hidden",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 2,
+            py: 1.5,
+            bgcolor: isDarkMode ? "rgba(0,0,0,0.65)" : "rgba(255,255,255,0.88)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: "0.85rem",
+              color: isDarkMode ? "rgba(255,255,255,0.85)" : "#171512",
+            }}
+          >
+            {product.name} · {Math.round(zoomScale * 100)}%
+          </Typography>
+
+          <Stack direction="row" spacing={0.8}>
+            <IconButton
+              size="small"
+              onClick={() => setZoomScale((s) => Math.min(s + 0.4, 4))}
+              sx={{ color: isDarkMode ? "#fff" : "#171512" }}
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setZoomScale((s) => {
+                  const next = Math.max(s - 0.4, 1);
+                  if (next <= 1) setZoomPosition({ x: 0, y: 0 });
+                  return next;
+                });
+              }}
+              sx={{ color: isDarkMode ? "#fff" : "#171512" }}
+            >
+              <RemoveIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={closeZoom}
+              sx={{
+                border: `1px solid ${getBorderColor()}`,
+                borderRadius: 1,
+                color: isDarkMode ? "#fff" : "#171512",
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        </Box>
+
+        <Box
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMoveZoom}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onDoubleClick={handleDoubleClick}
+          sx={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor:
+              zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+            overflow: "hidden",
+            userSelect: "none",
+          }}
+        >
+          <Box
+            sx={{
+              position: "relative",
+              width: "90vw",
+              height: "85vh",
+              maxWidth: 1200,
+              transform: `translate(${zoomPosition.x}px, ${zoomPosition.y}px) scale(${zoomScale})`,
+              transition: isDragging ? "none" : "transform 0.15s ease-out",
+              transformOrigin: "center center",
+            }}
+          >
+            <Image
+              src={activeImage || "/images/products/fallback.png"}
+              alt={product.name}
+              fill
+              sizes="90vw"
+              style={{ objectFit: "contain" }}
+              priority
+              draggable={false}
+            />
+          </Box>
+        </Box>
       </Dialog>
     </>
   );
