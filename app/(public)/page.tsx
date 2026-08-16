@@ -3,9 +3,24 @@ export const fetchCache = "force-no-store";
 
 import Image from "next/image";
 import Link from "next/link";
-import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Grid,
+  Stack,
+  Typography,
+  Fade,
+  useTheme,
+} from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowRight,
+  faStar,
+  faHands,
+  faGem,
+  faClock,
+} from "@fortawesome/free-solid-svg-icons";
 import { SectionHeading } from "@/components/section-heading";
 import { ProductCard } from "@/components/product-card";
 import { TestimonialCards } from "@/components/testimonial-cards";
@@ -20,6 +35,29 @@ export const metadata = buildMetadata({
     "Explore premium handbags, totes, crossbody pieces, and accessories crafted for modern elegance.",
   path: "/",
 });
+
+// Feature Cards Data
+const features = [
+  {
+    icon: faGem,
+    title: "Material Integrity",
+    description:
+      "Full-grain leather and finishes designed to mature beautifully.",
+    color: "#b39a72",
+  },
+  {
+    icon: faHands,
+    title: "Handcrafted Excellence",
+    description: "Each piece is treated as a ceremony of care and precision.",
+    color: "#8d6e63",
+  },
+  {
+    icon: faClock,
+    title: "Lifetime Promise",
+    description: "Dedicated aftercare and repair guidance for generations.",
+    color: "#a1887f",
+  },
+];
 
 export default async function HomePage() {
   const [
@@ -82,7 +120,6 @@ export default async function HomePage() {
   const categoryCards = categories
     .slice(0, 4)
     .map((category) => {
-      // Get the image URL or use fallback
       const image =
         category.imageUrl && category.imageUrl.trim().length > 0
           ? category.imageUrl
@@ -108,6 +145,7 @@ export default async function HomePage() {
 
   return (
     <Stack spacing={{ xs: 6.5, md: 10 }}>
+      {/* Hero Section */}
       {heroActive ? (
         <Box
           sx={{
@@ -154,6 +192,7 @@ export default async function HomePage() {
                   letterSpacing: "0.4em",
                   fontSize: { xs: "0.62rem", md: "0.72rem" },
                   color: "#f8efe1",
+                  mb: 1.5,
                 }}
               >
                 {heroSubtitle}
@@ -195,9 +234,12 @@ export default async function HomePage() {
                   letterSpacing: "0.22em",
                   fontSize: { xs: "0.68rem", md: "0.74rem" },
                   borderRadius: 0,
+                  transition: "all 0.3s ease",
                   "&:hover": {
                     borderColor: "#fff",
                     backgroundColor: "rgba(255,255,255,0.06)",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
                   },
                 }}
               >
@@ -211,6 +253,7 @@ export default async function HomePage() {
         </Box>
       ) : null}
 
+      {/* Marquee Section */}
       <Box
         sx={{
           width: "100%",
@@ -245,6 +288,7 @@ export default async function HomePage() {
         </Box>
       </Box>
 
+      {/* Featured Products */}
       <Container maxWidth="xl" sx={{ pb: 1 }}>
         <section>
           <SectionHeading
@@ -261,6 +305,7 @@ export default async function HomePage() {
           </Grid>
         </section>
 
+        {/* Categories Section */}
         <section style={{ marginTop: "4rem" }}>
           <SectionHeading eyebrow="By Silhouette" title="Shop by Category" />
           <Grid container spacing={2.2}>
@@ -274,10 +319,11 @@ export default async function HomePage() {
                       border: "1px solid",
                       borderColor: "divider",
                       overflow: "hidden",
-                      transition: "all 0.3s ease",
+                      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                       "&:hover": {
                         borderColor: "text.primary",
-                        transform: "scale(1.01)",
+                        transform: "scale(1.02)",
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
                       },
                     }}
                   >
@@ -286,7 +332,10 @@ export default async function HomePage() {
                       alt={category.label}
                       fill
                       sizes="(max-width: 900px) 50vw, 25vw"
-                      style={{ objectFit: "cover" }}
+                      style={{
+                        objectFit: "cover",
+                        transition: "transform 0.6s ease",
+                      }}
                     />
                     <Box
                       sx={{
@@ -296,14 +345,26 @@ export default async function HomePage() {
                           "linear-gradient(180deg, rgba(0,0,0,0.1) 38%, rgba(0,0,0,0.7) 100%)",
                         display: "flex",
                         alignItems: "flex-end",
-                        p: 2,
+                        p: 2.5,
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          background:
+                            "linear-gradient(180deg, rgba(0,0,0,0.2) 38%, rgba(0,0,0,0.8) 100%)",
+                        },
                       }}
                     >
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Typography color="#fff" fontWeight={600}>
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Typography
+                          color="#fff"
+                          fontWeight={600}
+                          fontSize="1.1rem"
+                        >
                           {category.label}
                         </Typography>
-                        <Typography color="#fff" sx={{ opacity: 0.9 }}>
+                        <Typography
+                          color="#fff"
+                          sx={{ opacity: 0.8, fontSize: "0.8rem" }}
+                        >
                           Explore
                         </Typography>
                         <FontAwesomeIcon
@@ -320,6 +381,7 @@ export default async function HomePage() {
           </Grid>
         </section>
 
+        {/* Best Sellers */}
         <section style={{ marginTop: "4.25rem" }}>
           <Stack
             direction={{ xs: "column", md: "row" }}
@@ -338,6 +400,10 @@ export default async function HomePage() {
                 fontSize: "0.72rem",
                 color: "text.secondary",
                 mb: { xs: 0, md: 2 },
+                transition: "color 0.3s ease",
+                "&:hover": {
+                  color: "text.primary",
+                },
               }}
             >
               View All
@@ -352,6 +418,7 @@ export default async function HomePage() {
           </Grid>
         </section>
 
+        {/* Philosophy Section */}
         <section style={{ marginTop: "4.4rem" }}>
           <Box
             sx={{
@@ -367,14 +434,22 @@ export default async function HomePage() {
             <Grid container spacing={{ xs: 2.5, md: 4 }} alignItems="stretch">
               <Grid size={{ xs: 12, md: 6 }}>
                 <Box
-                  sx={{ position: "relative", height: { xs: 360, md: 700 } }}
+                  sx={{
+                    position: "relative",
+                    height: { xs: 360, md: 700 },
+                    overflow: "hidden",
+                    borderRadius: 1,
+                  }}
                 >
                   <Image
                     src={"/images/products/new2.webp"}
                     alt="Zuriè atelier"
                     fill
                     sizes="(max-width: 900px) 100vw, 48vw"
-                    style={{ objectFit: "cover" }}
+                    style={{
+                      objectFit: "cover",
+                      transition: "transform 0.6s ease",
+                    }}
                   />
                 </Box>
               </Grid>
@@ -435,10 +510,12 @@ export default async function HomePage() {
                       color: "#f3eee4",
                       borderBottom: "1px solid rgba(243,238,228,0.34)",
                       pb: 0.8,
-                      transition: "border-color 180ms ease, color 180ms ease",
+                      transition:
+                        "border-color 180ms ease, color 180ms ease, transform 0.3s ease",
                       "&:hover": {
                         borderColor: "rgba(243,238,228,0.85)",
                         color: "#fff",
+                        transform: "translateX(4px)",
                       },
                     }}
                   >
@@ -451,6 +528,104 @@ export default async function HomePage() {
           </Box>
         </section>
 
+        {/* Features Section */}
+        <section style={{ marginTop: "4.4rem" }}>
+          <Box sx={{ textAlign: "center", mb: 4.5 }}>
+            <Typography
+              variant="overline"
+              sx={{
+                letterSpacing: "0.34em",
+                color: "#b39a72",
+                fontSize: "0.7rem",
+              }}
+            >
+              Why Zuriè
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "var(--font-playfair), serif",
+                fontSize: { xs: "2rem", md: "2.8rem" },
+                lineHeight: 1.1,
+                color: "text.primary",
+                mb: 1,
+              }}
+            >
+              The Zuriè Difference
+            </Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+                fontSize: "1rem",
+                maxWidth: 500,
+                mx: "auto",
+              }}
+            >
+              Crafted with intention, designed to last.
+            </Typography>
+          </Box>
+
+          <Grid container spacing={2.5}>
+            {features.map((feature, index) => (
+              <Grid key={index} size={{ xs: 12, md: 4 }}>
+                <Box
+                  sx={{
+                    p: 3.5,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    textAlign: "center",
+                    height: "100%",
+                    transition: "all 0.3s ease",
+                    bgcolor: "background.paper",
+                    "&:hover": {
+                      transform: "translateY(-6px)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+                      borderColor: feature.color,
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: "50%",
+                      bgcolor: `${feature.color}15`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mx: "auto",
+                      mb: 2,
+                      color: feature.color,
+                    }}
+                  >
+                    <FontAwesomeIcon icon={feature.icon} size="lg" />
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "1.1rem",
+                      mb: 1,
+                      color: "text.primary",
+                    }}
+                  >
+                    {feature.title}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.9rem",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {feature.description}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </section>
+
+        {/* New Arrivals */}
         <section style={{ marginTop: "4.4rem" }}>
           <Stack
             direction={{ xs: "column", md: "row" }}
@@ -472,6 +647,10 @@ export default async function HomePage() {
                 fontSize: "0.72rem",
                 color: "text.secondary",
                 mb: { xs: 0, md: 2 },
+                transition: "color 0.3s ease",
+                "&:hover": {
+                  color: "text.primary",
+                },
               }}
             >
               View All
@@ -486,6 +665,7 @@ export default async function HomePage() {
           </Grid>
         </section>
 
+        {/* Banner Section */}
         <section style={{ marginTop: "4.4rem" }}>
           {bannerActive && bannerImage && bannerImage.trim().length > 0 ? (
             <Box
@@ -496,6 +676,11 @@ export default async function HomePage() {
                 border: "1px solid",
                 borderColor: "divider",
                 mb: 4,
+                borderRadius: 2,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+                },
               }}
             >
               <Image
@@ -503,7 +688,10 @@ export default async function HomePage() {
                 alt={bannerTitle || "Promotional banner"}
                 fill
                 sizes="100vw"
-                style={{ objectFit: "cover" }}
+                style={{
+                  objectFit: "cover",
+                  transition: "transform 0.6s ease",
+                }}
               />
               <Box
                 sx={{
@@ -521,12 +709,20 @@ export default async function HomePage() {
                 <Box>
                   <Typography
                     variant="h4"
-                    sx={{ fontFamily: "var(--font-playfair), serif" }}
+                    sx={{
+                      fontFamily: "var(--font-playfair), serif",
+                      fontWeight: 600,
+                    }}
                   >
                     {bannerTitle}
                   </Typography>
                   <Typography
-                    sx={{ mt: 1.2, mb: 2.2, color: "rgba(255,255,255,0.88)" }}
+                    sx={{
+                      mt: 1.2,
+                      mb: 2.2,
+                      color: "rgba(255,255,255,0.88)",
+                      fontSize: "1.05rem",
+                    }}
                   >
                     {bannerDescription}
                   </Typography>
@@ -535,8 +731,25 @@ export default async function HomePage() {
                     href={bannerCtaLink}
                     variant="outlined"
                     color="inherit"
+                    sx={{
+                      borderColor: "rgba(255,255,255,0.5)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.2em",
+                      fontSize: "0.7rem",
+                      px: 3.5,
+                      py: 1.2,
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        borderColor: "#fff",
+                        backgroundColor: "rgba(255,255,255,0.1)",
+                        transform: "translateY(-2px)",
+                      },
+                    }}
                   >
                     {bannerCtaText}
+                    <Box component="span" sx={{ ml: 1 }}>
+                      <FontAwesomeIcon icon={faArrowRight} fontSize={10} />
+                    </Box>
                   </Button>
                 </Box>
               </Box>
@@ -551,6 +764,7 @@ export default async function HomePage() {
         </section>
       </Container>
 
+      {/* Schema Script */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -560,6 +774,11 @@ export default async function HomePage() {
             name: "Zuriè",
             url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
             logo: "/images/logo.png",
+            sameAs: [
+              "https://instagram.com/zurie",
+              "https://facebook.com/zurie",
+              "https://tiktok.com/@zurie",
+            ],
           }),
         }}
       />

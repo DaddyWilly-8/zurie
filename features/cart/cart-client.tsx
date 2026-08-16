@@ -15,6 +15,9 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Snackbar,
+  Paper,
+  useTheme,
+  Fade,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -22,6 +25,9 @@ import {
   faPlus,
   faEnvelope,
   faPhone,
+  faTrashAlt,
+  faShoppingBag,
+  faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { SITE } from "@/constants/site";
@@ -45,6 +51,8 @@ import {
 type ContactMethod = "whatsapp" | "email" | "phone";
 
 export const CartClient = () => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -89,13 +97,11 @@ export const CartClient = () => {
   };
 
   const validateForm = () => {
-    // Name is always required
     if (!customerName.trim()) {
       showSnackbar("Please enter your name", "error");
       return false;
     }
 
-    // Phone is always required (for delivery)
     if (!customerPhone.trim()) {
       showSnackbar("Please enter your phone number", "error");
       return false;
@@ -109,7 +115,6 @@ export const CartClient = () => {
       return false;
     }
 
-    // Email is required only if email method is selected
     if (contactMethod === "email") {
       if (!customerEmail.trim()) {
         showSnackbar("Please enter your email address", "error");
@@ -125,7 +130,6 @@ export const CartClient = () => {
     return true;
   };
 
-  // Submit order to backend
   const submitOrderToBackend = async (): Promise<boolean> => {
     try {
       setIsSubmitting(true);
@@ -245,9 +249,77 @@ export const CartClient = () => {
 
   if (cart.length === 0) {
     return (
-      <Alert severity="info" sx={{ borderRadius: 0 }}>
-        Your cart is empty. Add a beautiful Zuriè piece to continue.
-      </Alert>
+      <Fade in timeout={500}>
+        <Box
+          sx={{
+            textAlign: "center",
+            py: { xs: 6, md: 10 },
+            px: 3,
+          }}
+        >
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "#f8f6f2",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
+              mb: 2.5,
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faShoppingBag}
+              style={{
+                fontSize: 32,
+                color: isDarkMode ? "rgba(255,255,255,0.3)" : "#b39a72",
+              }}
+            />
+          </Box>
+          <Typography
+            sx={{
+              fontFamily: "var(--font-playfair), serif",
+              fontSize: { xs: "1.5rem", md: "2rem" },
+              color: "text.primary",
+              mb: 1,
+            }}
+          >
+            Your cart is empty
+          </Typography>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.95rem",
+              mb: 2.5,
+            }}
+          >
+            Add a beautiful Zuriè piece to continue.
+          </Typography>
+          <Button
+            component={Link}
+            href="/shop"
+            variant="contained"
+            endIcon={<FontAwesomeIcon icon={faArrowRight} />}
+            sx={{
+              borderRadius: 0,
+              textTransform: "uppercase",
+              letterSpacing: "0.2em",
+              fontSize: "0.7rem",
+              px: 3.5,
+              py: 1.2,
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
+              "&:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+              },
+            }}
+          >
+            Continue Shopping
+          </Button>
+        </Box>
+      </Fade>
     );
   }
 
@@ -264,15 +336,18 @@ export const CartClient = () => {
             }
             startIcon={<FontAwesomeIcon icon={faWhatsapp} />}
             sx={{
-              mt: 1,
-              borderRadius: 0,
-              py: 1.1,
-              fontSize: "0.66rem",
+              mt: 1.5,
+              borderRadius: 1.5,
+              py: 1.3,
+              fontSize: "0.7rem",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               boxShadow: "none",
+              bgcolor: "#25D366",
               "&:hover": {
-                boxShadow: "none",
+                bgcolor: "#1da851",
+                boxShadow: "0 4px 16px rgba(37,211,102,0.3)",
+                transform: "translateY(-2px)",
               },
             }}
           >
@@ -293,17 +368,19 @@ export const CartClient = () => {
             }
             startIcon={<FontAwesomeIcon icon={faEnvelope} />}
             sx={{
-              mt: 1,
-              borderRadius: 0,
-              py: 1.1,
-              fontSize: "0.66rem",
+              mt: 1.5,
+              borderRadius: 1.5,
+              py: 1.3,
+              fontSize: "0.7rem",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               boxShadow: "none",
-              bgcolor: "#171512",
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
               "&:hover": {
-                bgcolor: "#2d2a26",
-                boxShadow: "none",
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+                transform: "translateY(-2px)",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
               },
             }}
           >
@@ -321,17 +398,19 @@ export const CartClient = () => {
             }
             startIcon={<FontAwesomeIcon icon={faPhone} />}
             sx={{
-              mt: 1,
-              borderRadius: 0,
-              py: 1.1,
-              fontSize: "0.66rem",
+              mt: 1.5,
+              borderRadius: 1.5,
+              py: 1.3,
+              fontSize: "0.7rem",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               boxShadow: "none",
-              bgcolor: "#171512",
+              bgcolor: isDarkMode ? "#ffffff" : "#171512",
+              color: isDarkMode ? "#171512" : "#ffffff",
               "&:hover": {
-                bgcolor: "#2d2a26",
-                boxShadow: "none",
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.9)" : "#2d2a26",
+                transform: "translateY(-2px)",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
               },
             }}
           >
@@ -344,16 +423,16 @@ export const CartClient = () => {
   };
 
   const getContactFields = () => {
-    // Phone is always shown and required
     const phoneField = (
       <Box key="phone-field">
         <Typography
           sx={{
-            fontSize: "0.66rem",
+            fontSize: "0.65rem",
             letterSpacing: "0.28em",
             textTransform: "uppercase",
             color: "text.secondary",
             mt: 0.4,
+            mb: 0.5,
           }}
         >
           Phone Number *
@@ -366,8 +445,10 @@ export const CartClient = () => {
           required
           sx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 0,
-              backgroundColor: "background.default",
+              borderRadius: 1.5,
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.03)"
+                : "#f8f6f2",
             },
             "& .MuiOutlinedInput-input::placeholder": {
               opacity: 0.72,
@@ -376,7 +457,7 @@ export const CartClient = () => {
         />
         <Typography
           sx={{
-            fontSize: "0.65rem",
+            fontSize: "0.6rem",
             color: "text.secondary",
             mt: 0.5,
             fontStyle: "italic",
@@ -394,7 +475,7 @@ export const CartClient = () => {
             {phoneField}
             <Typography
               sx={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 color: "text.secondary",
                 mt: 0.5,
                 fontStyle: "italic",
@@ -410,11 +491,12 @@ export const CartClient = () => {
             {phoneField}
             <Typography
               sx={{
-                fontSize: "0.66rem",
+                fontSize: "0.65rem",
                 letterSpacing: "0.28em",
                 textTransform: "uppercase",
                 color: "text.secondary",
                 mt: 0.4,
+                mb: 0.5,
               }}
             >
               Email Address *
@@ -427,8 +509,10 @@ export const CartClient = () => {
               required
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  backgroundColor: "background.default",
+                  borderRadius: 1.5,
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.03)"
+                    : "#f8f6f2",
                 },
                 "& .MuiOutlinedInput-input::placeholder": {
                   opacity: 0.72,
@@ -437,7 +521,7 @@ export const CartClient = () => {
             />
             <Typography
               sx={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 color: "text.secondary",
                 mt: 0.5,
                 fontStyle: "italic",
@@ -453,7 +537,7 @@ export const CartClient = () => {
             {phoneField}
             <Typography
               sx={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 color: "text.secondary",
                 mt: 0.5,
                 fontStyle: "italic",
@@ -479,7 +563,7 @@ export const CartClient = () => {
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", borderRadius: 1.5 }}
         >
           {snackbarMessage}
         </Alert>
@@ -490,14 +574,22 @@ export const CartClient = () => {
         spacing={{ xs: 4, lg: 4.4 }}
         alignItems="flex-start"
       >
+        {/* Cart Items */}
         <Stack spacing={0} sx={{ flex: 1, width: "100%", minWidth: 0 }}>
-          {cart.map((item) => (
+          {cart.map((item, index) => (
             <Box
               key={item.productId}
               sx={{
-                py: { xs: 2, md: 2.75 },
-                borderBottom: "1px solid",
+                py: { xs: 2.5, md: 3 },
+                borderBottom: index < cart.length - 1 ? "1px solid" : "none",
                 borderColor: "divider",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  bgcolor: isDarkMode ? "rgba(255,255,255,0.02)" : "#faf8f5",
+                  px: 1,
+                  mx: -1,
+                  borderRadius: 1,
+                },
               }}
             >
               <Stack
@@ -516,9 +608,12 @@ export const CartClient = () => {
                       position: "relative",
                       width: { xs: 88, md: 118 },
                       height: { xs: 112, md: 146 },
-                      bgcolor: "background.paper",
+                      bgcolor: isDarkMode
+                        ? "rgba(255,255,255,0.03)"
+                        : "#f8f6f2",
                       flexShrink: 0,
                       overflow: "hidden",
+                      borderRadius: 1.5,
                     }}
                   >
                     <Image
@@ -535,14 +630,15 @@ export const CartClient = () => {
 
                   <Stack
                     justifyContent="space-between"
-                    sx={{ minHeight: { sm: 146 }, py: { sm: 0.15 } }}
+                    sx={{ minHeight: { sm: 146 }, py: { sm: 0.15 }, flex: 1 }}
                   >
                     <Box>
                       <Typography
                         sx={{
                           fontFamily: "var(--font-playfair), serif",
-                          fontSize: { xs: "1.12rem", md: "1.45rem" },
-                          lineHeight: 1.1,
+                          fontSize: { xs: "1rem", md: "1.3rem" },
+                          lineHeight: 1.2,
+                          color: "text.primary",
                         }}
                       >
                         {item.product.name}
@@ -550,11 +646,11 @@ export const CartClient = () => {
                       <Typography
                         sx={{
                           color: "text.secondary",
-                          fontSize: "0.88rem",
-                          mt: 0.45,
+                          fontSize: "0.8rem",
+                          mt: 0.25,
                         }}
                       >
-                        Colour: {item.product.colors?.[0]?.name ?? "Classic"}
+                        {item.product.colors?.[0]?.name ?? "Classic"}
                       </Typography>
                     </Box>
 
@@ -569,25 +665,27 @@ export const CartClient = () => {
                           updateCartQuantity(item.productId, item.quantity - 1)
                         }
                         sx={{
-                          width: 30,
-                          height: 30,
+                          width: 32,
+                          height: 32,
                           border: "1px solid",
                           borderColor: "divider",
-                          borderRadius: 0,
+                          borderRadius: 1,
                         }}
                       >
                         <FontAwesomeIcon icon={faMinus} fontSize={10} />
                       </IconButton>
                       <Box
                         sx={{
-                          width: 38,
-                          height: 30,
+                          width: 40,
+                          height: 32,
                           borderTop: "1px solid",
                           borderBottom: "1px solid",
                           borderColor: "divider",
                           display: "grid",
                           placeItems: "center",
                           fontSize: "0.84rem",
+                          fontWeight: 500,
+                          color: "text.primary",
                         }}
                       >
                         {item.quantity}
@@ -597,11 +695,11 @@ export const CartClient = () => {
                           updateCartQuantity(item.productId, item.quantity + 1)
                         }
                         sx={{
-                          width: 30,
-                          height: 30,
+                          width: 32,
+                          height: 32,
                           border: "1px solid",
                           borderColor: "divider",
-                          borderRadius: 0,
+                          borderRadius: 1,
                         }}
                       >
                         <FontAwesomeIcon icon={faPlus} fontSize={10} />
@@ -624,16 +722,20 @@ export const CartClient = () => {
                       minWidth: "auto",
                       p: 0,
                       color: "text.secondary",
-                      fontSize: "1.1rem",
+                      fontSize: "1rem",
                       lineHeight: 1,
                       alignSelf: { xs: "flex-end", sm: "auto" },
+                      "&:hover": {
+                        color: "error.main",
+                      },
                     }}
                   >
-                    ×
+                    <FontAwesomeIcon icon={faTrashAlt} fontSize={14} />
                   </Button>
                   <Typography
                     sx={{
-                      fontSize: "0.94rem",
+                      fontSize: "1rem",
+                      fontWeight: 600,
                       color: "text.primary",
                       pt: { sm: 1.5 },
                     }}
@@ -658,32 +760,42 @@ export const CartClient = () => {
             underline="always"
             sx={{
               alignSelf: "flex-start",
-              mt: 1.3,
+              mt: 1.5,
               color: "text.secondary",
               fontSize: "0.76rem",
+              "&:hover": {
+                color: "error.main",
+              },
             }}
           >
             Clear bag
           </Link>
         </Stack>
 
+        {/* Order Summary */}
         <Box
           sx={{
             width: "100%",
             maxWidth: { xs: "100%", lg: 340 },
-            bgcolor: "background.paper",
+            bgcolor: isDarkMode ? "rgba(255,255,255,0.02)" : "#faf8f5",
             border: "1px solid",
             borderColor: "divider",
-            p: { xs: 2.2, md: 2.4 },
+            borderRadius: 2,
+            p: { xs: 2.5, md: 3 },
             position: { lg: "sticky" },
             top: { lg: 110 },
+            transition: "all 0.3s ease",
+            "&:hover": {
+              boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
+            },
           }}
         >
           <Typography
             sx={{
               fontFamily: "var(--font-playfair), serif",
-              fontSize: { xs: "1.55rem", md: "1.7rem" },
-              mb: 2,
+              fontSize: { xs: "1.4rem", md: "1.6rem" },
+              mb: 2.5,
+              color: "text.primary",
             }}
           >
             Order Summary
@@ -691,10 +803,16 @@ export const CartClient = () => {
 
           <Stack spacing={1.25}>
             <Stack direction="row" justifyContent="space-between" spacing={2}>
-              <Typography sx={{ fontSize: "0.88rem", color: "text.secondary" }}>
-                Subtotal
+              <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>
+                Subtotal ({cart.length} items)
               </Typography>
-              <Typography sx={{ fontSize: "0.88rem", color: "text.primary" }}>
+              <Typography
+                sx={{
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                  color: "text.primary",
+                }}
+              >
                 {formatCurrency(
                   convertFromBaseCurrency(total, currency, rates),
                   currency,
@@ -702,10 +820,10 @@ export const CartClient = () => {
               </Typography>
             </Stack>
             <Stack direction="row" justifyContent="space-between" spacing={2}>
-              <Typography sx={{ fontSize: "0.88rem", color: "text.secondary" }}>
+              <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>
                 Delivery
               </Typography>
-              <Typography sx={{ fontSize: "0.82rem", color: "text.primary" }}>
+              <Typography sx={{ fontSize: "0.8rem", color: "text.secondary" }}>
                 Calculated via{" "}
                 {contactMethod === "whatsapp"
                   ? "WhatsApp"
@@ -716,17 +834,17 @@ export const CartClient = () => {
             </Stack>
           </Stack>
 
-          <Divider sx={{ my: 2.1, borderColor: "divider" }} />
+          <Divider sx={{ my: 2.5, borderColor: "divider" }} />
 
           <Stack
             direction="row"
             justifyContent="space-between"
             spacing={2}
-            sx={{ mb: 2.1 }}
+            sx={{ mb: 2.5 }}
           >
             <Typography
               sx={{
-                fontSize: "0.66rem",
+                fontSize: "0.7rem",
                 letterSpacing: "0.32em",
                 textTransform: "uppercase",
                 color: "text.secondary",
@@ -737,8 +855,9 @@ export const CartClient = () => {
             <Typography
               sx={{
                 fontFamily: "var(--font-playfair), serif",
-                fontSize: "1.8rem",
+                fontSize: { xs: "1.6rem", md: "1.8rem" },
                 lineHeight: 1,
+                color: "text.primary",
               }}
             >
               {formatCurrency(
@@ -748,10 +867,10 @@ export const CartClient = () => {
             </Typography>
           </Stack>
 
-          <Stack spacing={1.15}>
+          <Stack spacing={1.5}>
             <Typography
               sx={{
-                fontSize: "0.66rem",
+                fontSize: "0.65rem",
                 letterSpacing: "0.28em",
                 textTransform: "uppercase",
                 color: "text.secondary",
@@ -767,8 +886,10 @@ export const CartClient = () => {
               size="small"
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  backgroundColor: "background.default",
+                  borderRadius: 1.5,
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.03)"
+                    : "#ffffff",
                 },
                 "& .MuiOutlinedInput-input::placeholder": {
                   opacity: 0.72,
@@ -778,11 +899,11 @@ export const CartClient = () => {
 
             <Typography
               sx={{
-                fontSize: "0.66rem",
+                fontSize: "0.65rem",
                 letterSpacing: "0.28em",
                 textTransform: "uppercase",
                 color: "text.secondary",
-                mt: 1,
+                mt: 0.5,
               }}
             >
               Contact Method *
@@ -797,14 +918,20 @@ export const CartClient = () => {
                 width: "100%",
                 "& .MuiToggleButtonGroup-grouped": {
                   flex: 1,
-                  borderRadius: 0,
+                  borderRadius: 1.5,
                   borderColor: "divider",
-                  py: 0.8,
+                  py: 1,
+                  fontSize: "0.7rem",
+                  textTransform: "none",
                   "&.Mui-selected": {
-                    backgroundColor: "#171512",
-                    color: "white",
+                    backgroundColor: isDarkMode
+                      ? "rgba(255,255,255,0.1)"
+                      : "#171512",
+                    color: isDarkMode ? "#ffffff" : "#ffffff",
                     "&:hover": {
-                      backgroundColor: "#2d2a26",
+                      backgroundColor: isDarkMode
+                        ? "rgba(255,255,255,0.15)"
+                        : "#2d2a26",
                     },
                   },
                 },
@@ -831,11 +958,11 @@ export const CartClient = () => {
 
           <Typography
             sx={{
-              mt: 1.2,
+              mt: 1.5,
               textAlign: "center",
               color: "text.secondary",
-              fontSize: "0.72rem",
-              lineHeight: 1.45,
+              fontSize: "0.68rem",
+              lineHeight: 1.5,
             }}
           >
             Your order details will be sent via{" "}
