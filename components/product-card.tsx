@@ -37,7 +37,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const rates = useCurrencyStore((state) => state.rates);
   const inWishlist = wishlist.includes(product.id);
   const categoryLabel =
-    (typeof product.category === "object" && product.category && "name" in product.category
+    (typeof product.category === "object" &&
+    product.category &&
+    "name" in product.category
       ? String(product.category.name ?? "")
       : product.categoryLabel) || "Uncategorized";
 
@@ -80,7 +82,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           ) : null}
         </Stack>
 
-        <IconButton
+        {/* <IconButton
           aria-label="Add to wishlist"
           onClick={() => toggleWishlist(product.id)}
           sx={{
@@ -102,7 +104,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             color={inWishlist ? "#b58a57" : "currentColor"}
             fontSize={13}
           />
-        </IconButton>
+        </IconButton> */}
 
         <Stack
           direction="row"
