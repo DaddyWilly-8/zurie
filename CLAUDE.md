@@ -155,9 +155,12 @@ pkill -9 -f "next dev"
   `@/services/content` or `@/services/products` (no subpath), that's stale
   and should be updated to `@/services/content/content.service` or
   `@/services/products/product.service`.
-- The repo's actual git root is the parent directory
-  (`/Users/willbardmloka/projects/zurie`), one level above `frontend/`. Husky
-  and lint-staged config live at that root, not inside `frontend/`. Keep
-  `frontend/.gitignore` covering `node_modules/`, `.next*/` etc. itself —
-  the root `.gitignore`'s anchored patterns (`/node_modules`) do not reach
-  into the `frontend/` subdirectory.
+- **The app used to live in a `frontend/` subdirectory one level below the git
+  root, with a duplicate (stale) copy of the app also sitting at the git root
+  to satisfy Vercel's project config (`.vercel/repo.json` has
+  `"directory": "."`).** Both are gone: the stale root duplicate was deleted,
+  and `frontend/`'s contents were moved up into the git root, so the app root
+  and the git root are now the same directory. If you see a reference to a
+  `frontend/` path anywhere (docs, scripts, imports), that's stale — the
+  repo root is the project root now. Husky and lint-staged config already
+  lived at this root and are unaffected.
