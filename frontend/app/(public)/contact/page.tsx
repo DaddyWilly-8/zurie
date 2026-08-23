@@ -303,6 +303,7 @@ export default async function ContactPage() {
                         key={social.platform}
                         href={social.url}
                         target="_blank"
+                        rel="noopener noreferrer"
                         style={{ textDecoration: "none" }}
                       >
                         <Box

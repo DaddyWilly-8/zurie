@@ -44,28 +44,89 @@ import { authService } from "@/services/auth/auth.service";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { CURRENCY_OPTIONS, type CurrencyCode } from "@/utils/currency";
 import { useThemeMode } from "@/providers/theme-provider";
+import { useAdminAuth } from "@/providers/admin-auth-provider";
 
 type AdminNavLink = {
   href: string;
   label: string;
   icon: typeof faHouse;
+  /**
+   * Permission keys from the catalog (doc §2.4) that unlock this link — the
+   * user needs at least one. Omit for links every logged-in admin can see.
+   */
+  permissions?: string[];
 };
 
 const DRAWER_WIDTH = 260;
 const MOBILE_DRAWER_WIDTH = "86vw";
 
 const links: AdminNavLink[] = [
-  { href: "/admin", label: "Overview", icon: faHouse },
-  { href: "/admin/products", label: "Products", icon: faBoxArchive },
-  { href: "/admin/categories", label: "Categories", icon: faLayerGroup },
-  { href: "/admin/orders", label: "Orders", icon: faBoxesPacking },
-  { href: "/admin/customers", label: "Customers", icon: faUsers },
-  { href: "/admin/enquiries", label: "Enquiries", icon: faCommentDots },
-  { href: "/admin/faq", label: "FAQ", icon: faCircleQuestion },
-  { href: "/admin/media", label: "Media", icon: faImages },
-  { href: "/admin/settings", label: "Settings", icon: faGear },
-  { href: "/admin/users", label: "Admin Users", icon: faUserShield },
-  { href: "/admin/activity", label: "Activity", icon: faChartLine },
+  {
+    href: "/admin",
+    label: "Overview",
+    icon: faHouse,
+    permissions: ["dashboard_view"],
+  },
+  {
+    href: "/admin/products",
+    label: "Products",
+    icon: faBoxArchive,
+    permissions: ["product_view"],
+  },
+  {
+    href: "/admin/categories",
+    label: "Categories",
+    icon: faLayerGroup,
+    permissions: ["category_view"],
+  },
+  {
+    href: "/admin/orders",
+    label: "Orders",
+    icon: faBoxesPacking,
+    permissions: ["order_view"],
+  },
+  {
+    href: "/admin/customers",
+    label: "Customers",
+    icon: faUsers,
+    permissions: ["customer_view"],
+  },
+  {
+    href: "/admin/enquiries",
+    label: "Enquiries",
+    icon: faCommentDots,
+    permissions: ["enquiry_view"],
+  },
+  {
+    href: "/admin/faq",
+    label: "FAQ",
+    icon: faCircleQuestion,
+    permissions: ["faq_create", "faq_update", "faq_delete"],
+  },
+  {
+    href: "/admin/media",
+    label: "Media",
+    icon: faImages,
+    permissions: ["media_view"],
+  },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    icon: faGear,
+    permissions: ["settings_manage"],
+  },
+  {
+    href: "/admin/users",
+    label: "Admin Users",
+    icon: faUserShield,
+    permissions: ["user_manage"],
+  },
+  {
+    href: "/admin/activity",
+    label: "Activity",
+    icon: faChartLine,
+    permissions: ["activity_view"],
+  },
 ];
 
 export const AdminShell = ({ children }: { children: React.ReactNode }) => {
@@ -77,6 +138,12 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const setCurrency = useCurrencyStore((state) => state.setCurrency);
   const refreshRates = useCurrencyStore((state) => state.refreshRates);
   const { mode, toggleMode } = useThemeMode();
+  const { user, hasAnyPermission } = useAdminAuth();
+
+  const visibleLinks = useMemo(
+    () => links.filter((link) => hasAnyPermission(link.permissions ?? [])),
+    [hasAnyPermission],
+  );
 
   useEffect(() => {
     void refreshRates();
@@ -113,7 +180,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
       </Toolbar>
       <Divider />
       <List sx={{ px: 1, py: 1 }}>
-        {links.map((link) => {
+        {visibleLinks.map((link) => {
           const selected =
             currentPath === link.href ||
             currentPath.startsWith(`${link.href}/`);
@@ -140,6 +207,16 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
         })}
       </List>
       <Box sx={{ mt: "auto", p: 2 }}>
+        {user ? (
+          <Box sx={{ mb: 1.5 }}>
+            <Typography variant="body2" fontWeight={600} noWrap>
+              {user.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {user.email}
+            </Typography>
+          </Box>
+        ) : null}
         <Button
           fullWidth
           color="inherit"

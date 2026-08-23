@@ -771,6 +771,9 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
+          // JSON.stringify doesn't escape "<" — without this, an admin-set
+          // siteName/logoUrl/socialLink containing "</script>" could break
+          // out of this tag and inject an arbitrary script.
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
@@ -778,7 +781,7 @@ export default async function HomePage() {
             url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
             logo: brand.logoUrl || "/images/logo.png",
             sameAs: (settings.contact?.socialLinks ?? []).map((s) => s.url),
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
     </Stack>

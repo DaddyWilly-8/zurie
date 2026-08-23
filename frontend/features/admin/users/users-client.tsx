@@ -60,8 +60,11 @@ import {
   faCalendar,
   faUser,
   faExclamationCircle,
+  faEye,
+  faEyeSlash,
 } from "@fortawesome/free-solid-svg-icons";
 import { userActions } from "./user-actions";
+import { ApiError } from "@/services/api/client";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -91,6 +94,22 @@ type FormErrors = {
   password?: string;
   roleName?: string;
   roleDescription?: string;
+};
+
+// Maps a 422 response's backend field names to this form's FormErrors keys.
+const fieldErrorsToFormErrors = (
+  fieldErrors: Record<string, string[]> | undefined,
+  keyMap: Record<string, keyof FormErrors>,
+): FormErrors => {
+  const result: FormErrors = {};
+  if (!fieldErrors) return result;
+  for (const [backendField, messages] of Object.entries(fieldErrors)) {
+    const formKey = keyMap[backendField];
+    if (formKey && messages.length) {
+      result[formKey] = messages.join(" ");
+    }
+  }
+  return result;
 };
 
 export const AdminUsersClient = () => {
@@ -136,6 +155,7 @@ export const AdminUsersClient = () => {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
+  const [showNewUserPassword, setShowNewUserPassword] = useState(false);
   const [newUserRoleIds, setNewUserRoleIds] = useState<number[]>([]);
   const [creatingUser, setCreatingUser] = useState(false);
   const [openUserDialog, setOpenUserDialog] = useState(false);
@@ -352,6 +372,15 @@ export const AdminUsersClient = () => {
       setOpenUserDialog(false);
       await refetch();
     } catch (error) {
+      if (error instanceof ApiError && error.fieldErrors) {
+        setUserFormErrors(
+          fieldErrorsToFormErrors(error.fieldErrors, {
+            name: "name",
+            email: "email",
+            password: "password",
+          }),
+        );
+      }
       const err = error as Error;
       setMessage(err?.message || "Failed to create user.");
       setMessageType("error");
@@ -377,6 +406,14 @@ export const AdminUsersClient = () => {
       setOpenRoleDialog(false);
       await loadRoles();
     } catch (error) {
+      if (error instanceof ApiError && error.fieldErrors) {
+        setRoleFormErrors(
+          fieldErrorsToFormErrors(error.fieldErrors, {
+            name: "roleName",
+            description: "roleDescription",
+          }),
+        );
+      }
       const err = error as Error;
       setMessage(err?.message || "Failed to create role.");
       setMessageType("error");
@@ -1769,7 +1806,7 @@ export const AdminUsersClient = () => {
             />
             <TextField
               label="Password *"
-              type="password"
+              type={showNewUserPassword ? "text" : "password"}
               value={newUserPassword}
               onChange={(e) => {
                 setNewUserPassword(e.target.value);
@@ -1791,6 +1828,28 @@ export const AdminUsersClient = () => {
               size={isMobile ? "small" : "medium"}
               error={!!userFormErrors.password}
               helperText={userFormErrors.password}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={
+                          showNewUserPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                        onClick={() => setShowNewUserPassword((prev) => !prev)}
+                        edge="end"
+                        size="small"
+                      >
+                        <FontAwesomeIcon
+                          icon={showNewUserPassword ? faEyeSlash : faEye}
+                        />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: getInputBackground(),

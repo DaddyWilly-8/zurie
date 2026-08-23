@@ -28,7 +28,7 @@ export type ApiProduct = {
     url: string;
     sortOrder: number;
   }>;
-  stockStatus: "IN_STOCK" | "OUT_OF_STOCK";
+  stockStatus: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
   quantity: number;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -76,12 +76,6 @@ export type DashboardOverview = {
   recentCustomers: ApiCustomer[];
 };
 
-// For backward compatibility with existing code that might expect lowStockProducts
-export type LegacyDashboardOverview = DashboardOverview & {
-  completedOrders: number;
-  lowStockProducts: Array<{ id: string; name: string; stock_count: number }>;
-};
-
 type ApiResponse = {
   success: boolean;
   data: DashboardOverview;
@@ -92,16 +86,6 @@ export const dashboardService = {
     const response = await apiClient.get<ApiResponse>(
       API_ENDPOINTS.settings.dashboardOverview,
     );
-
-    if (
-      response &&
-      typeof response === "object" &&
-      "data" in response &&
-      response.data
-    ) {
-      return response.data;
-    }
-
-    return response as unknown as DashboardOverview;
+    return response.data;
   },
 };

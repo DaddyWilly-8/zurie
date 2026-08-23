@@ -13,6 +13,21 @@ const axiosClient = axios.create({
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+/**
+ * Thrown on any failed request. `fieldErrors` carries the raw 422
+ * `errors` map (field name -> messages) so callers can show a message
+ * next to the specific input that failed, not just a flat toast.
+ */
+export class ApiError extends Error {
+  fieldErrors?: Record<string, string[]>;
+
+  constructor(message: string, fieldErrors?: Record<string, string[]>) {
+    super(message);
+    this.name = "ApiError";
+    this.fieldErrors = fieldErrors;
+  }
+}
+
 const getApiOrigin = () => {
   try {
     return new URL(
@@ -135,7 +150,7 @@ export const apiClient = {
         axiosError.response?.data?.error ||
         axiosError.message ||
         "Request failed";
-      throw new Error(message);
+      throw new ApiError(message, validationErrors);
     }
   },
 

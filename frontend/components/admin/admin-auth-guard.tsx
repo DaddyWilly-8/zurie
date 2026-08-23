@@ -2,7 +2,7 @@
 
 import { CircularProgress, Stack, Typography } from "@mui/material";
 import type { PropsWithChildren } from "react";
-import { useAdminAuth } from "@/hooks/use-admin-auth";
+import { useAdminAuth } from "@/providers/admin-auth-provider";
 
 export const AdminAuthGuard = ({ children }: PropsWithChildren) => {
   const { loading, user } = useAdminAuth();

@@ -175,8 +175,10 @@ export type AuthUser = {
   id: EntityId;
   name: string;
   email: string;
-  role: AdminRole;
-  permissions?: string[];
+  /** Role names this user holds — a user may hold more than one (doc §2). */
+  roles: string[];
+  /** Flat, de-duplicated permission keys across all roles (doc §2). */
+  permissions: string[];
 };
 
 export type AuthSession = {
