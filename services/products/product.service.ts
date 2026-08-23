@@ -411,6 +411,7 @@ const normalizeStorefrontProduct = (row: RawStorefrontProduct): Product => {
     name,
     description: String(row.description ?? row.shortDescription ?? ""),
     price: toNumber(row.salePrice ?? row.price, 0),
+    originalPrice: row.salePrice != null ? toNumber(row.price, 0) : undefined,
     category: (categoryObject ?? rawCategorySlug) as Product["category"],
     categoryId,
     categorySlug: rawCategorySlug,

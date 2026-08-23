@@ -32,6 +32,7 @@ export type Product = {
   name: string;
   description: string;
   price: number;
+  originalPrice?: number;
   category: ProductCategory;
   categoryLabel?: string;
   categoryId?: string | number;

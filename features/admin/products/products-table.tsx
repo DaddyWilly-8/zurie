@@ -493,7 +493,11 @@ export const ProductsTable = ({
                         }}
                       >
                         {formatBaseCurrencyInCurrency(
-                          item.price,
+                          item.salePrice ??
+                            item.sale_price ??
+                            item.compareAtPrice ??
+                            item.compare_at_price ??
+                            item.price,
                           currency,
                           rates,
                         )}
@@ -1022,7 +1026,11 @@ export const ProductsTable = ({
                         sx={{ fontSize: "0.85rem", color: getPriceColor() }}
                       >
                         {formatBaseCurrencyInCurrency(
-                          item.price,
+                          item.salePrice ??
+                            item.sale_price ??
+                            item.compareAtPrice ??
+                            item.compare_at_price ??
+                            item.price,
                           currency,
                           rates,
                         )}
@@ -1042,11 +1050,7 @@ export const ProductsTable = ({
                         }}
                       >
                         {formatBaseCurrencyInCurrency(
-                          item.salePrice ??
-                            item.sale_price ??
-                            item.compareAtPrice ??
-                            item.compare_at_price ??
-                            0,
+                          item.price,
                           currency,
                           rates,
                         )}

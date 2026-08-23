@@ -166,9 +166,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         >
           {product.name}
         </Typography>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-          {formatBaseCurrencyInCurrency(product.price, currency, rates)}
-        </Typography>
+        <Stack direction="row" spacing={0.75} alignItems="baseline">
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            {formatBaseCurrencyInCurrency(product.price, currency, rates)}
+          </Typography>
+          {product.originalPrice != null && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ textDecoration: "line-through" }}
+            >
+              {formatBaseCurrencyInCurrency(
+                product.originalPrice,
+                currency,
+                rates,
+              )}
+            </Typography>
+          )}
+        </Stack>
         <Typography
           component={Link}
           href={`/shop/${product.slug}`}

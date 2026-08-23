@@ -730,14 +730,33 @@ export const ProductDetailClient = ({
                 {product.name}
               </Typography>
 
-              <Typography
-                sx={{
-                  fontSize: { xs: "1.55rem", md: "1.9rem" },
-                  color: isDarkMode ? "#ffffff" : "inherit",
-                }}
-              >
-                {formatBaseCurrencyInCurrency(product.price, currency, rates)}
-              </Typography>
+              <Stack direction="row" spacing={1.25} alignItems="baseline">
+                <Typography
+                  sx={{
+                    fontSize: { xs: "1.55rem", md: "1.9rem" },
+                    color: isDarkMode ? "#ffffff" : "inherit",
+                  }}
+                >
+                  {formatBaseCurrencyInCurrency(product.price, currency, rates)}
+                </Typography>
+                {product.originalPrice != null && (
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "1rem", md: "1.2rem" },
+                      textDecoration: "line-through",
+                      color: isDarkMode
+                        ? "rgba(255,255,255,0.6)"
+                        : "text.secondary",
+                    }}
+                  >
+                    {formatBaseCurrencyInCurrency(
+                      product.originalPrice,
+                      currency,
+                      rates,
+                    )}
+                  </Typography>
+                )}
+              </Stack>
 
               <Typography
                 sx={{
