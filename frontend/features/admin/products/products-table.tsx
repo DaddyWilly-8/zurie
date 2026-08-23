@@ -23,6 +23,8 @@ import {
   Alert,
   Snackbar,
   IconButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import React, { useState } from "react";
 import Image from "next/image";
@@ -45,6 +47,72 @@ import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import type { AdminProduct } from "./types";
 
+type ProductStatus = "draft" | "published" | "archived";
+
+const STATUS_OPTIONS: ProductStatus[] = ["draft", "published", "archived"];
+
+// Clicking the status chip opens a menu to change it in place — replaces the
+// old status field on the create/edit form, which now always defaults new
+// products to "draft" and leaves status untouched on edit.
+const InlineStatusChip = ({
+  productId,
+  status,
+  onStatusChange,
+  getStatusColor,
+  size,
+  sx,
+}: {
+  productId: string;
+  status: ProductStatus;
+  onStatusChange: (id: string, status: ProductStatus) => Promise<boolean>;
+  getStatusColor: (
+    status: string,
+  ) => "success" | "warning" | "error" | "default";
+  size?: "small" | "medium";
+  sx?: Record<string, unknown>;
+}) => {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [updating, setUpdating] = useState(false);
+
+  const handleSelect = async (next: ProductStatus) => {
+    setAnchorEl(null);
+    if (next === status) return;
+    setUpdating(true);
+    await onStatusChange(productId, next);
+    setUpdating(false);
+  };
+
+  return (
+    <>
+      <Chip
+        label={updating ? "Updating…" : status}
+        size={size ?? "small"}
+        color={getStatusColor(status)}
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+        disabled={updating}
+        deleteIcon={<FontAwesomeIcon icon={faChevronDown} size="2xs" />}
+        onDelete={(event) => setAnchorEl(event.currentTarget as HTMLElement)}
+        sx={{ cursor: "pointer", ...sx }}
+      />
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
+        {STATUS_OPTIONS.map((option) => (
+          <MenuItem
+            key={option}
+            selected={option === status}
+            onClick={() => handleSelect(option)}
+          >
+            {option}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
+};
+
 type ProductsTableProps = {
   products: AdminProduct[];
   categoryOptions: Array<{ value: string; label: string }>;
@@ -53,6 +121,7 @@ type ProductsTableProps = {
   onDelete: (id: string) => void;
   onUploadImages: (id: string, files: File[]) => Promise<boolean>;
   onDeleteImage: (id: string, imageId: string) => Promise<boolean>;
+  onStatusChange: (id: string, status: ProductStatus) => Promise<boolean>;
 };
 
 export const ProductsTable = ({
@@ -63,6 +132,7 @@ export const ProductsTable = ({
   onDelete,
   onUploadImages,
   onDeleteImage,
+  onStatusChange,
 }: ProductsTableProps) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -349,10 +419,11 @@ export const ProductsTable = ({
                         >
                           {item.slug}
                         </Typography>
-                        <Chip
-                          label={item.status ?? "draft"}
-                          size="small"
-                          color={getStatusColor(item.status ?? "draft")}
+                        <InlineStatusChip
+                          productId={productId}
+                          status={(item.status ?? "draft") as ProductStatus}
+                          onStatusChange={onStatusChange}
+                          getStatusColor={getStatusColor}
                           sx={{
                             fontSize: "0.45rem",
                             height: 16,
@@ -911,10 +982,11 @@ export const ProductsTable = ({
                       >
                         {item.slug}
                       </Typography>
-                      <Chip
-                        label={item.status ?? "draft"}
-                        size="small"
-                        color={getStatusColor(item.status ?? "draft")}
+                      <InlineStatusChip
+                        productId={productId}
+                        status={(item.status ?? "draft") as ProductStatus}
+                        onStatusChange={onStatusChange}
+                        getStatusColor={getStatusColor}
                         sx={{
                           fontSize: "0.5rem",
                           height: 16,

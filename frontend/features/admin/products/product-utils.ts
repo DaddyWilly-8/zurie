@@ -233,6 +233,9 @@ export const canPublishProduct = (state: ProductFormState): boolean => {
 
 export const toCreatePayload = (state: ProductFormState) => ({
   ...toBasePayload(state),
+  // The form no longer exposes a status picker — every new product starts
+  // as a draft; publishing happens via the products list's status control.
+  status: "draft" as const,
   quantity: Math.max(0, Number(state.stockCount) || 0),
 });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -44,6 +45,9 @@ import {
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
+import { categoryService } from "@/services/categories/category.service";
+import { OrderDetailDialog } from "@/features/admin/orders/order-detail-dialog";
+import { ProductDetailDialog } from "@/features/admin/products/product-detail-dialog";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -286,6 +290,9 @@ export const AdminOverviewClient = () => {
   const canViewCustomers = hasPermission("customer_view");
   const canViewActivity = hasPermission("activity_view");
 
+  const [viewProductId, setViewProductId] = useState<string | null>(null);
+  const [viewOrderNumber, setViewOrderNumber] = useState<string | null>(null);
+
   const {
     data: overview = emptyOverview,
     isLoading,
@@ -299,6 +306,17 @@ export const AdminOverviewClient = () => {
   const recentOrders: ApiOrder[] = overview?.recentOrders ?? [];
   const recentProducts: ApiProduct[] = overview?.recentProducts ?? [];
   const recentCustomers: ApiCustomer[] = overview?.recentCustomers ?? [];
+
+  // Admin product responses only carry categoryId, never a nested category
+  // object (doc §3) — resolve names client-side against the category list.
+  const { data: categories = [] } = useQuery({
+    queryKey: ["admin-categories"],
+    queryFn: () => categoryService.listAdminCategories(),
+    enabled: canViewProducts,
+  });
+  const categoryNameById = new Map(
+    categories.map((c) => [String(c.id), c.name]),
+  );
 
   // Calculate additional metrics
   const totalRevenue = recentOrders.reduce(
@@ -816,12 +834,12 @@ export const AdminOverviewClient = () => {
                     {recentProducts.slice(0, 4).map((item) => (
                       <Stack
                         key={item.id}
-                        component={Link}
-                        href="/admin/products"
+                        onClick={() => setViewProductId(String(item.id))}
                         direction="row"
                         alignItems="center"
                         spacing={2}
                         sx={{
+                          cursor: "pointer",
                           textDecoration: "none",
                           color: "inherit",
                           p: 1.5,
@@ -883,6 +901,16 @@ export const AdminOverviewClient = () => {
                           >
                             {item.name}
                           </Typography>
+                          {categoryNameById.get(String(item.categoryId)) && (
+                            <Typography
+                              sx={{
+                                color: getSecondaryTextColor(),
+                                fontSize: "0.7rem",
+                              }}
+                            >
+                              {categoryNameById.get(String(item.categoryId))}
+                            </Typography>
+                          )}
                           <Stack
                             direction="row"
                             spacing={1}
@@ -1026,12 +1054,12 @@ export const AdminOverviewClient = () => {
                     {recentOrders.slice(0, 4).map((order) => (
                       <Stack
                         key={order.id}
-                        component={Link}
-                        href="/admin/orders"
+                        onClick={() => setViewOrderNumber(order.orderNumber)}
                         direction="row"
                         alignItems="center"
                         spacing={2}
                         sx={{
+                          cursor: "pointer",
                           textDecoration: "none",
                           color: "inherit",
                           p: 1.5,
@@ -1314,6 +1342,17 @@ export const AdminOverviewClient = () => {
           </Box>
         </Paper>
       )}
+
+      <ProductDetailDialog
+        productId={viewProductId}
+        onClose={() => setViewProductId(null)}
+        isDarkMode={isDarkMode}
+      />
+      <OrderDetailDialog
+        orderNumber={viewOrderNumber}
+        onClose={() => setViewOrderNumber(null)}
+        isDarkMode={isDarkMode}
+      />
     </Stack>
   );
 };

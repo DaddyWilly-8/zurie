@@ -23,10 +23,13 @@ import {
   Button,
   Alert,
   Snackbar,
+  IconButton,
 } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useState } from "react";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
+import { OrderDetailDialog } from "./order-detail-dialog";
 import type { AdminOrderRow } from "./types";
 
 type Props = {
@@ -99,6 +102,9 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
   const [pendingOrderId, setPendingOrderId] = useState<string>("");
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingCurrentStatus, setPendingCurrentStatus] = useState<string>("");
+
+  // View-order-detail dialog state
+  const [viewOrderNumber, setViewOrderNumber] = useState<string | null>(null);
 
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -277,16 +283,25 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
                         {new Date(row.created_at).toLocaleDateString()}
                       </Typography>
                     </Box>
-                    <Chip
-                      label={STATUS_LABELS[row.status] || row.status}
-                      size="small"
-                      color={STATUS_COLORS[row.status] || "default"}
-                      sx={{
-                        fontSize: "0.55rem",
-                        fontWeight: 500,
-                        minWidth: 60,
-                      }}
-                    />
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <Chip
+                        label={STATUS_LABELS[row.status] || row.status}
+                        size="small"
+                        color={STATUS_COLORS[row.status] || "default"}
+                        sx={{
+                          fontSize: "0.55rem",
+                          fontWeight: 500,
+                          minWidth: 60,
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        aria-label="View order details"
+                        onClick={() => setViewOrderNumber(row.order_number)}
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
                   </Stack>
 
                   <Divider sx={{ borderColor: getBorderColor() }} />
@@ -473,6 +488,13 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
           isDarkMode={isDarkMode}
         />
 
+        {/* Order Detail Dialog */}
+        <OrderDetailDialog
+          orderNumber={viewOrderNumber}
+          onClose={() => setViewOrderNumber(null)}
+          isDarkMode={isDarkMode}
+        />
+
         {/* Snackbar for errors/success */}
         <Snackbar
           open={snackbarOpen}
@@ -566,6 +588,13 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1} alignItems="center">
+                      <IconButton
+                        size="small"
+                        aria-label="View order details"
+                        onClick={() => setViewOrderNumber(row.order_number)}
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
                       {!isTerminal && hasValidTransition && (
                         <Button
                           variant="contained"
@@ -669,6 +698,13 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
         isDarkMode={isDarkMode}
       />
 
+      {/* Order Detail Dialog */}
+      <OrderDetailDialog
+        orderNumber={viewOrderNumber}
+        onClose={() => setViewOrderNumber(null)}
+        isDarkMode={isDarkMode}
+      />
+
       {/* Snackbar for errors/success */}
       <Snackbar
         open={snackbarOpen}
@@ -746,6 +782,7 @@ const ActionConfirmationDialog = ({
           sx={{ fontWeight: 600, fontSize: "0.8rem" }}
         />
         <Typography
+          component="span"
           variant="h6"
           fontWeight={600}
           sx={{ color: getTextColor() }}

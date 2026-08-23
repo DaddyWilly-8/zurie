@@ -5,7 +5,6 @@ import {
   MenuItem,
   Stack,
   TextField,
-  FormHelperText,
   Alert,
   Typography,
 } from "@mui/material";
@@ -111,9 +110,6 @@ export const ProductFields = ({
 
   const hasImages =
     state.imageUrlsText.trim().length > 0 || state.existingImageIds.length > 0;
-  const isStatusError =
-    errors?.status === "Product must have at least one image to be published" ||
-    errors?.status === "Product must have stock to be published";
 
   return (
     <Grid container spacing={2.5}>
@@ -276,43 +272,6 @@ export const ProductFields = ({
             </MenuItem>
           ))}
         </TextField>
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <TextField
-          label="Status"
-          select
-          value={state.status}
-          onChange={(event) =>
-            onChange(
-              "status",
-              event.target.value as ProductFieldsProps["state"]["status"],
-            )
-          }
-          fullWidth
-          variant="outlined"
-          error={isStatusError}
-          helperText={isStatusError ? getError("status") : ""}
-          sx={{
-            bgcolor: "background.paper",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 0,
-            },
-          }}
-        >
-          <MenuItem value="draft">Draft</MenuItem>
-          <MenuItem value="published">Published</MenuItem>
-          <MenuItem value="archived">Archived</MenuItem>
-        </TextField>
-        {state.status === "published" && !hasImages && (
-          <FormHelperText error sx={{ mt: 0.5 }}>
-            Please add images before publishing
-          </FormHelperText>
-        )}
-        {state.status === "published" && state.stockCount <= 0 && (
-          <FormHelperText error sx={{ mt: 0.5 }}>
-            Please add stock before publishing
-          </FormHelperText>
-        )}
       </Grid>
       <Grid size={{ xs: 12 }}>
         <AdminField

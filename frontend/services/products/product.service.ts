@@ -130,6 +130,14 @@ export const productService = {
     );
   },
 
+  /** Partial PATCH /products/{id} — status only, for the list's inline status changer. */
+  updateProductStatus(id: string, status: "draft" | "published" | "archived") {
+    return apiClient.patch<{ success: boolean }>(
+      API_ENDPOINTS.products.byId(id),
+      { status },
+    );
+  },
+
   deleteProduct(id: string) {
     return apiClient.delete<{ success: boolean }>(
       API_ENDPOINTS.products.byId(id),

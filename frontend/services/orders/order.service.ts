@@ -49,8 +49,10 @@ export type OrderListItem = {
   customerName: string;
   totalAmount: number;
   createdAt: string;
-  customer_phone: string;
-  whatsapp_number: string;
+  // camelCase per doc §4 / "Changes from v2.17" — these briefly shipped as
+  // snake_case and were fixed; don't reintroduce customer_phone/whatsapp_number.
+  customerPhone: string;
+  whatsappNumber: string;
 };
 
 export type OrderListResponse = {

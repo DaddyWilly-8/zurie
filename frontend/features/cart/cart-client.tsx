@@ -69,11 +69,11 @@ export const CartClient = () => {
       setOrderNumber(response.data.orderNumber);
       clearCart();
     } catch (err) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ??
-        "Something went wrong placing your order. Please try again.";
-      setError(message);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong placing your order. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }

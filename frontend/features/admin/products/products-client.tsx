@@ -105,6 +105,25 @@ export const AdminProductsClient = () => {
     }
   };
 
+  const changeProductStatus = async (
+    id: string,
+    status: "draft" | "published" | "archived",
+  ) => {
+    try {
+      await productActions.updateStatus(id, status);
+      setMessageType("success");
+      setMessage("Product status updated.");
+      await refetch();
+      return true;
+    } catch (error) {
+      setMessageType("error");
+      setMessage(
+        error instanceof Error ? error.message : "Failed to update status.",
+      );
+      return false;
+    }
+  };
+
   const duplicateProduct = async (id: string) => {
     try {
       await productActions.duplicate(id);
@@ -305,6 +324,7 @@ export const AdminProductsClient = () => {
               onDelete={deleteProduct}
               onUploadImages={uploadProductImages}
               onDeleteImage={deleteProductImage}
+              onStatusChange={changeProductStatus}
             />
             {filteredProducts.length > PRODUCTS_PAGE_SIZE ? (
               <Stack direction="row" justifyContent="flex-end">

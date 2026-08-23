@@ -2,6 +2,7 @@ export { AdminProductsClient } from "./products-client";
 export { productActions } from "./product-actions";
 export { ProductCreateDialog } from "./product-create-dialog";
 export { ProductEditDialog } from "./product-edit-dialog";
+export { ProductDetailDialog } from "./product-detail-dialog";
 export { ProductFields } from "./product-fields";
 export { emptyFormState, toFormState } from "./product-utils";
 export { ProductsTable } from "./products-table";

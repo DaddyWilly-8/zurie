@@ -96,6 +96,10 @@ export const productActions = {
     return productService.updateInventory(id, toInventoryPayload(form));
   },
 
+  async updateStatus(id: string, status: "draft" | "published" | "archived") {
+    return productService.updateProductStatus(id, status);
+  },
+
   async remove(id: string) {
     return productService.deleteProduct(id);
   },
