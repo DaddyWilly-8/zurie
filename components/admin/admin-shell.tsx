@@ -91,24 +91,24 @@ const links: AdminNavLink[] = [
     icon: faUsers,
     permissions: ["customer_view"],
   },
-  {
-    href: "/admin/enquiries",
-    label: "Enquiries",
-    icon: faCommentDots,
-    permissions: ["enquiry_view"],
-  },
-  {
-    href: "/admin/faq",
-    label: "FAQ",
-    icon: faCircleQuestion,
-    permissions: ["faq_create", "faq_update", "faq_delete"],
-  },
-  {
-    href: "/admin/media",
-    label: "Media",
-    icon: faImages,
-    permissions: ["media_view"],
-  },
+  // {
+  //   href: "/admin/enquiries",
+  //   label: "Enquiries",
+  //   icon: faCommentDots,
+  //   permissions: ["enquiry_view"],
+  // },
+  // {
+  //   href: "/admin/faq",
+  //   label: "FAQ",
+  //   icon: faCircleQuestion,
+  //   permissions: ["faq_create", "faq_update", "faq_delete"],
+  // },
+  // {
+  //   href: "/admin/media",
+  //   label: "Media",
+  //   icon: faImages,
+  //   permissions: ["media_view"],
+  // },
   {
     href: "/admin/settings",
     label: "Settings",
