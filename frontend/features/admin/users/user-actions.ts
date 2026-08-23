@@ -38,48 +38,11 @@ export const userActions = {
     return userService.createRole(payload);
   },
 
-  async updateRolePermissions(roleId: number, permissionIds: number[]) {
-    try {
-      // Try to sync all permissions at once (replace all)
-      return await userService.syncRolePermissions(roleId, permissionIds);
-    } catch (error) {
-      console.warn("Sync failed, trying individual attachments:", error);
-
-      // Fallback: attach one by one
-      const results = [];
-      for (const permissionId of permissionIds) {
-        try {
-          const result = await userService.attachPermissionToRole(
-            roleId,
-            permissionId,
-          );
-          results.push(result);
-        } catch (err) {
-          console.error(`Failed to attach permission ${permissionId}:`, err);
-        }
-      }
-      return results;
-    }
-  },
-
-  // NEW: Remove a permission from a role
-  async removePermissionFromRole(roleId: number, permissionId: number) {
-    try {
-      return await userService.removePermissionFromRole(roleId, permissionId);
-    } catch (error) {
-      console.error(
-        `Failed to remove permission ${permissionId} from role ${roleId}:`,
-        error,
-      );
-      throw error;
-    }
+  updateRolePermissions(roleId: number, permissionIds: number[]) {
+    return userService.syncRolePermissions(roleId, permissionIds);
   },
 
   attachRoleToUser(userId: string, roleId: number) {
     return userService.attachRoleToUser(userId, roleId);
-  },
-
-  attachPermissionToRole(roleId: number, permissionId: number) {
-    return userService.attachPermissionToRole(roleId, permissionId);
   },
 };

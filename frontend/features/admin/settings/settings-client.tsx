@@ -101,13 +101,14 @@ export const AdminSettingsClient = () => {
         siteName: brand.siteName,
         tagline: brand.tagline,
       });
-      setBrand((prev) => ({
-        ...prev,
-        ...(updated as unknown as { data?: BrandSettings }).data,
-      }));
+      setBrand(updated);
       await afterSave("Brand settings");
-    } catch {
-      setMessage("Failed to save brand settings.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save brand settings.",
+      );
       setMessageType("error");
     } finally {
       setSaving(false);
@@ -119,8 +120,12 @@ export const AdminSettingsClient = () => {
     try {
       await contentService.updateContactSettings(contact);
       await afterSave("Contact settings");
-    } catch {
-      setMessage("Failed to save contact settings.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save contact settings.",
+      );
       setMessageType("error");
     } finally {
       setSaving(false);
@@ -137,8 +142,12 @@ export const AdminSettingsClient = () => {
         heroCtaUrl: homepage.heroCtaUrl,
       });
       await afterSave("Homepage settings");
-    } catch {
-      setMessage("Failed to save homepage settings.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save homepage settings.",
+      );
       setMessageType("error");
     } finally {
       setSaving(false);
@@ -150,8 +159,10 @@ export const AdminSettingsClient = () => {
     try {
       await contentService.updatePoliciesSettings(policies);
       await afterSave("Policies");
-    } catch {
-      setMessage("Failed to save policies.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Failed to save policies.",
+      );
       setMessageType("error");
     } finally {
       setSaving(false);
@@ -166,15 +177,13 @@ export const AdminSettingsClient = () => {
   };
 
   const uploadLogo = async (file: File) => {
-    const response = await contentService.uploadBrandLogo(file);
-    const updated = response.data;
+    const updated = await contentService.uploadBrandLogo(file);
     setBrand(updated);
     return updated.logoUrl ?? "";
   };
 
   const uploadHeroImage = async (file: File) => {
-    const response = await contentService.uploadHomepageHeroImage(file);
-    const updated = response.data;
+    const updated = await contentService.uploadHomepageHeroImage(file);
     setHomepage(updated);
     return updated.heroImageUrl ?? "";
   };

@@ -66,8 +66,12 @@ export const AdminImageUploader = ({
         uploaded.push(await onUpload(file));
       }
       onChange([...(images || []), ...uploaded]);
-    } catch {
-      setError("Upload failed. Please try again.");
+    } catch (uploadError) {
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Upload failed. Please try again.",
+      );
     } finally {
       setUploading(false);
     }

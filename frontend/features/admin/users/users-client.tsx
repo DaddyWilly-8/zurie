@@ -253,43 +253,13 @@ export const AdminUsersClient = () => {
   ) => {
     setSavingPermissions(true);
     try {
-      const originalRole = roles.find((r) => r.id === roleId);
-      const originalPerms = originalRole?.permissions || [];
-
-      const permissionsToAdd = permissionKeys.filter(
-        (key) => !originalPerms.includes(key),
-      );
-      const permissionsToRemove = originalPerms.filter(
-        (key) => !permissionKeys.includes(key),
-      );
-
-      const allPermissions = permissions;
-
-      for (const permissionKey of permissionsToRemove) {
-        const permission = allPermissions.find((p) => p.key === permissionKey);
-        if (permission) {
-          try {
-            await userActions.removePermissionFromRole(roleId, permission.id);
-          } catch (error) {
-            console.warn(
-              `Could not remove permission ${permissionKey}:`,
-              error,
-            );
-          }
-        }
-      }
-
-      const permissionIds = permissionsToAdd
-        .map((key) => allPermissions.find((p) => p.key === key)?.id)
+      const permissionIds = permissionKeys
+        .map((key) => permissions.find((p) => p.key === key)?.id)
         .filter((id): id is number => id !== undefined);
 
-      if (permissionIds.length > 0) {
-        await userActions.updateRolePermissions(roleId, permissionIds);
-      }
+      await userActions.updateRolePermissions(roleId, permissionIds);
 
-      setMessage(
-        `Updated ${permissionsToAdd.length} permission(s) added, ${permissionsToRemove.length} removed.`,
-      );
+      setMessage("Role permissions updated.");
       setMessageType("success");
       await loadRoles();
 

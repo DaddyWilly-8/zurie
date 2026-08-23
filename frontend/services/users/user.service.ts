@@ -125,35 +125,25 @@ export const userService = {
     );
   },
 
-  // NEW: Sync all permissions for a role (replaces all existing permissions)
-  syncRolePermissions(roleId: number, permissionIds: number[]) {
-    // If the backend supports PUT to replace all permissions
+  /**
+   * Full replacement of a role's permission set — PATCH /admin/roles/{id}
+   * (doc §2.4). Not additive: any permission not in `permissionIds` is
+   * revoked. Send `[]` to revoke every permission from the role.
+   */
+  syncRolePermissions(roleId: number, permissionIds: number[]): Promise<Role> {
     return apiClient
-      .put<{ success: boolean }>(
-        API_ENDPOINTS.roles.updatePermissions(String(roleId)),
-        { permissionIds },
-      )
-      .catch(() => {
-        // If PUT fails, try POST one by one
-        return Promise.all(
-          permissionIds.map((permissionId) =>
-            apiClient.post<{ success: boolean }>(
-              API_ENDPOINTS.roles.attachPermission(String(roleId)),
-              { permissionId },
-            ),
-          ),
-        );
-      });
-  },
-
-  // NEW: Remove a permission from a role (if DELETE endpoint exists)
-  removePermissionFromRole(roleId: number, permissionId: number) {
-    return apiClient.delete<{ success: boolean }>(
-      API_ENDPOINTS.roles.detachPermission(
-        String(roleId),
-        String(permissionId),
-      ),
-    );
+      .patch<{ data: RoleApi }>(API_ENDPOINTS.adminRoles.byId(String(roleId)), {
+        permissionIds,
+      })
+      .then((res) => ({
+        id: res.data.id,
+        name: res.data.name,
+        description: res.data.description || "",
+        permissions: res.data.permissions || [],
+        users_count: res.data.users_count || 0,
+        created_at: res.data.created_at,
+        updated_at: res.data.updated_at,
+      }));
   },
 
   createUser(payload: {

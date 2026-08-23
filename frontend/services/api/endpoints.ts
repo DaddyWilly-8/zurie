@@ -73,6 +73,7 @@ export const API_ENDPOINTS = {
   },
   adminRoles: {
     list: "/admin/roles",
+    byId: (id: string) => `/admin/roles/${id}`,
   },
   adminPermissions: {
     list: "/admin/permissions",
@@ -80,9 +81,6 @@ export const API_ENDPOINTS = {
   roles: {
     create: "/roles",
     attachPermission: (id: string) => `/roles/${id}/permissions`,
-    updatePermissions: (id: string) => `/roles/${id}/permissions`,
-    detachPermission: (id: string, permissionId: string) =>
-      `/roles/${id}/permissions/${permissionId}`,
   },
   adminUsers: {
     list: "/admin/users",

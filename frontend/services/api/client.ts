@@ -112,6 +112,7 @@ export const apiClient = {
       const axiosError = error as AxiosError<{
         error?: string;
         message?: string;
+        errors?: Record<string, string[]>;
       }>;
 
       if (axiosError.response?.status === 419 && needsCsrf) {
@@ -123,7 +124,13 @@ export const apiClient = {
         return await execute();
       }
 
+      const validationErrors = axiosError.response?.data?.errors;
+      const validationMessage = validationErrors
+        ? Object.values(validationErrors).flat().join(" ")
+        : undefined;
+
       const message =
+        validationMessage ||
         axiosError.response?.data?.message ||
         axiosError.response?.data?.error ||
         axiosError.message ||
