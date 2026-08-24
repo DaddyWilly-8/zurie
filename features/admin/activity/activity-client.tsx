@@ -64,10 +64,13 @@ type ActivityLogRow = {
   description: string;
   subjectType: string | null;
   subjectId: number | null;
-  causerId: number;
-  causerName: string;
+  causerId: number | null;
+  causerName: string | null;
   createdAt: string;
 };
+
+const causerInitial = (name: string | null) => (name ? name.charAt(0) : "?");
+const causerDisplayName = (name: string | null) => name || "Guest";
 
 type ActivityServiceResponse = {
   data: ActivityLogRow[];
@@ -272,7 +275,7 @@ const ActivityDetailDialog = ({
                   color: "#fff",
                 }}
               >
-                {entry.causerName.charAt(0)}
+                {causerInitial(entry.causerName)}
               </Avatar>
               <Box>
                 <Typography
@@ -282,7 +285,7 @@ const ActivityDetailDialog = ({
                     fontSize: "0.95rem",
                   }}
                 >
-                  {entry.causerName}
+                  {causerDisplayName(entry.causerName)}
                 </Typography>
               </Box>
             </Stack>
@@ -575,7 +578,7 @@ const MobileActivityCard = ({
                 fontWeight: 600,
               }}
             >
-              {entry.causerName.charAt(0)}
+              {causerInitial(entry.causerName)}
             </Avatar>
             <Box>
               <Typography
@@ -585,7 +588,7 @@ const MobileActivityCard = ({
                   fontSize: "0.85rem",
                 }}
               >
-                {entry.causerName}
+                {causerDisplayName(entry.causerName)}
               </Typography>
               <Typography
                 sx={{
@@ -759,7 +762,7 @@ export const AdminActivityClient = () => {
       filtered = filtered.filter(
         (entry: ActivityLogRow) =>
           entry.description.toLowerCase().includes(term) ||
-          entry.causerName.toLowerCase().includes(term) ||
+          (entry.causerName ?? "guest").toLowerCase().includes(term) ||
           entry.logName.toLowerCase().includes(term) ||
           entry.event.toLowerCase().includes(term),
       );
@@ -1019,7 +1022,7 @@ export const AdminActivityClient = () => {
                               fontWeight: 600,
                             }}
                           >
-                            {entry.causerName.charAt(0)}
+                            {causerInitial(entry.causerName)}
                           </Avatar>
                           <Typography
                             sx={{
@@ -1028,7 +1031,7 @@ export const AdminActivityClient = () => {
                               fontSize: "0.85rem",
                             }}
                           >
-                            {entry.causerName}
+                            {causerDisplayName(entry.causerName)}
                           </Typography>
                         </Stack>
                       </TableCell>

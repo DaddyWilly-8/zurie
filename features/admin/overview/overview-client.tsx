@@ -48,6 +48,7 @@ import { useAdminAuth } from "@/providers/admin-auth-provider";
 import { categoryService } from "@/services/categories/category.service";
 import { OrderDetailDialog } from "@/features/admin/orders/order-detail-dialog";
 import { ProductDetailDialog } from "@/features/admin/products/product-detail-dialog";
+import { CustomerDetailDialog } from "@/features/admin/customers/customer-detail-dialog";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -292,6 +293,7 @@ export const AdminOverviewClient = () => {
 
   const [viewProductId, setViewProductId] = useState<string | null>(null);
   const [viewOrderNumber, setViewOrderNumber] = useState<string | null>(null);
+  const [viewCustomerId, setViewCustomerId] = useState<string | null>(null);
 
   const {
     data: overview = emptyOverview,
@@ -1226,10 +1228,12 @@ export const AdminOverviewClient = () => {
                     {recentCustomers.slice(0, 4).map((customer) => (
                       <Stack
                         key={customer.id}
+                        onClick={() => setViewCustomerId(String(customer.id))}
                         direction="row"
                         alignItems="center"
                         spacing={2}
                         sx={{
+                          cursor: "pointer",
                           p: 1.5,
                           borderRadius: 1.5,
                           border: `1px solid transparent`,
@@ -1352,6 +1356,10 @@ export const AdminOverviewClient = () => {
         orderNumber={viewOrderNumber}
         onClose={() => setViewOrderNumber(null)}
         isDarkMode={isDarkMode}
+      />
+      <CustomerDetailDialog
+        customerId={viewCustomerId}
+        onClose={() => setViewCustomerId(null)}
       />
     </Stack>
   );
