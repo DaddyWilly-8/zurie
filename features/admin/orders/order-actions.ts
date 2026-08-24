@@ -42,4 +42,8 @@ export const orderActions = {
   updateStatus(orderNumber: string, nextStatus: string) {
     return orderService.updateOrderStatus(orderNumber, nextStatus);
   },
+
+  cancel(orderNumber: string) {
+    return orderService.cancelOrder(orderNumber);
+  },
 };

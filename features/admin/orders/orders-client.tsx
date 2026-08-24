@@ -52,6 +52,11 @@ export const AdminOrdersClient = () => {
     await refetch();
   };
 
+  const cancelOrder = async (orderNumber: string) => {
+    await orderActions.cancel(orderNumber);
+    await refetch();
+  };
+
   useEffect(() => {
     setPage(1);
   }, [search, status]);
@@ -99,7 +104,11 @@ export const AdminOrdersClient = () => {
               Loading orders...
             </Typography>
           ) : (
-            <OrdersTable rows={rows} onStatusChange={updateStatus} />
+            <OrdersTable
+              rows={rows}
+              onStatusChange={updateStatus}
+              onCancelOrder={cancelOrder}
+            />
           )}
 
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
