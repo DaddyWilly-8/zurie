@@ -1,9 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Popover, Stack, TextField, Button, Typography } from "@mui/material";
+import {
+  Popover,
+  Stack,
+  TextField,
+  Button,
+  Typography,
+  InputAdornment,
+} from "@mui/material";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
-import { formatBaseCurrencyInCurrency } from "@/utils/currency";
+import {
+  convertFromBaseCurrency,
+  convertToBaseCurrency,
+  formatBaseCurrencyInCurrency,
+} from "@/utils/currency";
 
 type DiscountPopoverProps = {
   productId: string;
@@ -26,34 +37,45 @@ export const DiscountPopover = ({
   const rates = useCurrencyStore((state) => state.rates);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [value, setValue] = useState(
-    salePrice != null ? String(salePrice) : "",
-  );
+  // Input is always shown/typed in the admin's currently selected display
+  // currency, then converted to the base currency (TZS) before it's sent
+  // anywhere — same convention as the price/buyingPrice/compareAt fields
+  // in product-fields.tsx. `price` and `salePrice` here are always TZS.
+  const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (anchorEl) {
-      setValue(salePrice != null ? String(salePrice) : "");
+      setValue(
+        salePrice != null
+          ? String(convertFromBaseCurrency(salePrice, currency, rates))
+          : "",
+      );
       setError(null);
     }
-  }, [anchorEl, salePrice]);
+  }, [anchorEl, salePrice, currency, rates]);
 
+  // Parses what the admin typed (in `currency`), converts it to TZS, and
+  // validates the TZS amount against `price` (already TZS) — never compare
+  // across currencies.
   const validate = (raw: string): number | null | undefined => {
     const trimmed = raw.trim();
     if (trimmed === "") return null;
 
-    const num = Number(trimmed);
-    if (!Number.isFinite(num) || num < 0) {
+    const typed = Number(trimmed);
+    if (!Number.isFinite(typed) || typed < 0) {
       setError("Enter a valid non-negative amount");
       return undefined;
     }
-    if (num > price) {
+
+    const inBaseCurrency = convertToBaseCurrency(typed, currency, rates);
+    if (inBaseCurrency > price) {
       setError("Sale price cannot be greater than price");
       return undefined;
     }
     setError(null);
-    return num;
+    return inBaseCurrency;
   };
 
   const handleSave = async () => {
@@ -95,6 +117,11 @@ export const DiscountPopover = ({
             error={Boolean(error)}
             helperText={error ?? "Leave empty to remove discount"}
             disabled={saving}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">{currency}</InputAdornment>
+              ),
+            }}
           />
           <Stack direction="row" spacing={1}>
             <Button
