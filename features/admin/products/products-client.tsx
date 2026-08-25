@@ -124,20 +124,20 @@ export const AdminProductsClient = () => {
     }
   };
 
-  const changeProductDiscount = async (
+  const changeProductPricing = async (
     id: string,
-    salePrice: number | null,
+    pricing: { price: number; salePrice: number | null },
   ) => {
     try {
-      await productActions.updateDiscount(id, salePrice);
+      await productActions.updatePricing(id, pricing);
       setMessageType("success");
-      setMessage(salePrice == null ? "Discount removed." : "Discount updated.");
+      setMessage("Pricing updated.");
       await refetch();
       return true;
     } catch (error) {
       setMessageType("error");
       setMessage(
-        error instanceof Error ? error.message : "Failed to update discount.",
+        error instanceof Error ? error.message : "Failed to update pricing.",
       );
       return false;
     }
@@ -344,7 +344,7 @@ export const AdminProductsClient = () => {
               onUploadImages={uploadProductImages}
               onDeleteImage={deleteProductImage}
               onStatusChange={changeProductStatus}
-              onDiscountChange={changeProductDiscount}
+              onPricingChange={changeProductPricing}
             />
             {filteredProducts.length > PRODUCTS_PAGE_SIZE ? (
               <Stack direction="row" justifyContent="flex-end">

@@ -39,13 +39,16 @@ import {
   faStar,
   faFire,
   faCircle,
+  faCircleCheck,
+  faCircleXmark,
   faExclamationTriangle,
   faChevronDown,
   faCopy,
+  faTag,
 } from "@fortawesome/free-solid-svg-icons";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
-import { DiscountPopover } from "./discount-popover";
+import { PricingPopover, type PricingUpdate } from "./pricing-popover";
 import type { AdminProduct } from "./types";
 
 type ProductStatus = "draft" | "published" | "archived";
@@ -123,7 +126,7 @@ type ProductsTableProps = {
   onUploadImages: (id: string, files: File[]) => Promise<boolean>;
   onDeleteImage: (id: string, imageId: string) => Promise<boolean>;
   onStatusChange: (id: string, status: ProductStatus) => Promise<boolean>;
-  onDiscountChange: (id: string, salePrice: number | null) => Promise<boolean>;
+  onPricingChange: (id: string, pricing: PricingUpdate) => Promise<boolean>;
 };
 
 const getDiscountValue = (item: AdminProduct): number | null =>
@@ -142,7 +145,7 @@ export const ProductsTable = ({
   onUploadImages,
   onDeleteImage,
   onStatusChange,
-  onDiscountChange,
+  onPricingChange,
 }: ProductsTableProps) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -224,6 +227,16 @@ export const ProductsTable = ({
 
   const getStockQuantity = (item: AdminProduct) => {
     return item.quantity ?? item.stockCount ?? item.stock_count ?? 0;
+  };
+
+  const getStockIcon = (item: AdminProduct) => {
+    const status =
+      item.stockStatus ??
+      item.stock_status ??
+      (item.in_stock ? "IN_STOCK" : "OUT_OF_STOCK");
+    if (status === "LOW_STOCK") return faExclamationTriangle;
+    if (status === "OUT_OF_STOCK") return faCircleXmark;
+    return faCircleCheck;
   };
 
   const getProductImageUrls = (item: AdminProduct) => {
@@ -419,28 +432,15 @@ export const ProductsTable = ({
                       >
                         {item.name}
                       </Typography>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: getSecondaryTextColor(),
-                            fontSize: "0.55rem",
-                          }}
-                        >
-                          {item.slug}
-                        </Typography>
-                        <InlineStatusChip
-                          productId={productId}
-                          status={(item.status ?? "draft") as ProductStatus}
-                          onStatusChange={onStatusChange}
-                          getStatusColor={getStatusColor}
-                          sx={{
-                            fontSize: "0.45rem",
-                            height: 16,
-                            fontWeight: 500,
-                          }}
-                        />
-                      </Stack>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: getSecondaryTextColor(),
+                          fontSize: "0.55rem",
+                        }}
+                      >
+                        {item.slug}
+                      </Typography>
                     </Box>
                     <IconButton
                       size="small"
@@ -463,6 +463,30 @@ export const ProductsTable = ({
 
                   {/* Quick Info */}
                   <Grid container spacing={1}>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: getSecondaryTextColor(),
+                          fontSize: "0.55rem",
+                        }}
+                      >
+                        Status
+                      </Typography>
+                      <Box sx={{ mt: 0.3 }}>
+                        <InlineStatusChip
+                          productId={productId}
+                          status={(item.status ?? "draft") as ProductStatus}
+                          onStatusChange={onStatusChange}
+                          getStatusColor={getStatusColor}
+                          sx={{
+                            fontSize: "0.6rem",
+                            height: 20,
+                            fontWeight: 500,
+                          }}
+                        />
+                      </Box>
+                    </Grid>
                     <Grid size={{ xs: 6 }}>
                       <Typography
                         variant="caption"
@@ -494,28 +518,48 @@ export const ProductsTable = ({
                       >
                         Price
                       </Typography>
-                      <DiscountPopover
+                      <PricingPopover
                         productId={productId}
                         price={item.price}
                         salePrice={getDiscountValue(item)}
-                        onSave={onDiscountChange}
+                        onSave={onPricingChange}
                         trigger={(open) => (
-                          <Typography
-                            variant="body2"
-                            onClick={open}
-                            sx={{
-                              color: getTextColor(),
-                              fontWeight: 600,
-                              fontSize: "0.8rem",
-                              cursor: "pointer",
-                            }}
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={0.5}
                           >
-                            {formatBaseCurrencyInCurrency(
-                              getDiscountValue(item) ?? item.price,
-                              currency,
-                              rates,
-                            )}
-                          </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: getTextColor(),
+                                fontWeight: 600,
+                                fontSize: "0.8rem",
+                              }}
+                            >
+                              {formatBaseCurrencyInCurrency(
+                                getDiscountValue(item) ?? item.price,
+                                currency,
+                                rates,
+                              )}
+                            </Typography>
+                            <Tooltip title="Edit pricing">
+                              <IconButton
+                                component="span"
+                                size="small"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  open(event);
+                                }}
+                                sx={{
+                                  p: 0.25,
+                                  color: getSecondaryTextColor(),
+                                }}
+                              >
+                                <FontAwesomeIcon icon={faTag} size="2xs" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
                         )}
                       />
                     </Grid>
@@ -529,27 +573,33 @@ export const ProductsTable = ({
                       >
                         Stock
                       </Typography>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <Chip
-                          label={getStockLabel(item)}
-                          size="small"
-                          color={getStockColor(item)}
-                          sx={{
-                            fontSize: "0.45rem",
-                            height: 16,
-                            fontWeight: 500,
-                          }}
-                        />
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: getSecondaryTextColor(),
-                            fontSize: "0.55rem",
-                          }}
-                        >
-                          Qty: {getStockQuantity(item)}
-                        </Typography>
-                      </Stack>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: getTextColor(),
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        {getStockQuantity(item)} Pcs
+                      </Typography>
+                      <Chip
+                        icon={
+                          <FontAwesomeIcon
+                            icon={getStockIcon(item)}
+                            size="2xs"
+                          />
+                        }
+                        label={getStockLabel(item)}
+                        size="small"
+                        color={getStockColor(item)}
+                        sx={{
+                          fontSize: "0.45rem",
+                          height: 18,
+                          fontWeight: 500,
+                          mt: 0.3,
+                        }}
+                      />
                     </Grid>
                     <Grid size={{ xs: 6 }}>
                       <Typography
@@ -884,7 +934,7 @@ export const ProductsTable = ({
                 borderRadius: 2,
                 borderTop: 2,
                 borderColor: getBorderColor(),
-                mb: 1.5,
+                mb: { xs: 1.5, lg: 2 },
                 bgcolor: isDarkMode
                   ? "rgba(255,255,255,0.03)"
                   : "background.paper",
@@ -909,8 +959,8 @@ export const ProductsTable = ({
               <AccordionSummary
                 expandIcon={isExpanded ? <RemoveIcon /> : <AddIcon />}
                 sx={{
-                  px: 3,
-                  py: 1,
+                  px: { xs: 2, md: 3, lg: 4 },
+                  py: { xs: 1, lg: 1.5 },
                   flexDirection: "row-reverse",
                   "& .MuiAccordionSummary-content": {
                     alignItems: "center",
@@ -943,12 +993,12 @@ export const ProductsTable = ({
                 <Grid
                   container
                   alignItems="center"
-                  spacing={1}
+                  spacing={{ xs: 1, md: 2, lg: 3 }}
                   sx={{
                     width: "100%",
                   }}
-                  paddingLeft={2}
-                  paddingRight={2}
+                  paddingLeft={{ xs: 2, lg: 3 }}
+                  paddingRight={{ xs: 2, lg: 3 }}
                 >
                   {/* Product Image */}
                   <Grid size={{ xs: 3, md: 1.5 }}>
@@ -975,7 +1025,7 @@ export const ProductsTable = ({
                   </Grid>
 
                   {/* Product Name */}
-                  <Grid size={{ xs: 9, md: 2.5 }}>
+                  <Grid size={{ xs: 9, md: 2 }}>
                     <Tooltip title="Product Name">
                       <Typography
                         variant="h5"
@@ -989,36 +1039,33 @@ export const ProductsTable = ({
                         {item.name}
                       </Typography>
                     </Tooltip>
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      alignItems="center"
-                      sx={{ mt: 0.3 }}
+                    <Typography
+                      variant="caption"
+                      color={getSecondaryTextColor()}
+                      sx={{ fontSize: "0.6rem", mt: 0.3, display: "block" }}
                     >
-                      <Typography
-                        variant="caption"
-                        color={getSecondaryTextColor()}
-                        sx={{ fontSize: "0.6rem" }}
-                      >
-                        {item.slug}
-                      </Typography>
-                      <InlineStatusChip
-                        productId={productId}
-                        status={(item.status ?? "draft") as ProductStatus}
-                        onStatusChange={onStatusChange}
-                        getStatusColor={getStatusColor}
-                        sx={{
-                          fontSize: "0.5rem",
-                          height: 16,
-                          fontWeight: 500,
-                          color: isDarkMode ? "#ffffff" : undefined,
-                        }}
-                      />
-                    </Stack>
+                      {item.slug}
+                    </Typography>
+                  </Grid>
+
+                  {/* Status */}
+                  <Grid size={{ xs: 6, md: 2 }}>
+                    <InlineStatusChip
+                      productId={productId}
+                      status={(item.status ?? "draft") as ProductStatus}
+                      onStatusChange={onStatusChange}
+                      getStatusColor={getStatusColor}
+                      sx={{
+                        fontSize: "0.6rem",
+                        height: 22,
+                        fontWeight: 500,
+                        color: isDarkMode ? "#ffffff" : undefined,
+                      }}
+                    />
                   </Grid>
 
                   {/* Category */}
-                  <Grid size={{ xs: 6, md: 2 }}>
+                  <Grid size={{ xs: 6, md: 1.5 }}>
                     <Tooltip title="Category">
                       <Chip
                         label={categoryLabel}
@@ -1035,22 +1082,23 @@ export const ProductsTable = ({
                   </Grid>
 
                   {/* Price */}
-                  <Grid size={{ xs: 6, md: 2 }}>
-                    <DiscountPopover
+                  <Grid size={{ xs: 6, md: 1.5 }}>
+                    <PricingPopover
                       productId={productId}
                       price={item.price}
                       salePrice={getDiscountValue(item)}
-                      onSave={onDiscountChange}
+                      onSave={onPricingChange}
                       trigger={(open) => (
-                        <Tooltip title="Click to set discount">
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                        >
                           <Typography
-                            onClick={open}
                             fontWeight={600}
                             sx={{
                               fontSize: "0.85rem",
                               color: getPriceColor(),
-                              cursor: "pointer",
-                              display: "inline-block",
                             }}
                           >
                             {formatBaseCurrencyInCurrency(
@@ -1059,7 +1107,23 @@ export const ProductsTable = ({
                               rates,
                             )}
                           </Typography>
-                        </Tooltip>
+                          <Tooltip title="Edit pricing">
+                            <IconButton
+                              component="span"
+                              size="small"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                open(event);
+                              }}
+                              sx={{
+                                p: 0.25,
+                                color: getSecondaryTextColor(),
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faTag} size="2xs" />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
                       )}
                     />
                     {getDiscountValue(item) != null && (
@@ -1081,29 +1145,40 @@ export const ProductsTable = ({
                     )}
                   </Grid>
 
-                  {/* Stock */}
+                  {/* Qty */}
+                  <Grid size={{ xs: 6, md: 1.5 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: getTextColor(),
+                        fontWeight: 600,
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {getStockQuantity(item)} Pcs
+                    </Typography>
+                  </Grid>
+
+                  {/* Stock Status */}
                   <Grid size={{ xs: 6, md: 2 }}>
                     <Tooltip title="Stock Status">
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <Chip
-                          label={getStockLabel(item)}
-                          size="small"
-                          color={getStockColor(item)}
-                          sx={{
-                            fontSize: "0.5rem",
-                            height: 18,
-                            fontWeight: 500,
-                            color: isDarkMode ? "#ffffff" : undefined,
-                          }}
-                        />
-                        <Typography
-                          variant="caption"
-                          color={getSecondaryTextColor()}
-                          sx={{ fontSize: "0.6rem" }}
-                        >
-                          Qty: {getStockQuantity(item)}
-                        </Typography>
-                      </Stack>
+                      <Chip
+                        icon={
+                          <FontAwesomeIcon
+                            icon={getStockIcon(item)}
+                            size="2xs"
+                          />
+                        }
+                        label={getStockLabel(item)}
+                        size="small"
+                        color={getStockColor(item)}
+                        sx={{
+                          fontSize: "0.5rem",
+                          height: 20,
+                          fontWeight: 500,
+                          color: isDarkMode ? "#ffffff" : undefined,
+                        }}
+                      />
                     </Tooltip>
                   </Grid>
 
@@ -1171,8 +1246,8 @@ export const ProductsTable = ({
                     ? "rgba(255,255,255,0.02)"
                     : "background.paper",
                   marginBottom: 3,
-                  px: 3,
-                  py: 2,
+                  px: { xs: 3, lg: 4 },
+                  py: { xs: 2, lg: 2.5 },
                 }}
               >
                 <Grid container spacing={2}>
