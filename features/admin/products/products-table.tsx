@@ -45,6 +45,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
+import { DiscountPopover } from "./discount-popover";
 import type { AdminProduct } from "./types";
 
 type ProductStatus = "draft" | "published" | "archived";
@@ -122,7 +123,15 @@ type ProductsTableProps = {
   onUploadImages: (id: string, files: File[]) => Promise<boolean>;
   onDeleteImage: (id: string, imageId: string) => Promise<boolean>;
   onStatusChange: (id: string, status: ProductStatus) => Promise<boolean>;
+  onDiscountChange: (id: string, salePrice: number | null) => Promise<boolean>;
 };
+
+const getDiscountValue = (item: AdminProduct): number | null =>
+  item.salePrice ??
+  item.sale_price ??
+  item.compareAtPrice ??
+  item.compare_at_price ??
+  null;
 
 export const ProductsTable = ({
   products,
@@ -133,6 +142,7 @@ export const ProductsTable = ({
   onUploadImages,
   onDeleteImage,
   onStatusChange,
+  onDiscountChange,
 }: ProductsTableProps) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -484,24 +494,30 @@ export const ProductsTable = ({
                       >
                         Price
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: getTextColor(),
-                          fontWeight: 600,
-                          fontSize: "0.8rem",
-                        }}
-                      >
-                        {formatBaseCurrencyInCurrency(
-                          item.salePrice ??
-                            item.sale_price ??
-                            item.compareAtPrice ??
-                            item.compare_at_price ??
-                            item.price,
-                          currency,
-                          rates,
+                      <DiscountPopover
+                        productId={productId}
+                        price={item.price}
+                        salePrice={getDiscountValue(item)}
+                        onSave={onDiscountChange}
+                        trigger={(open) => (
+                          <Typography
+                            variant="body2"
+                            onClick={open}
+                            sx={{
+                              color: getTextColor(),
+                              fontWeight: 600,
+                              fontSize: "0.8rem",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {formatBaseCurrencyInCurrency(
+                              getDiscountValue(item) ?? item.price,
+                              currency,
+                              rates,
+                            )}
+                          </Typography>
                         )}
-                      </Typography>
+                      />
                     </Grid>
                     <Grid size={{ xs: 6 }}>
                       <Typography
@@ -1020,26 +1036,33 @@ export const ProductsTable = ({
 
                   {/* Price */}
                   <Grid size={{ xs: 6, md: 2 }}>
-                    <Tooltip title="Price">
-                      <Typography
-                        fontWeight={600}
-                        sx={{ fontSize: "0.85rem", color: getPriceColor() }}
-                      >
-                        {formatBaseCurrencyInCurrency(
-                          item.salePrice ??
-                            item.sale_price ??
-                            item.compareAtPrice ??
-                            item.compare_at_price ??
-                            item.price,
-                          currency,
-                          rates,
-                        )}
-                      </Typography>
-                    </Tooltip>
-                    {(item.salePrice ??
-                      item.sale_price ??
-                      item.compareAtPrice ??
-                      item.compare_at_price) && (
+                    <DiscountPopover
+                      productId={productId}
+                      price={item.price}
+                      salePrice={getDiscountValue(item)}
+                      onSave={onDiscountChange}
+                      trigger={(open) => (
+                        <Tooltip title="Click to set discount">
+                          <Typography
+                            onClick={open}
+                            fontWeight={600}
+                            sx={{
+                              fontSize: "0.85rem",
+                              color: getPriceColor(),
+                              cursor: "pointer",
+                              display: "inline-block",
+                            }}
+                          >
+                            {formatBaseCurrencyInCurrency(
+                              getDiscountValue(item) ?? item.price,
+                              currency,
+                              rates,
+                            )}
+                          </Typography>
+                        </Tooltip>
+                      )}
+                    />
+                    {getDiscountValue(item) != null && (
                       <Typography
                         component="span"
                         sx={{

@@ -100,6 +100,10 @@ export const productActions = {
     return productService.updateProductStatus(id, status);
   },
 
+  async updateDiscount(id: string, salePrice: number | null) {
+    return productService.updateProductDiscount(id, salePrice);
+  },
+
   async remove(id: string) {
     return productService.deleteProduct(id);
   },

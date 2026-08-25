@@ -6,4 +6,5 @@ export { ProductDetailDialog } from "./product-detail-dialog";
 export { ProductFields } from "./product-fields";
 export { emptyFormState, toFormState } from "./product-utils";
 export { ProductsTable } from "./products-table";
+export { DiscountPopover } from "./discount-popover";
 export type { AdminProduct, ProductEdits, ProductFormState } from "./types";

@@ -124,6 +124,25 @@ export const AdminProductsClient = () => {
     }
   };
 
+  const changeProductDiscount = async (
+    id: string,
+    salePrice: number | null,
+  ) => {
+    try {
+      await productActions.updateDiscount(id, salePrice);
+      setMessageType("success");
+      setMessage(salePrice == null ? "Discount removed." : "Discount updated.");
+      await refetch();
+      return true;
+    } catch (error) {
+      setMessageType("error");
+      setMessage(
+        error instanceof Error ? error.message : "Failed to update discount.",
+      );
+      return false;
+    }
+  };
+
   const duplicateProduct = async (id: string) => {
     try {
       await productActions.duplicate(id);
@@ -325,6 +344,7 @@ export const AdminProductsClient = () => {
               onUploadImages={uploadProductImages}
               onDeleteImage={deleteProductImage}
               onStatusChange={changeProductStatus}
+              onDiscountChange={changeProductDiscount}
             />
             {filteredProducts.length > PRODUCTS_PAGE_SIZE ? (
               <Stack direction="row" justifyContent="flex-end">

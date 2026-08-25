@@ -138,6 +138,14 @@ export const productService = {
     );
   },
 
+  /** Partial PATCH /products/{id} — salePrice only, for the list's inline discount editor. */
+  updateProductDiscount(id: string, salePrice: number | null) {
+    return apiClient.patch<{ success: boolean }>(
+      API_ENDPOINTS.products.byId(id),
+      { salePrice },
+    );
+  },
+
   deleteProduct(id: string) {
     return apiClient.delete<{ success: boolean }>(
       API_ENDPOINTS.products.byId(id),
