@@ -42,6 +42,25 @@ include` — already handled centrally in `services/api/client.ts`, don't
   getter in `services/content/content.service.ts` normalizes this — always
   add a default when adding a new field there, don't assume the backend
   response is complete.
+- Product pricing is `price` + optional `salePrice` (`salePrice` must be
+  `<= price`). **Display rule**: if `salePrice` is present, show it as the
+  active price with `price` struck through; if `salePrice` is `null`, show
+  `price` alone. `buyingPrice` is admin-only and never appears in any public
+  product response — don't expose it on storefront pages.
+- **The backend's base currency is TZS.** Every price field the backend
+  stores or returns (`price`, `salePrice`, `buyingPrice`) is a plain TZS
+  number — there is no per-currency storage. `utils/currency.ts` is the
+  single source of truth for converting between TZS and whatever currency
+  the admin/customer currently has selected (`useCurrencyStore`):
+  `convertToBaseCurrency` turns a typed amount (in the selected currency)
+  into TZS before it's sent anywhere; `convertFromBaseCurrency`/
+  `formatBaseCurrencyInCurrency` turn a stored TZS amount into the selected
+  currency for display. Any new money input field must call
+  `convertToBaseCurrency` before saving — see `product-fields.tsx`'s
+  `decimalFieldProps` or `features/admin/products/pricing-popover.tsx` for
+  the pattern. Never compare or send a raw typed number without converting
+  it first (it was previously sent straight to the backend as if it were
+  TZS — see git history on `pricing-popover.tsx`).
 
 ## Directory map (as of this reorg)
 
@@ -128,6 +147,18 @@ No Redux, no SWR.
 - Public pages read dynamic content via `useSiteSettings()` (client) or
   `contentService.getPublicSettings()` (server component) — never hardcode
   brand name, tagline, contact info, or hero copy.
+- **Inline quick-edit popovers for admin table rows** (single-field-or-two
+  edits that shouldn't require opening the full edit dialog — e.g. changing
+  a product's status or price) follow the pattern in
+  `features/admin/products/products-table.tsx`'s `InlineStatusChip` and
+  `features/admin/products/pricing-popover.tsx`'s `PricingPopover`: a small
+  trigger (chip or icon button) opens an MUI `Menu`/`Popover`, and on save
+  it calls a **partial PATCH** to the same resource endpoint (e.g.
+  `productService.updateProductStatus`/`updateProductPricing`, both PATCH
+  `/admin/products/{id}` with just the changed field(s)) rather than the
+  full update payload the edit dialog sends. Don't reach for
+  react-hook-form/zod for these — plain local state is enough for 1-2
+  fields; that machinery is reserved for the full multi-field edit forms.
 
 ## Build/verify commands
 
@@ -145,6 +176,17 @@ bugs but aren't:
 
 ```
 pkill -9 -f "next dev"
+```
+
+If a build/runtime error mentions a missing chunk file (e.g. `Cannot find
+module './1234.js'` from `.next/server/webpack-runtime.js`), that's a stale
+`.next` build directory — usually left over from a `next dev`/`next build`
+overlap, or from a file rename that shifted chunk IDs mid-session. Kill any
+stray `next` process, then delete `.next` entirely and rebuild clean rather
+than trying to debug the missing module:
+
+```
+pkill -9 -f "next dev"; rm -rf .next && npm run build
 ```
 
 ## Known gotchas already fixed (context for git blame, not TODOs)
