@@ -110,6 +110,9 @@ export default async function HomePage() {
     newArrivalRows.length > 0
       ? newArrivalRows.slice(0, 3)
       : products.slice(0, 3);
+  const onSaleProducts = products
+    .filter((p) => p.originalPrice != null)
+    .slice(0, 3);
 
   // Filter categories with valid images and provide fallback
   const categoryCards = categories
@@ -291,9 +294,86 @@ export default async function HomePage() {
         </Box>
       </Box>
 
-      {/* Featured Products */}
       <Container maxWidth="xl" sx={{ pb: 1 }}>
-        <section id="featured-pieces">
+        {/* New Arrivals */}
+        <section id="new-arrivals">
+          <Box sx={{ position: "relative" }}>
+            <SectionHeading
+              eyebrow="Fresh from the Studio"
+              title="New Arrivals"
+            />
+            <Typography
+              component={Link}
+              href="/shop"
+              sx={{
+                textDecoration: "none",
+                textTransform: "uppercase",
+                letterSpacing: "0.18em",
+                fontSize: "0.72rem",
+                color: "text.secondary",
+                display: "block",
+                textAlign: { xs: "center", md: "right" },
+                mt: { xs: -2.5, md: 0 },
+                mb: { xs: 2, md: 0 },
+                position: { md: "absolute" },
+                right: { md: 0 },
+                top: { md: 8 },
+                transition: "color 0.3s ease",
+                "&:hover": { color: "text.primary" },
+              }}
+            >
+              View All
+            </Typography>
+          </Box>
+          <Grid container spacing={2.2}>
+            {newArrivals.map((p) => (
+              <Grid key={p.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                <ProductCard product={p} />
+              </Grid>
+            ))}
+          </Grid>
+        </section>
+
+        {/* On Sale */}
+        {onSaleProducts.length > 0 && (
+          <section id="on-sale" style={{ marginTop: "4.25rem" }}>
+            <Box sx={{ position: "relative" }}>
+              <SectionHeading eyebrow="Limited Time" title="On Sale" />
+              <Typography
+                component={Link}
+                href="/shop?search=sale"
+                sx={{
+                  textDecoration: "none",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.18em",
+                  fontSize: "0.72rem",
+                  color: "text.secondary",
+                  display: "block",
+                  textAlign: { xs: "center", md: "right" },
+                  mt: { xs: -2.5, md: 0 },
+                  mb: { xs: 2, md: 0 },
+                  position: { md: "absolute" },
+                  right: { md: 0 },
+                  top: { md: 8 },
+                  transition: "color 0.3s ease",
+                  "&:hover": { color: "text.primary" },
+                }}
+              >
+                View All
+              </Typography>
+            </Box>
+            <Grid container spacing={2.2}>
+              {onSaleProducts.map((p) => (
+                <Grid key={p.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <ProductCard product={p} />
+                </Grid>
+              ))}
+            </Grid>
+          </section>
+        )}
+
+        {/* Featured Products */}
+        <section id="featured-pieces" style={{ marginTop: "4.25rem" }}>
           <SectionHeading
             eyebrow="Curated Selection"
             title="Featured Pieces"
@@ -386,12 +466,7 @@ export default async function HomePage() {
 
         {/* Best Sellers */}
         <section id="best-sellers" style={{ marginTop: "4.25rem" }}>
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            justifyContent="space-between"
-            alignItems={{ xs: "start", md: "end" }}
-            sx={{ mb: 3.2 }}
-          >
+          <Box sx={{ position: "relative" }}>
             <SectionHeading eyebrow="Most Coveted" title="Best Sellers" />
             <Typography
               component={Link}
@@ -402,16 +477,20 @@ export default async function HomePage() {
                 letterSpacing: "0.18em",
                 fontSize: "0.72rem",
                 color: "text.secondary",
-                mb: { xs: 0, md: 2 },
+                display: "block",
+                textAlign: { xs: "center", md: "right" },
+                mt: { xs: -2.5, md: 0 },
+                mb: { xs: 2, md: 0 },
+                position: { md: "absolute" },
+                right: { md: 0 },
+                top: { md: 8 },
                 transition: "color 0.3s ease",
-                "&:hover": {
-                  color: "text.primary",
-                },
+                "&:hover": { color: "text.primary" },
               }}
             >
               View All
             </Typography>
-          </Stack>
+          </Box>
           <Grid container spacing={2.2}>
             {bestSellers.map((p) => (
               <Grid key={p.id} size={{ xs: 12, sm: 6, md: 4 }}>
@@ -623,46 +702,6 @@ export default async function HomePage() {
                     {feature.description}
                   </Typography>
                 </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </section>
-
-        {/* New Arrivals */}
-        <section id="new-arrivals" style={{ marginTop: "4.4rem" }}>
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            justifyContent="space-between"
-            alignItems={{ xs: "start", md: "end" }}
-            sx={{ mb: 3.2 }}
-          >
-            <SectionHeading
-              eyebrow="Fresh from the Studio"
-              title="New Arrivals"
-            />
-            <Typography
-              component={Link}
-              href="/shop"
-              sx={{
-                textDecoration: "none",
-                textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                fontSize: "0.72rem",
-                color: "text.secondary",
-                mb: { xs: 0, md: 2 },
-                transition: "color 0.3s ease",
-                "&:hover": {
-                  color: "text.primary",
-                },
-              }}
-            >
-              View All
-            </Typography>
-          </Stack>
-          <Grid container spacing={2.2}>
-            {newArrivals.map((p) => (
-              <Grid key={p.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                <ProductCard product={p} />
               </Grid>
             ))}
           </Grid>
