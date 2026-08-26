@@ -137,7 +137,7 @@ export default function AboutPage() {
         }}
       >
         <Image
-          src="/images/about/hero-about.jpg"
+          src="/images/hero/zurie-hero.png"
           alt="Zuriè atelier - handcrafted luxury handbags"
           fill
           priority

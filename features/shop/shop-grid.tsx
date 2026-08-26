@@ -13,6 +13,10 @@ import {
 } from "@mui/material";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/types/product";
+import {
+  getProductCategorySlug,
+  productMatchesQuery,
+} from "@/utils/product-search";
 
 type SortKey = "featured" | "price-low" | "price-high" | "newest";
 
@@ -62,14 +66,16 @@ type ShopGridProps = {
   products: Product[];
   categories: ShopCategory[];
   initialCategory?: string;
+  initialSearch?: string;
 };
 
 export const ShopGrid = ({
   products,
   categories,
   initialCategory = "all",
+  initialSearch = "",
 }: ShopGridProps) => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialSearch);
   const [category, setCategory] = useState<string>(
     normalizeCategory(initialCategory, categories),
   );
@@ -79,6 +85,10 @@ export const ShopGrid = ({
   useEffect(() => {
     setCategory(normalizeCategory(initialCategory, categories));
   }, [initialCategory, categories]);
+
+  useEffect(() => {
+    setQuery(initialSearch);
+  }, [initialSearch]);
 
   const updateCategory = (nextCategory: string) => {
     const normalized = normalizeCategory(nextCategory, categories);
@@ -101,21 +111,9 @@ export const ShopGrid = ({
   };
 
   const visibleProducts = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-
     const filtered = products.filter((product) => {
-      const matchesQuery =
-        product.name.toLowerCase().includes(normalized) ||
-        product.description.toLowerCase().includes(normalized);
-      const categoryValue =
-        typeof product.category === "object" && product.category
-          ? String((product.category as { slug?: unknown }).slug ?? "")
-          : String(
-              product.categorySlug ??
-                product.category ??
-                product.categoryId ??
-                "",
-            );
+      const categoryValue = getProductCategorySlug(product);
+      const matchesQuery = productMatchesQuery(product, query);
       const matchesCategory =
         category === "all" ||
         categoryValue.trim().toLowerCase() === category.trim().toLowerCase() ||

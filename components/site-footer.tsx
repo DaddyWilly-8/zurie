@@ -9,7 +9,6 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { NewsletterForm } from "@/components/newsletter-form";
 import { getStorefrontCategories } from "@/services/categories/category.service";
 import { contentService } from "@/services/content/content.service";
 
@@ -47,42 +46,7 @@ export const SiteFooter = async () => {
       }}
     >
       <Container maxWidth="xl">
-        <Box sx={{ py: { xs: 4.2, md: 5.2 } }}>
-          <Grid container spacing={4} alignItems="center">
-            <Grid size={{ xs: 12, md: 6.5 }}>
-              <Typography
-                sx={{
-                  textTransform: "uppercase",
-                  letterSpacing: "0.22em",
-                  fontSize: "0.72rem",
-                }}
-              >
-                The Zuriè Letter
-              </Typography>
-              <Typography
-                variant="h3"
-                sx={{
-                  mt: 1,
-                  mb: 1.2,
-                  fontSize: { xs: "1.9rem", md: "2.5rem" },
-                  color: "#f7f1e8",
-                }}
-              >
-                Join the atelier circle
-              </Typography>
-              <Typography color="rgba(242,239,233,0.72)">
-                Private previews, new arrivals, and stories from the studio.
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 5.5 }}>
-              <NewsletterForm compact />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Divider sx={{ borderColor: "#2e2925", mb: 4.2 }} />
-
-        <Grid container spacing={5}>
+        <Grid container spacing={5} sx={{ pt: { xs: 4.2, md: 5.2 } }}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography
               sx={{

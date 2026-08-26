@@ -293,7 +293,7 @@ export default async function HomePage() {
 
       {/* Featured Products */}
       <Container maxWidth="xl" sx={{ pb: 1 }}>
-        <section>
+        <section id="featured-pieces">
           <SectionHeading
             eyebrow="Curated Selection"
             title="Featured Pieces"
@@ -309,7 +309,7 @@ export default async function HomePage() {
         </section>
 
         {/* Categories Section */}
-        <section style={{ marginTop: "4rem" }}>
+        <section id="shop-by-category" style={{ marginTop: "4rem" }}>
           <SectionHeading eyebrow="By Silhouette" title="Shop by Category" />
           <Grid container spacing={2.2}>
             {categoryCards.map((category) => (
@@ -385,7 +385,7 @@ export default async function HomePage() {
         </section>
 
         {/* Best Sellers */}
-        <section style={{ marginTop: "4.25rem" }}>
+        <section id="best-sellers" style={{ marginTop: "4.25rem" }}>
           <Stack
             direction={{ xs: "column", md: "row" }}
             justifyContent="space-between"
@@ -629,7 +629,7 @@ export default async function HomePage() {
         </section>
 
         {/* New Arrivals */}
-        <section style={{ marginTop: "4.4rem" }}>
+        <section id="new-arrivals" style={{ marginTop: "4.4rem" }}>
           <Stack
             direction={{ xs: "column", md: "row" }}
             justifyContent="space-between"

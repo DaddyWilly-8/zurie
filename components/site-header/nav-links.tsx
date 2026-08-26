@@ -1,12 +1,17 @@
 import Link from "next/link";
+import type { MouseEvent } from "react";
 import { Box, Typography } from "@mui/material";
 import { NAV_LINKS } from "@/constants/site";
 
 type Props = {
   pathname: string;
+  // When provided, clicks are routed through this instead of a plain <Link>
+  // navigation, so a slow tab switch (e.g. Home -> Shop) can show the
+  // branded BackdropSpinner rather than looking unresponsive.
+  onNavigate?: (href: string) => void;
 };
 
-export const SiteHeaderNavLinks = ({ pathname }: Props) => {
+export const SiteHeaderNavLinks = ({ pathname, onNavigate }: Props) => {
   return (
     <Box
       sx={{
@@ -25,6 +30,11 @@ export const SiteHeaderNavLinks = ({ pathname }: Props) => {
           key={link.href}
           component={Link}
           href={link.href}
+          onClick={(event: MouseEvent) => {
+            if (!onNavigate || link.href === pathname) return;
+            event.preventDefault();
+            onNavigate(link.href);
+          }}
           variant="body2"
           sx={{
             textTransform: "uppercase",

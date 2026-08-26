@@ -10,6 +10,7 @@ import { productService } from "@/services/products/product.service";
 export const ShopPageClient = () => {
   const searchParams = useSearchParams();
   const initialCategory = searchParams?.get("category") ?? "all";
+  const initialSearch = searchParams?.get("search") ?? "";
 
   const productsQuery = useQuery({
     queryKey: ["storefront-products", initialCategory],
@@ -53,6 +54,7 @@ export const ShopPageClient = () => {
           products={products}
           categories={categories}
           initialCategory={initialCategory}
+          initialSearch={initialSearch}
         />
       </Box>
     </Stack>
