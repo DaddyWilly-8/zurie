@@ -7,11 +7,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: "https://test.weldtech.co.tz/api/v1/:path*",
+        destination: "http://api.zurie.co.tz/api/v1/:path*",
       },
       {
         source: "/sanctum/:path*",
-        destination: "https://test.weldtech.co.tz/sanctum/:path*",
+        destination: "http://api.zurie.co.tz/sanctum/:path*",
       },
     ];
   },
@@ -23,8 +23,8 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
       },
       {
-        protocol: "https",
-        hostname: "test.weldtech.co.tz",
+        protocol: "http",
+        hostname: "api.zurie.co.tz",
       },
     ],
   },
