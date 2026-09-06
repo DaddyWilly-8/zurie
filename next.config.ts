@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
 
+// Same single source of truth as services/api/config.ts — Next.js loads
+// .env.local automatically before this file runs, so setting
+// NEXT_PUBLIC_API_ORIGIN there (local) or in the hosting platform's env vars
+// (production) is enough; nothing here should ever hardcode a backend host.
+const API_ORIGIN =
+  process.env.NEXT_PUBLIC_API_ORIGIN ?? "https://api.zurie.co.tz";
+const apiOriginUrl = new URL(API_ORIGIN);
+
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   outputFileTracingRoot: process.cwd(),
@@ -7,11 +15,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: "http://api.zurie.co.tz/api/v1/:path*",
+        destination: `${API_ORIGIN}/api/v1/:path*`,
       },
       {
         source: "/sanctum/:path*",
-        destination: "http://api.zurie.co.tz/sanctum/:path*",
+        destination: `${API_ORIGIN}/sanctum/:path*`,
       },
     ];
   },
@@ -23,8 +31,9 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
       },
       {
-        protocol: "http",
-        hostname: "api.zurie.co.tz",
+        protocol: apiOriginUrl.protocol === "https:" ? "https" : "http",
+        hostname: apiOriginUrl.hostname,
+        port: apiOriginUrl.port || undefined,
       },
     ],
   },
