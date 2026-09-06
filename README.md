@@ -1,4 +1,4 @@
-# Zuriè Frontend (Next.js 15)
+# Zuriè Frontend (Next.js 15) (deploy test)
 
 Production-oriented frontend for Zuriè women's handbags, built with Next.js App Router, TypeScript, Material UI, and Font Awesome.
 
