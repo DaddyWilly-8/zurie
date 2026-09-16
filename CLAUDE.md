@@ -6,11 +6,22 @@ situation by reading every file again.
 
 ## The one rule that matters most
 
-**There is no local backend in this repo, and there never should be one added
-here.** The `backend/` folder that used to sit next to `frontend/` has been
-deleted. Do not create one, do not assume `php artisan serve` is running, do
-not go looking for Laravel source to cross-reference. This repo talks to a
-**remote** Laravel API only.
+**This repo never contains backend code, and never should.** The `backend/`
+folder that used to sit next to `frontend/` was deleted for good reason — do
+not recreate one here, do not put Laravel files in this repo. The real
+Laravel backend is a **separate sibling project** at
+`/Users/willbardmloka/projects/zurie_backend` — it has its own `CLAUDE.md`,
+read that before touching anything backend-side. This app only ever talks to
+it over HTTP/JSON.
+
+Which backend this app points at is controlled by `NEXT_PUBLIC_API_ORIGIN`
+in `.env.local` (gitignored — set it to `http://127.0.0.1:8000` to run
+against the local backend, e.g. for V2 module work) — falls back to the
+production `https://api.zurie.co.tz` if unset. Never hardcode a backend URL
+in `services/api/config.ts` again; that env var is the single source of
+truth now. `next.config.ts`'s dev-server rewrites (`/api/v1/:path*`,
+`/sanctum/:path*`) need to point at the same origin — keep them in sync with
+whichever backend you're actually running against.
 
 **`docs/development-guide.md` is the single source of truth for that API.**
 It is the full v2.24 contract: every endpoint, request/response shape,
@@ -19,6 +30,21 @@ _why_ things are shaped the way they are. Read it before touching any
 `services/*.service.ts` file, any admin CRUD screen, or anything settings-
 related. When frontend code and that doc disagree, the doc wins — fix the
 frontend, don't "fix" the doc to match broken code.
+
+**For V2 (POS, Inventory ledger, Purchases, Finance/Accounting core, Cost
+Centers, Sales Outlets, Price Lists, Customer accounts) — read
+`Zurie_V2_Architecture_Design (2).md`** in this repo's root first. It also
+contains the standing **Extensibility Constitution** (§36): every new
+module/schema addition, on either side of the stack, must (1) need only
+three touchpoints to register (`bootstrap/providers.php`, `routes/api.php`,
+`PermissionSeeder.php` — backend-side), (2) cross module boundaries only
+through Service classes, never raw Models/tables, and (3) model
+"categories that grow" as polymorphic/generic tables (new rows), never as
+enums or new columns on an existing table. Check any new feature design
+against these three before building it — on the frontend side this means:
+new API-facing capability → `endpoints.ts` first, then a thin
+`<domain>.service.ts`, matching whatever shape the backend's Resource class
+actually returns, never assuming or duplicating backend logic client-side.
 
 Key things from that doc worth internalizing up front:
 
