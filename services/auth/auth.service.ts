@@ -31,6 +31,36 @@ export const authService = {
     return toAuthUser(response.data);
   },
 
+  /**
+   * POST /auth/register (backend §RegisterRequest) — logs the new customer
+   * in immediately (same session-cookie flow as login), so the caller can
+   * treat this exactly like login() once it resolves. `phone` is required
+   * server-side; a phone already claimed by another *registered* account
+   * (not a guest order) comes back as a 422 on that field specifically.
+   */
+  async register(payload: {
+    name: string;
+    email: string;
+    password: string;
+    passwordConfirmation: string;
+    phone: string;
+    whatsappNumber?: string;
+  }): Promise<AuthUser> {
+    const response = await apiClient.post<{ data: AuthSessionData }>(
+      API_ENDPOINTS.auth.register,
+      {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        password_confirmation: payload.passwordConfirmation,
+        phone: payload.phone,
+        whatsappNumber: payload.whatsappNumber || undefined,
+      },
+    );
+
+    return toAuthUser(response.data);
+  },
+
   async logout() {
     await apiClient.post(API_ENDPOINTS.auth.logout);
   },

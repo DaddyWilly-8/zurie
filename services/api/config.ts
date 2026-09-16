@@ -3,7 +3,7 @@
 // committed) and as a real environment variable in the hosting platform
 // (Vercel project settings) for staging/production — never hardcode a
 // backend URL here again.
-const API_ORIGIN =
+export const API_ORIGIN =
   process.env.NEXT_PUBLIC_API_ORIGIN ?? "https://api.zurie.co.tz";
 
 const LIVE_API_BASE_URL = `${API_ORIGIN}/api/v1`;

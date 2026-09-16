@@ -2,10 +2,18 @@ export const API_ENDPOINTS = {
   auth: {
     csrfCookie: "/sanctum/csrf-cookie",
     login: "/auth/login",
+    register: "/auth/register",
     logout: "/auth/logout",
     currentUser: "/auth/user",
     forgotPassword: "/auth/forgot-password",
     resetPassword: "/auth/reset-password",
+    // Plain browser navigations (<a href>, never apiClient) — see
+    // AuthController::redirectToGoogle()'s docblock on the backend for why.
+    googleRedirect: "/auth/google/redirect",
+  },
+  account: {
+    profile: "/account/profile",
+    orders: "/account/orders",
   },
   products: {
     list: "/products",
