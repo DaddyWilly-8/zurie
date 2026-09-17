@@ -52,7 +52,7 @@ export const SiteFooter = async () => {
               sx={{
                 fontFamily: "var(--font-playfair), serif",
                 fontSize: "2rem",
-                mb: 1.3,
+                mb: 1.4,
               }}
             >
               {siteName}
