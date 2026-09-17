@@ -101,6 +101,17 @@ export const apiClient = {
       mergedHeaders["Content-Type"] = "application/json";
     }
 
+    // Without this, an unauthenticated/expired-session request to an
+    // auth:sanctum route doesn't register as "expects JSON" to Laravel,
+    // so it tries an HTML redirect to a named `login` route instead of
+    // returning a clean 401 — this API defines no such route, so that
+    // redirect attempt itself throws and surfaces as a confusing 500
+    // ("Route [login] not defined.") instead of the expected 401. Found
+    // via a live prod 500 on every admin/* GET.
+    if (!mergedHeaders["Accept"]) {
+      mergedHeaders["Accept"] = "application/json";
+    }
+
     if (needsCsrf && !mergedHeaders["X-XSRF-TOKEN"]) {
       const csrfToken = readCookieValue("XSRF-TOKEN");
       if (csrfToken) {
