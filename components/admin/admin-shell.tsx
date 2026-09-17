@@ -39,6 +39,9 @@ import {
   faCommentDots,
   faCircleQuestion,
   faImages,
+  faSitemap,
+  faStore,
+  faTruckField,
 } from "@fortawesome/free-solid-svg-icons";
 import { authService } from "@/services/auth/auth.service";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
@@ -90,6 +93,24 @@ const links: AdminNavLink[] = [
     label: "Customers",
     icon: faUsers,
     permissions: ["customer_view"],
+  },
+  {
+    href: "/admin/cost-centers",
+    label: "Cost Centers",
+    icon: faSitemap,
+    permissions: ["finance_view"],
+  },
+  {
+    href: "/admin/outlets",
+    label: "Outlets",
+    icon: faStore,
+    permissions: ["outlet_view"],
+  },
+  {
+    href: "/admin/suppliers",
+    label: "Suppliers",
+    icon: faTruckField,
+    permissions: ["supplier_view"],
   },
   // {
   //   href: "/admin/enquiries",

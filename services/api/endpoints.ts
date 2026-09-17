@@ -101,6 +101,18 @@ export const API_ENDPOINTS = {
     list: "/admin/customers",
     byId: (id: string) => `/admin/customers/${id}`,
   },
+  costCenters: {
+    list: "/admin/finance/cost-centers",
+    byId: (id: number) => `/admin/finance/cost-centers/${id}`,
+  },
+  outlets: {
+    list: "/admin/outlets",
+    byId: (id: number) => `/admin/outlets/${id}`,
+  },
+  suppliers: {
+    list: "/admin/suppliers",
+    byId: (id: string | number) => `/admin/suppliers/${id}`,
+  },
   whatsappCheckout: "/checkout/whatsapp",
   contact: "/contact",
   newsletter: "/newsletter",
