@@ -174,7 +174,7 @@ export const SiteHeader = () => {
                 lineHeight: 1,
               }}
             >
-              Zuriè
+              Zurièee
             </Typography>
 
             <Box
