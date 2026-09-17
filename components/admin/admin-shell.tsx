@@ -42,6 +42,10 @@ import {
   faSitemap,
   faStore,
   faTruckField,
+  faCashRegister,
+  faTruckRampBox,
+  faTags,
+  faMoneyBillWave,
 } from "@fortawesome/free-solid-svg-icons";
 import { authService } from "@/services/auth/auth.service";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
@@ -93,6 +97,30 @@ const links: AdminNavLink[] = [
     label: "Customers",
     icon: faUsers,
     permissions: ["customer_view"],
+  },
+  {
+    href: "/admin/pos",
+    label: "Point of Sale",
+    icon: faCashRegister,
+    permissions: ["pos_sale"],
+  },
+  {
+    href: "/admin/purchases",
+    label: "Purchases",
+    icon: faTruckRampBox,
+    permissions: ["purchase_view"],
+  },
+  {
+    href: "/admin/cashier-sessions",
+    label: "Cashier Sessions",
+    icon: faMoneyBillWave,
+    permissions: ["cashier_session_view"],
+  },
+  {
+    href: "/admin/price-lists",
+    label: "Price Lists",
+    icon: faTags,
+    permissions: ["price_list_view"],
   },
   {
     href: "/admin/cost-centers",

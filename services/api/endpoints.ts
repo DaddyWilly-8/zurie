@@ -113,6 +113,26 @@ export const API_ENDPOINTS = {
     list: "/admin/suppliers",
     byId: (id: string | number) => `/admin/suppliers/${id}`,
   },
+  priceLists: {
+    list: "/admin/price-lists",
+    byId: (id: number) => `/admin/price-lists/${id}`,
+    items: (id: number) => `/admin/price-lists/${id}/items`,
+    itemByProduct: (id: number, productId: number) =>
+      `/admin/price-lists/${id}/items/${productId}`,
+  },
+  purchases: {
+    list: "/admin/purchases",
+    byNumber: (purchaseNumber: string) => `/admin/purchases/${purchaseNumber}`,
+  },
+  pos: {
+    sale: "/admin/pos/sale",
+  },
+  cashierSessions: {
+    list: "/admin/cashier-sessions",
+    current: "/admin/cashier-sessions/current",
+    open: "/admin/cashier-sessions/open",
+    close: (id: number) => `/admin/cashier-sessions/${id}/close`,
+  },
   whatsappCheckout: "/checkout/whatsapp",
   contact: "/contact",
   newsletter: "/newsletter",
