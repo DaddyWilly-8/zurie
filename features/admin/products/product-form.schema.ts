@@ -45,6 +45,9 @@ export const productFormSchema = z
       z.string().trim().min(1, "Category is required"),
     ),
     category: z.string(),
+    // Optional — matches the backend's nullable FK (existing products
+    // predate this field, and not every product needs a unit assigned).
+    measurementUnitId: z.string(),
     featured: z.boolean(),
     bestSeller: z.boolean(),
     newArrival: z.boolean(),

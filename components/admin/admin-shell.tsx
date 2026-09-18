@@ -8,6 +8,7 @@ import {
   Box,
   Breadcrumbs,
   Button,
+  Collapse,
   CssBaseline,
   Divider,
   Drawer,
@@ -24,159 +25,92 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBars,
-  faBoxArchive,
-  faBoxesPacking,
-  faChartLine,
-  faGear,
-  faHouse,
+  faChevronDown,
+  faChevronRight,
   faMoon,
   faArrowUpRightFromSquare,
-  faLayerGroup,
-  faUsers,
-  faUserShield,
   faRightFromBracket,
   faSun,
-  faCommentDots,
-  faCircleQuestion,
-  faImages,
-  faSitemap,
-  faStore,
-  faTruckField,
-  faCashRegister,
-  faTruckRampBox,
-  faTags,
-  faMoneyBillWave,
 } from "@fortawesome/free-solid-svg-icons";
 import { authService } from "@/services/auth/auth.service";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { CURRENCY_OPTIONS, type CurrencyCode } from "@/utils/currency";
 import { useThemeMode } from "@/providers/theme-provider";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
-
-type AdminNavLink = {
-  href: string;
-  label: string;
-  icon: typeof faHouse;
-  /**
-   * Permission keys from the catalog (doc §2.4) that unlock this link — the
-   * user needs at least one. Omit for links every logged-in admin can see.
-   */
-  permissions?: string[];
-};
+import {
+  ADMIN_NAV_SECTIONS,
+  type NavCollapsible,
+  type NavItem,
+  type NavSection,
+} from "./admin-nav";
 
 const DRAWER_WIDTH = 260;
 const MOBILE_DRAWER_WIDTH = "86vw";
 
-const links: AdminNavLink[] = [
-  {
-    href: "/admin",
-    label: "Overview",
-    icon: faHouse,
-    permissions: ["dashboard_view"],
-  },
-  {
-    href: "/admin/products",
-    label: "Products",
-    icon: faBoxArchive,
-    permissions: ["product_view"],
-  },
-  {
-    href: "/admin/categories",
-    label: "Categories",
-    icon: faLayerGroup,
-    permissions: ["category_view"],
-  },
-  {
-    href: "/admin/orders",
-    label: "Orders",
-    icon: faBoxesPacking,
-    permissions: ["order_view"],
-  },
-  {
-    href: "/admin/customers",
-    label: "Customers",
-    icon: faUsers,
-    permissions: ["customer_view"],
-  },
-  {
-    href: "/admin/pos",
-    label: "Point of Sale",
-    icon: faCashRegister,
-    permissions: ["pos_sale"],
-  },
-  {
-    href: "/admin/purchases",
-    label: "Purchases",
-    icon: faTruckRampBox,
-    permissions: ["purchase_view"],
-  },
-  {
-    href: "/admin/cashier-sessions",
-    label: "Cashier Sessions",
-    icon: faMoneyBillWave,
-    permissions: ["cashier_session_view"],
-  },
-  {
-    href: "/admin/price-lists",
-    label: "Price Lists",
-    icon: faTags,
-    permissions: ["price_list_view"],
-  },
-  {
-    href: "/admin/cost-centers",
-    label: "Cost Centers",
-    icon: faSitemap,
-    permissions: ["finance_view"],
-  },
-  {
-    href: "/admin/outlets",
-    label: "Outlets",
-    icon: faStore,
-    permissions: ["outlet_view"],
-  },
-  {
-    href: "/admin/suppliers",
-    label: "Suppliers",
-    icon: faTruckField,
-    permissions: ["supplier_view"],
-  },
-  // {
-  //   href: "/admin/enquiries",
-  //   label: "Enquiries",
-  //   icon: faCommentDots,
-  //   permissions: ["enquiry_view"],
-  // },
-  // {
-  //   href: "/admin/faq",
-  //   label: "FAQ",
-  //   icon: faCircleQuestion,
-  //   permissions: ["faq_create", "faq_update", "faq_delete"],
-  // },
-  // {
-  //   href: "/admin/media",
-  //   label: "Media",
-  //   icon: faImages,
-  //   permissions: ["media_view"],
-  // },
-  {
-    href: "/admin/settings",
-    label: "Settings",
-    icon: faGear,
-    permissions: ["settings_manage"],
-  },
-  {
-    href: "/admin/users",
-    label: "Admin Users",
-    icon: faUserShield,
-    permissions: ["user_manage"],
-  },
-  {
-    href: "/admin/activity",
-    label: "Activity",
-    icon: faChartLine,
-    permissions: ["activity_view"],
-  },
-];
+const NavItemButton = ({
+  item,
+  selected,
+  onClick,
+  indented,
+}: {
+  item: NavItem;
+  selected: boolean;
+  onClick: () => void;
+  indented?: boolean;
+}) => (
+  <ListItemButton
+    component={Link}
+    href={item.href}
+    selected={selected}
+    onClick={onClick}
+    sx={{ borderRadius: 1.5, mb: 0.5, pl: indented ? 4 : 2 }}
+  >
+    <Box
+      sx={{
+        width: 22,
+        color: selected ? "primary.main" : "text.secondary",
+      }}
+    >
+      <FontAwesomeIcon icon={item.icon} size="sm" />
+    </Box>
+    <ListItemText primary={item.label} />
+  </ListItemButton>
+);
+
+const NavCollapsibleGroup = ({
+  collapsible,
+  open,
+  onToggle,
+  isNavItemActive,
+  onNavigate,
+}: {
+  collapsible: NavCollapsible;
+  open: boolean;
+  onToggle: () => void;
+  isNavItemActive: (item: NavItem) => boolean;
+  onNavigate: () => void;
+}) => (
+  <>
+    <ListItemButton onClick={onToggle} sx={{ borderRadius: 1.5, mb: 0.5 }}>
+      <Box sx={{ width: 22, color: "text.secondary" }}>
+        <FontAwesomeIcon icon={collapsible.icon} size="sm" />
+      </Box>
+      <ListItemText primary={collapsible.label} />
+      <FontAwesomeIcon icon={open ? faChevronDown : faChevronRight} size="xs" />
+    </ListItemButton>
+    <Collapse in={open} timeout="auto" unmountOnExit>
+      {collapsible.children.map((item) => (
+        <NavItemButton
+          key={item.href}
+          item={item}
+          selected={isNavItemActive(item)}
+          onClick={onNavigate}
+          indented
+        />
+      ))}
+    </Collapse>
+  </>
+);
 
 export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -189,10 +123,47 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const { mode, toggleMode } = useThemeMode();
   const { user, hasAnyPermission } = useAdminAuth();
 
-  const visibleLinks = useMemo(
-    () => links.filter((link) => hasAnyPermission(link.permissions ?? [])),
-    [hasAnyPermission],
-  );
+  /**
+   * Recursive permission filter, matching ProsERP's own separation of
+   * concerns (the nav data file stays plain data; this component is the
+   * one place that cross-checks it against what the current user can
+   * see). A collapsible drops out entirely once none of its children
+   * survive; a section drops out once none of its children (nav-items or
+   * surviving collapsibles) do.
+   */
+  const visibleSections = useMemo(() => {
+    const filterChildren = (
+      children: NavSection["children"],
+    ): NavSection["children"] =>
+      children.flatMap((child): NavSection["children"] => {
+        if (child.type === "nav-item") {
+          return hasAnyPermission(child.permissions ?? []) ? [child] : [];
+        }
+
+        const visibleGrandchildren = child.children.filter((item) =>
+          hasAnyPermission(item.permissions ?? []),
+        );
+
+        return visibleGrandchildren.length > 0
+          ? [{ ...child, children: visibleGrandchildren }]
+          : [];
+      });
+
+    return ADMIN_NAV_SECTIONS.map((section) => ({
+      ...section,
+      children: filterChildren(section.children),
+    })).filter((section) => section.children.length > 0);
+  }, [hasAnyPermission]);
+
+  const [openCollapsibles, setOpenCollapsibles] = useState<
+    Record<string, boolean>
+  >({});
+
+  const isNavItemActive = (item: NavItem) =>
+    currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+
+  const toggleCollapsible = (label: string) =>
+    setOpenCollapsibles((prev) => ({ ...prev, [label]: !prev[label] }));
 
   useEffect(() => {
     void refreshRates();
@@ -229,31 +200,46 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
       </Toolbar>
       <Divider />
       <List sx={{ px: 1, py: 1 }}>
-        {visibleLinks.map((link) => {
-          const selected =
-            currentPath === link.href ||
-            currentPath.startsWith(`${link.href}/`);
-          return (
-            <ListItemButton
-              key={link.href}
-              component={Link}
-              href={link.href}
-              selected={selected}
-              onClick={() => setMobileOpen(false)}
-              sx={{ borderRadius: 1.5, mb: 0.5 }}
+        {visibleSections.map((section, sectionIndex) => (
+          <Box key={section.label} sx={{ mb: 0.5 }}>
+            <Typography
+              variant="overline"
+              sx={{
+                display: "block",
+                px: 1.5,
+                pt: sectionIndex === 0 ? 0.5 : 1.5,
+                pb: 0.25,
+                fontSize: "0.68rem",
+                letterSpacing: "0.08em",
+                color: "text.secondary",
+              }}
             >
-              <Box
-                sx={{
-                  width: 22,
-                  color: selected ? "primary.main" : "text.secondary",
-                }}
-              >
-                <FontAwesomeIcon icon={link.icon} size="sm" />
-              </Box>
-              <ListItemText primary={link.label} />
-            </ListItemButton>
-          );
-        })}
+              {section.label}
+            </Typography>
+            {section.children.map((child) =>
+              child.type === "nav-item" ? (
+                <NavItemButton
+                  key={child.href}
+                  item={child}
+                  selected={isNavItemActive(child)}
+                  onClick={() => setMobileOpen(false)}
+                />
+              ) : (
+                <NavCollapsibleGroup
+                  key={child.label}
+                  collapsible={child}
+                  open={
+                    openCollapsibles[child.label] ??
+                    child.children.some(isNavItemActive)
+                  }
+                  onToggle={() => toggleCollapsible(child.label)}
+                  isNavItemActive={isNavItemActive}
+                  onNavigate={() => setMobileOpen(false)}
+                />
+              ),
+            )}
+          </Box>
+        ))}
       </List>
       <Box sx={{ mt: "auto", p: 2 }}>
         {user ? (

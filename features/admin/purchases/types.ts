@@ -14,6 +14,7 @@ export type PurchaseForm = {
   items: PurchaseLineForm[];
   amountPaid: string;
   notes: string;
+  currencyId: number | "";
 };
 
 export const emptyPurchaseLine: PurchaseLineForm = {
@@ -27,4 +28,5 @@ export const emptyPurchaseForm: PurchaseForm = {
   items: [{ ...emptyPurchaseLine }],
   amountPaid: "0",
   notes: "",
+  currencyId: "",
 };

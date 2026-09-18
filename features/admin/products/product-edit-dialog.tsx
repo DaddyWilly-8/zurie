@@ -22,6 +22,7 @@ import type { AdminProduct, ProductFormState } from "./types";
 type ProductEditDialogProps = {
   product: AdminProduct | null;
   categoryOptions: Array<{ value: string; label: string }>;
+  measurementUnitOptions: Array<{ value: string; label: string }>;
   onClose: () => void;
   onSubmit: (productId: string, values: ProductFormState) => Promise<boolean>;
 };
@@ -29,6 +30,7 @@ type ProductEditDialogProps = {
 export const ProductEditDialog = ({
   product,
   categoryOptions,
+  measurementUnitOptions,
   onClose,
   onSubmit,
 }: ProductEditDialogProps) => {
@@ -227,6 +229,7 @@ export const ProductEditDialog = ({
               state={values}
               onChange={changeField}
               categoryOptions={categoryOptions}
+              measurementUnitOptions={measurementUnitOptions}
               errors={errors}
             />
           ) : null}

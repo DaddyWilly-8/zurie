@@ -14,6 +14,8 @@ export type Purchase = {
   supplierId: number;
   totalAmount: number;
   amountPaid: number;
+  currencyId: number | null;
+  exchangeRate: number | null;
   notes: string | null;
   items: PurchaseItem[];
   createdAt: string;
@@ -25,6 +27,7 @@ export type CreatePurchasePayload = {
   amountPaid?: number;
   notes?: string;
   costCenterId?: number | null;
+  currencyId?: number;
 };
 
 export type PurchaseListResponse = {

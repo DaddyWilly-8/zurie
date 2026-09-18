@@ -8,12 +8,16 @@ import {
 } from "@mui/material";
 import { AdminField } from "@/components/admin";
 import type { SalesOutlet } from "@/services/outlets/outlet.service";
+import type { Currency } from "@/services/currencies/currency.service";
 import type { CustomerMode } from "./types";
 
 type Props = {
   outlets: SalesOutlet[];
   outletId: number | "";
   onOutletChange: (id: number | "") => void;
+  currencies: Currency[];
+  currencyId: number | "";
+  onCurrencyChange: (id: number | "") => void;
   customerMode: CustomerMode;
   onCustomerModeChange: (mode: CustomerMode) => void;
   customerName: string;
@@ -33,6 +37,9 @@ export const PosCheckoutPanel = ({
   outlets,
   outletId,
   onOutletChange,
+  currencies,
+  currencyId,
+  onCurrencyChange,
   customerMode,
   onCustomerModeChange,
   customerName,
@@ -68,6 +75,30 @@ export const PosCheckoutPanel = ({
           </MenuItem>
         ))}
       </TextField>
+
+      {/* Only worth showing once more than the base currency exists —
+          for a TZS-only shop this stays hidden and every sale posts in
+          base currency automatically, same as before Currency existed. */}
+      {currencies.length > 1 ? (
+        <TextField
+          select
+          fullWidth
+          label="Currency"
+          value={currencyId}
+          onChange={(event) =>
+            onCurrencyChange(
+              event.target.value === "" ? "" : Number(event.target.value),
+            )
+          }
+        >
+          {currencies.map((currency) => (
+            <MenuItem key={currency.id} value={currency.id}>
+              {currency.code}
+              {currency.isBase ? " (Base)" : ""}
+            </MenuItem>
+          ))}
+        </TextField>
+      ) : null}
 
       <ButtonGroup fullWidth size="small">
         <Button

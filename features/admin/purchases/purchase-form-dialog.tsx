@@ -18,6 +18,7 @@ import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { AdminField } from "@/components/admin";
 import type { AdminProduct } from "@/features/admin/products";
 import type { Supplier } from "@/services/suppliers/supplier.service";
+import type { Currency } from "@/services/currencies/currency.service";
 import { emptyPurchaseLine } from "./types";
 import type { PurchaseForm, PurchaseLineForm } from "./types";
 
@@ -27,6 +28,7 @@ type Props = {
   form: PurchaseForm;
   suppliers: Supplier[];
   products: AdminProduct[];
+  currencies: Currency[];
   onClose: () => void;
   onChange: <K extends keyof PurchaseForm>(
     key: K,
@@ -41,6 +43,7 @@ export const PurchaseFormDialog = ({
   form,
   suppliers,
   products,
+  currencies,
   onClose,
   onChange,
   onSubmit,
@@ -99,6 +102,32 @@ export const PurchaseFormDialog = ({
                 </MenuItem>
               ))}
             </TextField>
+
+            {/* Only worth showing once more than the base currency
+                exists — for a TZS-only shop this stays hidden and every
+                purchase posts in base currency automatically, same as
+                before Currency existed. */}
+            {currencies.length > 1 ? (
+              <TextField
+                select
+                fullWidth
+                label="Currency"
+                value={form.currencyId}
+                onChange={(event) =>
+                  onChange(
+                    "currencyId",
+                    event.target.value === "" ? "" : Number(event.target.value),
+                  )
+                }
+              >
+                {currencies.map((currency) => (
+                  <MenuItem key={currency.id} value={currency.id}>
+                    {currency.code}
+                    {currency.isBase ? " (Base)" : ""}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : null}
 
             <Divider />
             <Typography variant="subtitle2">Items</Typography>

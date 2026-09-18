@@ -8,6 +8,7 @@ import { ApiError } from "@/services/api/client";
 import { outletService } from "@/services/outlets/outlet.service";
 import { productService } from "@/services/products/product.service";
 import { posService } from "@/services/pos/pos.service";
+import { currencyService } from "@/services/currencies/currency.service";
 import { PosProductGrid } from "./pos-product-grid";
 import { PosCartPanel } from "./pos-cart-panel";
 import { PosCheckoutPanel } from "./pos-checkout-panel";
@@ -17,6 +18,7 @@ import type { CustomerMode, PosCartLine } from "./types";
 export const AdminPosClient = () => {
   const [cart, setCart] = useState<PosCartLine[]>([]);
   const [outletId, setOutletId] = useState<number | "">("");
+  const [currencyId, setCurrencyId] = useState<number | "">("");
   const [customerMode, setCustomerMode] = useState<CustomerMode>("walkin");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -31,6 +33,11 @@ export const AdminPosClient = () => {
   const { data: outlets = [] } = useQuery({
     queryKey: ["admin-outlets"],
     queryFn: outletService.list,
+  });
+
+  const { data: currencies = [] } = useQuery({
+    queryKey: ["admin-currencies"],
+    queryFn: currencyService.list,
   });
 
   const { data: products = [] } = useQuery({
@@ -102,6 +109,7 @@ export const AdminPosClient = () => {
           ? { customerId: Number(customerId) }
           : { customerName, customerPhone }),
         couponCode: couponCode || undefined,
+        ...(currencyId !== "" ? { currencyId } : {}),
       });
       setMessage(
         `Sale complete — ${response.data.orderNumber}, total ${response.data.totalAmount.toLocaleString()}`,
@@ -146,6 +154,9 @@ export const AdminPosClient = () => {
                 outlets={outlets}
                 outletId={outletId}
                 onOutletChange={setOutletId}
+                currencies={currencies}
+                currencyId={currencyId}
+                onCurrencyChange={setCurrencyId}
                 customerMode={customerMode}
                 onCustomerModeChange={setCustomerMode}
                 customerName={customerName}

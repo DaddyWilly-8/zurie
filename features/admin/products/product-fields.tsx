@@ -23,6 +23,7 @@ export const ProductFields = ({
   state,
   onChange,
   categoryOptions,
+  measurementUnitOptions,
   errors,
 }: ProductFieldsProps) => {
   const currency = useCurrencyStore((state) => state.currency);
@@ -269,6 +270,33 @@ export const ProductFields = ({
           {categoryOptions.map((category) => (
             <MenuItem key={category.value} value={category.value}>
               {category.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+      <Grid size={{ xs: 12, md: 6 }}>
+        <TextField
+          label="Measurement Unit"
+          select
+          value={state.measurementUnitId}
+          onChange={(event) =>
+            onChange("measurementUnitId", event.target.value)
+          }
+          fullWidth
+          variant="outlined"
+          error={Boolean(getError("measurementUnitId"))}
+          helperText={getError("measurementUnitId") || "Optional"}
+          sx={{
+            bgcolor: "background.paper",
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 0,
+            },
+          }}
+        >
+          <MenuItem value="">None</MenuItem>
+          {measurementUnitOptions.map((unit) => (
+            <MenuItem key={unit.value} value={unit.value}>
+              {unit.label}
             </MenuItem>
           ))}
         </TextField>

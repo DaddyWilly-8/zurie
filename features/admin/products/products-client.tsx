@@ -17,6 +17,7 @@ import {
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import { categoryService } from "@/services/categories/category.service";
+import { measurementUnitService } from "@/services/measurement-units/measurement-unit.service";
 import { AdminFeedbackSnackbar } from "@/components/admin";
 import { productActions } from "./product-actions";
 import { ProductCreateDialog } from "./product-create-dialog";
@@ -61,6 +62,22 @@ export const AdminProductsClient = () => {
     () =>
       categories.map((item) => ({ value: String(item.id), label: item.name })),
     [categories],
+  );
+
+  const { data: measurementUnits = [] } = useQuery({
+    queryKey: ["admin-measurement-units"],
+    queryFn: measurementUnitService.list,
+  });
+
+  const measurementUnitOptions = useMemo(
+    () =>
+      measurementUnits
+        .filter((item) => item.isActive)
+        .map((item) => ({
+          value: String(item.id),
+          label: `${item.name} (${item.symbol})`,
+        })),
+    [measurementUnits],
   );
 
   const createProduct = async (values: ProductFormState) => {
@@ -303,6 +320,7 @@ export const AdminProductsClient = () => {
         <ProductCreateDialog
           open={isAdding}
           categoryOptions={categoryOptions}
+          measurementUnitOptions={measurementUnitOptions}
           onClose={() => setIsAdding(false)}
           onSubmit={async (values) => {
             const created = await createProduct(values);
@@ -362,6 +380,7 @@ export const AdminProductsClient = () => {
         <ProductEditDialog
           product={editingProduct}
           categoryOptions={categoryOptions}
+          measurementUnitOptions={measurementUnitOptions}
           onClose={() => setEditingId(null)}
           onSubmit={async (productId, values) => {
             const updated = await saveProduct(productId, values);

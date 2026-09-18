@@ -18,6 +18,7 @@ export const purchaseActions = {
         })),
       amountPaid: Number(form.amountPaid) || 0,
       notes: form.notes || undefined,
+      ...(form.currencyId !== "" ? { currencyId: form.currencyId } : {}),
     });
   },
 };

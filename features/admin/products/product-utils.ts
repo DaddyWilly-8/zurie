@@ -122,6 +122,7 @@ export const emptyFormState: ProductFormState = {
   featuredImageUrl: "",
   categoryId: "",
   category: "tote-bags",
+  measurementUnitId: "",
   featured: false,
   bestSeller: false,
   newArrival: false,
@@ -171,6 +172,10 @@ export const toFormState = (product: AdminProduct): ProductFormState => {
       product.categoryId ?? product.category_id ?? product.category ?? "",
     ),
     category: product.category ?? "",
+    measurementUnitId:
+      product.measurementUnitId != null
+        ? String(product.measurementUnitId)
+        : "",
     featured: Boolean(product.featured),
     bestSeller: Boolean(product.bestSeller ?? product.best_seller),
     newArrival: Boolean(product.newArrival ?? product.new_arrival),
@@ -219,6 +224,9 @@ const toBasePayload = (state: ProductFormState) => {
     ...(specifications ? { specifications } : {}),
     ...(seoTitle ? { seoTitle } : {}),
     ...(seoDescription ? { seoDescription } : {}),
+    ...(state.measurementUnitId
+      ? { measurementUnitId: state.measurementUnitId }
+      : {}),
   };
 };
 

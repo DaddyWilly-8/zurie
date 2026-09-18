@@ -11,6 +11,7 @@ export type PosSalePayload = {
   whatsappNumber?: string;
   customerEmail?: string;
   couponCode?: string;
+  currencyId?: number;
 };
 
 export const posService = {

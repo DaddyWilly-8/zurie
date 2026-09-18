@@ -18,6 +18,7 @@ export type AdminProductPayload = {
   seoTitle?: string;
   seoDescription?: string;
   categoryId: string;
+  measurementUnitId?: string;
   featured?: boolean;
   bestSeller?: boolean;
   newArrival?: boolean;
@@ -116,6 +117,9 @@ export const productService = {
       {
         ...payload,
         categoryId: Number(payload.categoryId),
+        ...(payload.measurementUnitId
+          ? { measurementUnitId: Number(payload.measurementUnitId) }
+          : {}),
       },
     );
   },
@@ -126,6 +130,9 @@ export const productService = {
       {
         ...payload,
         categoryId: Number(payload.categoryId),
+        ...(payload.measurementUnitId
+          ? { measurementUnitId: Number(payload.measurementUnitId) }
+          : {}),
       },
     );
   },

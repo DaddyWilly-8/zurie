@@ -15,6 +15,7 @@ import { AdminFeedbackSnackbar } from "@/components/admin";
 import { ApiError } from "@/services/api/client";
 import { supplierService } from "@/services/suppliers/supplier.service";
 import { productService } from "@/services/products/product.service";
+import { currencyService } from "@/services/currencies/currency.service";
 import { purchaseActions } from "./purchase-actions";
 import { PurchasesTable } from "./purchases-table";
 import { PurchaseFormDialog } from "./purchase-form-dialog";
@@ -50,6 +51,11 @@ export const AdminPurchasesClient = () => {
     queryKey: ["admin-products"],
     queryFn: () =>
       productService.listAdminProducts() as Promise<AdminProduct[]>,
+  });
+
+  const { data: currencies = [] } = useQuery({
+    queryKey: ["admin-currencies"],
+    queryFn: currencyService.list,
   });
 
   const items = data?.data ?? [];
@@ -142,6 +148,7 @@ export const AdminPurchasesClient = () => {
         form={form}
         suppliers={suppliers}
         products={products}
+        currencies={currencies}
         onClose={() => setOpen(false)}
         onChange={(key, value) =>
           setForm((prev) => ({ ...prev, [key]: value }))

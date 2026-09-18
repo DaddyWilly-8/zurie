@@ -23,6 +23,7 @@ export type AdminProduct = {
   featured_image_url?: string | null;
   categoryId?: string | number | null;
   category_id?: string | number | null;
+  measurementUnitId?: string | number | null;
   category: string;
   featured: boolean;
   bestSeller?: boolean;
@@ -67,6 +68,7 @@ export type ProductFormState = {
   featuredImageUrl: string;
   categoryId: string;
   category: string;
+  measurementUnitId: string;
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;
@@ -88,5 +90,6 @@ export type ProductFieldsProps = {
     value: ProductFormState[K],
   ) => void;
   categoryOptions: Array<{ value: string; label: string }>;
+  measurementUnitOptions: Array<{ value: string; label: string }>;
   errors?: Partial<Record<keyof ProductFormState, string>>;
 };
