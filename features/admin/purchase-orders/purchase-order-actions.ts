@@ -25,7 +25,10 @@ export const purchaseOrderActions = {
   },
 
   create(form: PurchaseOrderForm) {
-    return purchaseOrderService.create(toPayload(form));
+    return purchaseOrderService.create({
+      ...toPayload(form),
+      instantReceive: form.instantReceive,
+    });
   },
 
   update(id: number, form: PurchaseOrderForm) {

@@ -206,6 +206,15 @@ export const AdminPurchaseOrdersClient = () => {
                 "Purchase order deleted",
               )
             }
+            onGrnUnreceived={(text) => {
+              setMessage(text);
+              setMessageType("success");
+              void refetch();
+            }}
+            onGrnUnreceiveError={(text) => {
+              setMessage(text);
+              setMessageType("error");
+            }}
           />
           {totalPages > 1 ? (
             <Stack direction="row" justifyContent="flex-end">

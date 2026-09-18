@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { AdminField } from "@/components/admin";
+import { AdminField, AdminToggle } from "@/components/admin";
 import type { AdminProduct } from "@/features/admin/products";
 import type { Stakeholder } from "@/services/stakeholders/stakeholder.service";
 import type { Currency } from "@/services/currencies/currency.service";
@@ -136,6 +136,23 @@ export const PurchaseOrderFormDialog = ({
                 ))}
               </TextField>
             ) : null}
+
+            <Box>
+              <AdminToggle
+                label="Instant Receive — mark every line fully received right away"
+                checked={form.instantReceive}
+                onChange={(checked) => onChange("instantReceive", checked)}
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", pl: 4.5, mt: -0.5 }}
+              >
+                {form.instantReceive
+                  ? "Stock and the ledger update immediately, same as a quick walk-in purchase."
+                  : "Leave unchecked for goods arriving later — receive them (in full or in batches) from this purchase order's Receive Goods action."}
+              </Typography>
+            </Box>
 
             <Divider />
             <Typography variant="subtitle2">Items</Typography>

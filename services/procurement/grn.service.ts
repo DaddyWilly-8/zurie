@@ -33,7 +33,7 @@ export type CreateGrnPayload = {
 };
 
 export const grnService = {
-  list(params: { page: number; pageSize: number }) {
+  list(params: { page: number; pageSize: number; purchaseOrderId?: number }) {
     return apiClient.get<GrnListResponse>(API_ENDPOINTS.grns.list, {
       query: params,
     });
@@ -47,5 +47,10 @@ export const grnService = {
     return apiClient
       .get<{ data: Grn }>(API_ENDPOINTS.grns.byId(id))
       .then((response) => response.data);
+  },
+
+  /** "Un-receive" — reverses the GRN's stock and ledger effect; rejected if the received stock has already moved on (e.g. sold). */
+  remove(id: number) {
+    return apiClient.delete<{ message: string }>(API_ENDPOINTS.grns.byId(id));
   },
 };

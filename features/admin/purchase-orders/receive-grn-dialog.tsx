@@ -24,10 +24,14 @@ type Props = {
 
 /**
  * Scoped to one PurchaseOrder — lets an admin key in how much of each
- * item's still-unreceived quantity arrived on this delivery. Doesn't try
- * to track "already received" client-side (that's derived server-side
- * from every prior GRN); it just submits whatever the admin enters and
- * lets GrnService's over-receive guard reject an invalid amount.
+ * item's still-unreceived quantity arrived on this delivery. The
+ * remaining-to-receive figure shown per line comes straight from
+ * `PurchaseOrderItemResource.remainingQuantity` (computed server-side
+ * from every prior GRN) — the admin no longer has to do that
+ * subtraction in their head. A line already fully received (remaining
+ * <= 0) is hidden entirely rather than shown with nothing left to enter.
+ * The server's own over-receive guard is still the actual enforcement;
+ * this is just showing the same number, not duplicating the rule.
  */
 export const ReceiveGrnDialog = ({
   open,
@@ -38,7 +42,11 @@ export const ReceiveGrnDialog = ({
 }: Props) => {
   const [quantities, setQuantities] = useState<Record<number, string>>({});
 
-  const items = useMemo(() => purchaseOrder?.items ?? [], [purchaseOrder]);
+  const items = useMemo(
+    () =>
+      (purchaseOrder?.items ?? []).filter((item) => item.remainingQuantity > 0),
+    [purchaseOrder],
+  );
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -66,23 +74,33 @@ export const ReceiveGrnDialog = ({
       <Box component="form" onSubmit={handleSubmit}>
         <DialogContent dividers>
           <Stack spacing={2}>
-            {items.map((item) => (
-              <TextField
-                key={item.id}
-                fullWidth
-                size="small"
-                type="number"
-                label={`Product #${item.productId} — ordered ${item.quantity}`}
-                placeholder="0"
-                value={quantities[item.id] ?? ""}
-                onChange={(event) =>
-                  setQuantities((prev) => ({
-                    ...prev,
-                    [item.id]: event.target.value,
-                  }))
-                }
-              />
-            ))}
+            {items.length === 0 ? (
+              <Typography color="text.secondary">
+                Every line on this purchase order has already been received in
+                full.
+              </Typography>
+            ) : (
+              items.map((item) => (
+                <TextField
+                  key={item.id}
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label={`Product #${item.productId} — ${item.remainingQuantity} remaining of ${item.quantity} ordered`}
+                  placeholder="0"
+                  slotProps={{
+                    htmlInput: { max: item.remainingQuantity, min: 0 },
+                  }}
+                  value={quantities[item.id] ?? ""}
+                  onChange={(event) =>
+                    setQuantities((prev) => ({
+                      ...prev,
+                      [item.id]: event.target.value,
+                    }))
+                  }
+                />
+              ))
+            )}
             <Typography variant="caption" color="text.secondary">
               Leave a line at 0 to skip it on this delivery — over-receiving
               past what&apos;s still unreceived is rejected by the server.

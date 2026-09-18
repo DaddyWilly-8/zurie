@@ -10,6 +10,8 @@ export type PurchaseOrderItem = {
   rate: number;
   vatPercentage: number;
   lineTotal: number;
+  receivedQuantity: number;
+  remainingQuantity: number;
 };
 
 export type PurchaseOrderStatus =
@@ -42,6 +44,8 @@ export type PurchaseOrderPayload = {
   currencyId?: number;
   dateRequired?: string;
   notes?: string;
+  /** Immediately posts a GRN receiving every line in full, in the same request — the "instant receive" toggle. */
+  instantReceive?: boolean;
   items: Array<{
     productId: number;
     measurementUnitId: number;

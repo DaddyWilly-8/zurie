@@ -13,12 +13,14 @@ import {
   Divider,
   Drawer,
   IconButton,
+  InputAdornment,
   List,
   ListItemButton,
   ListItemText,
   MenuItem,
   Select,
   Stack,
+  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -27,6 +29,7 @@ import {
   faBars,
   faChevronDown,
   faChevronRight,
+  faMagnifyingGlass,
   faMoon,
   faArrowUpRightFromSquare,
   faRightFromBracket,
@@ -38,6 +41,7 @@ import { CURRENCY_OPTIONS, type CurrencyCode } from "@/utils/currency";
 import { useThemeMode } from "@/providers/theme-provider";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
 import {
+  ADMIN_DASHBOARD_ITEM,
   ADMIN_NAV_SECTIONS,
   type NavCollapsible,
   type NavItem,
@@ -47,6 +51,13 @@ import {
 const DRAWER_WIDTH = 260;
 const MOBILE_DRAWER_WIDTH = "86vw";
 
+/**
+ * Every plain nav-item (whether a section's direct child or nested inside
+ * a collapsible) renders as a bullet + label only — matching the
+ * reference screenshot, where icons appear solely on section headers'
+ * collapsible siblings ("Masters", "Transactions") and the standalone
+ * Dashboard pill, never on a leaf link.
+ */
 const NavItemButton = ({
   item,
   selected,
@@ -63,17 +74,25 @@ const NavItemButton = ({
     href={item.href}
     selected={selected}
     onClick={onClick}
-    sx={{ borderRadius: 1.5, mb: 0.5, pl: indented ? 4 : 2 }}
+    sx={{ borderRadius: 1.5, mb: 0.25, pl: indented ? 4.5 : 3 }}
   >
     <Box
+      component="span"
       sx={{
-        width: 22,
-        color: selected ? "primary.main" : "text.secondary",
+        width: 6,
+        height: 6,
+        borderRadius: "50%",
+        bgcolor: selected ? "primary.main" : "text.disabled",
+        mr: 1.5,
+        flexShrink: 0,
       }}
-    >
-      <FontAwesomeIcon icon={item.icon} size="sm" />
-    </Box>
-    <ListItemText primary={item.label} />
+    />
+    <ListItemText
+      primary={item.label}
+      slotProps={{
+        primary: { fontSize: "0.875rem", fontWeight: selected ? 600 : 400 },
+      }}
+    />
   </ListItemButton>
 );
 
@@ -91,12 +110,22 @@ const NavCollapsibleGroup = ({
   onNavigate: () => void;
 }) => (
   <>
-    <ListItemButton onClick={onToggle} sx={{ borderRadius: 1.5, mb: 0.5 }}>
-      <Box sx={{ width: 22, color: "text.secondary" }}>
+    <ListItemButton
+      onClick={onToggle}
+      sx={{ borderRadius: 1.5, mb: 0.25, pl: 3 }}
+    >
+      <FontAwesomeIcon
+        icon={open ? faChevronDown : faChevronRight}
+        size="2xs"
+        style={{ width: 10, marginRight: 10, opacity: 0.6 }}
+      />
+      <Box sx={{ width: 20, color: "text.secondary" }}>
         <FontAwesomeIcon icon={collapsible.icon} size="sm" />
       </Box>
-      <ListItemText primary={collapsible.label} />
-      <FontAwesomeIcon icon={open ? faChevronDown : faChevronRight} size="xs" />
+      <ListItemText
+        primary={collapsible.label}
+        slotProps={{ primary: { fontSize: "0.875rem" } }}
+      />
     </ListItemButton>
     <Collapse in={open} timeout="auto" unmountOnExit>
       {collapsible.children.map((item) => (
@@ -112,6 +141,111 @@ const NavCollapsibleGroup = ({
   </>
 );
 
+const DashboardButton = ({
+  selected,
+  onClick,
+}: {
+  selected: boolean;
+  onClick: () => void;
+}) => (
+  <ListItemButton
+    component={Link}
+    href={ADMIN_DASHBOARD_ITEM.href}
+    onClick={onClick}
+    disableRipple={selected}
+    sx={{
+      borderRadius: 1.5,
+      mb: 1,
+      // Driven entirely by this sx block rather than MUI's own
+      // `selected` prop — that prop layers a translucent
+      // action.selectedOpacity overlay on top of whatever background
+      // sx sets, which combined with primary.contrastText produced
+      // near-unreadable low-contrast text (reported directly: "Dashboard
+      // menu haionekani vzr" — not showing properly).
+      ...(selected && {
+        bgcolor: "primary.main",
+        color: "primary.contrastText",
+      }),
+      "&:hover": selected ? { bgcolor: "primary.dark" } : undefined,
+    }}
+  >
+    <Box sx={{ width: 22, color: "inherit" }}>
+      <FontAwesomeIcon icon={ADMIN_DASHBOARD_ITEM.icon} size="sm" />
+    </Box>
+    <ListItemText
+      primary={ADMIN_DASHBOARD_ITEM.label}
+      slotProps={{ primary: { fontWeight: 600 } }}
+    />
+  </ListItemButton>
+);
+
+const NavSectionGroup = ({
+  section,
+  open,
+  onToggleSection,
+  openCollapsibles,
+  onToggleCollapsible,
+  isNavItemActive,
+  onNavigate,
+  isSearching,
+}: {
+  section: NavSection;
+  open: boolean;
+  onToggleSection: () => void;
+  openCollapsibles: Record<string, boolean>;
+  onToggleCollapsible: (label: string) => void;
+  isNavItemActive: (item: NavItem) => boolean;
+  onNavigate: () => void;
+  isSearching: boolean;
+}) => (
+  <Box sx={{ mb: 0.5 }}>
+    <ListItemButton onClick={onToggleSection} sx={{ borderRadius: 1.5 }}>
+      <FontAwesomeIcon
+        icon={open ? faChevronDown : faChevronRight}
+        size="2xs"
+        style={{ width: 10, marginRight: 10, opacity: 0.6 }}
+      />
+      <ListItemText
+        primary={section.label}
+        slotProps={{
+          primary: {
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            color: "text.secondary",
+            textTransform: "uppercase",
+          },
+        }}
+      />
+    </ListItemButton>
+    <Collapse in={open} timeout="auto" unmountOnExit>
+      {section.children.map((child) =>
+        child.type === "nav-item" ? (
+          <NavItemButton
+            key={child.href}
+            item={child}
+            selected={isNavItemActive(child)}
+            onClick={onNavigate}
+          />
+        ) : (
+          <NavCollapsibleGroup
+            key={child.label}
+            collapsible={child}
+            open={
+              isSearching ||
+              (openCollapsibles[child.label] ??
+                child.children.some(isNavItemActive))
+            }
+            onToggle={() => onToggleCollapsible(child.label)}
+            isNavItemActive={isNavItemActive}
+            onNavigate={onNavigate}
+          />
+        ),
+      )}
+    </Collapse>
+  </Box>
+);
+
 export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const currentPath = pathname ?? "";
@@ -123,25 +257,38 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const { mode, toggleMode } = useThemeMode();
   const { user, hasAnyPermission } = useAdminAuth();
 
+  const [navQuery, setNavQuery] = useState("");
+  const isSearching = navQuery.trim() !== "";
+
   /**
    * Recursive permission filter, matching ProsERP's own separation of
    * concerns (the nav data file stays plain data; this component is the
    * one place that cross-checks it against what the current user can
    * see). A collapsible drops out entirely once none of its children
    * survive; a section drops out once none of its children (nav-items or
-   * surviving collapsibles) do.
+   * surviving collapsibles) do. The search box's text filter runs the
+   * same way, on top of the permission filter, so a search can never
+   * surface something permissions already hid.
    */
   const visibleSections = useMemo(() => {
+    const query = navQuery.trim().toLowerCase();
+    const matches = (label: string) =>
+      query === "" || label.toLowerCase().includes(query);
+
     const filterChildren = (
       children: NavSection["children"],
     ): NavSection["children"] =>
       children.flatMap((child): NavSection["children"] => {
         if (child.type === "nav-item") {
-          return hasAnyPermission(child.permissions ?? []) ? [child] : [];
+          return hasAnyPermission(child.permissions ?? []) &&
+            matches(child.label)
+            ? [child]
+            : [];
         }
 
-        const visibleGrandchildren = child.children.filter((item) =>
-          hasAnyPermission(item.permissions ?? []),
+        const visibleGrandchildren = child.children.filter(
+          (item) =>
+            hasAnyPermission(item.permissions ?? []) && matches(item.label),
         );
 
         return visibleGrandchildren.length > 0
@@ -153,14 +300,38 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
       ...section,
       children: filterChildren(section.children),
     })).filter((section) => section.children.length > 0);
-  }, [hasAnyPermission]);
+  }, [hasAnyPermission, navQuery]);
 
+  const isDashboardVisible = hasAnyPermission(
+    ADMIN_DASHBOARD_ITEM.permissions ?? [],
+  );
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [openCollapsibles, setOpenCollapsibles] = useState<
     Record<string, boolean>
   >({});
 
+  /**
+   * Prefix-matches so a sub-route (e.g. /admin/products/new) still
+   * highlights its parent link (Products) — except Dashboard, whose
+   * href ("/admin") is a literal prefix of every other admin route, so
+   * it needs an exact match or it would render as "active" (and, worse,
+   * visually near-unreadable — see DashboardButton) on every single page.
+   */
   const isNavItemActive = (item: NavItem) =>
-    currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+    item.href === ADMIN_DASHBOARD_ITEM.href
+      ? currentPath === item.href
+      : currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+
+  const isSectionActive = (section: NavSection) =>
+    section.children.some((child) =>
+      child.type === "nav-item"
+        ? isNavItemActive(child)
+        : child.children.some(isNavItemActive),
+    );
+
+  const toggleSection = (label: string) =>
+    setOpenSections((prev) => ({ ...prev, [label]: !prev[label] }));
 
   const toggleCollapsible = (label: string) =>
     setOpenCollapsibles((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -199,46 +370,50 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
         </Typography>
       </Toolbar>
       <Divider />
-      <List sx={{ px: 1, py: 1 }}>
-        {visibleSections.map((section, sectionIndex) => (
-          <Box key={section.label} sx={{ mb: 0.5 }}>
-            <Typography
-              variant="overline"
-              sx={{
-                display: "block",
-                px: 1.5,
-                pt: sectionIndex === 0 ? 0.5 : 1.5,
-                pb: 0.25,
-                fontSize: "0.68rem",
-                letterSpacing: "0.08em",
-                color: "text.secondary",
-              }}
-            >
-              {section.label}
-            </Typography>
-            {section.children.map((child) =>
-              child.type === "nav-item" ? (
-                <NavItemButton
-                  key={child.href}
-                  item={child}
-                  selected={isNavItemActive(child)}
-                  onClick={() => setMobileOpen(false)}
-                />
-              ) : (
-                <NavCollapsibleGroup
-                  key={child.label}
-                  collapsible={child}
-                  open={
-                    openCollapsibles[child.label] ??
-                    child.children.some(isNavItemActive)
-                  }
-                  onToggle={() => toggleCollapsible(child.label)}
-                  isNavItemActive={isNavItemActive}
-                  onNavigate={() => setMobileOpen(false)}
-                />
+      <Box sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search Menu"
+          value={navQuery}
+          onChange={(event) => setNavQuery(event.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FontAwesomeIcon
+                    icon={faMagnifyingGlass}
+                    size="xs"
+                    style={{ opacity: 0.6 }}
+                  />
+                </InputAdornment>
               ),
-            )}
-          </Box>
+            },
+          }}
+        />
+      </Box>
+      <List sx={{ px: 1, py: 1 }}>
+        {isDashboardVisible ? (
+          <DashboardButton
+            selected={isNavItemActive(ADMIN_DASHBOARD_ITEM)}
+            onClick={() => setMobileOpen(false)}
+          />
+        ) : null}
+        {visibleSections.map((section) => (
+          <NavSectionGroup
+            key={section.label}
+            section={section}
+            open={
+              isSearching ||
+              (openSections[section.label] ?? isSectionActive(section))
+            }
+            onToggleSection={() => toggleSection(section.label)}
+            openCollapsibles={openCollapsibles}
+            onToggleCollapsible={toggleCollapsible}
+            isNavItemActive={isNavItemActive}
+            onNavigate={() => setMobileOpen(false)}
+            isSearching={isSearching}
+          />
         ))}
       </List>
       <Box sx={{ mt: "auto", p: 2 }}>

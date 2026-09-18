@@ -17,6 +17,8 @@ export type PurchaseOrderForm = {
   currencyId: number | "";
   dateRequired: string;
   notes: string;
+  /** "Instant Receive" — immediately posts a GRN for every line in full, same one-step behavior the old standalone Purchases flow had. */
+  instantReceive: boolean;
   items: PurchaseOrderLineForm[];
 };
 
@@ -33,5 +35,6 @@ export const emptyPurchaseOrderForm: PurchaseOrderForm = {
   currencyId: "",
   dateRequired: "",
   notes: "",
+  instantReceive: false,
   items: [{ ...emptyPurchaseOrderLine }],
 };
