@@ -32,6 +32,7 @@ export type OrderResponse = {
   totalAmount: number;
   notes: string | null;
   items: Array<{
+    id: number;
     productId: number;
     productName: string;
     quantity: number;
@@ -40,6 +41,33 @@ export type OrderResponse = {
   }>;
   createdAt: string;
   updatedAt: string;
+};
+
+export type OrderReceiptLink = {
+  receiptId: number;
+  receiptNumber: string;
+  amountApplied: number;
+  transactionDate: string;
+};
+
+export type OrderDelivery = {
+  id: number;
+  deliveryNumber: string;
+  dateDispatched: string;
+  notes: string | null;
+  lines: Array<{
+    orderItemId: number;
+    productName: string;
+    quantityDispatched: number;
+  }>;
+};
+
+export type UndispatchedOrderItem = {
+  orderItemId: number;
+  productName: string;
+  quantity: number;
+  dispatchedQuantity: number;
+  remainingQuantity: number;
 };
 
 export type OrderListItem = {
@@ -137,6 +165,48 @@ export const orderService = {
   cancelOrder(orderNumber: string): Promise<OrderActionResponse> {
     return apiClient.post<OrderActionResponse>(
       API_ENDPOINTS.orders.adminCancel(orderNumber),
+    );
+  },
+
+  /** GET /admin/orders/{orderNumber}/receipts — the Receipts tab. */
+  getReceipts(orderNumber: string) {
+    return apiClient
+      .get<{ data: OrderReceiptLink[] }>(
+        API_ENDPOINTS.orders.adminReceipts(orderNumber),
+      )
+      .then((response) => response.data);
+  },
+
+  /** GET /admin/orders/{orderNumber}/deliveries — the Delivery tab's dispatch history. */
+  getDeliveries(orderNumber: string) {
+    return apiClient
+      .get<{ data: OrderDelivery[] }>(
+        API_ENDPOINTS.orders.adminDeliveries(orderNumber),
+      )
+      .then((response) => response.data);
+  },
+
+  /** GET /admin/orders/{orderNumber}/undispatched-items — the dispatch form's remaining-quantity picker. */
+  getUndispatchedItems(orderNumber: string) {
+    return apiClient
+      .get<{ data: UndispatchedOrderItem[] }>(
+        API_ENDPOINTS.orders.adminUndispatchedItems(orderNumber),
+      )
+      .then((response) => response.data);
+  },
+
+  /** POST /admin/orders/{orderNumber}/deliveries — record a dispatch. */
+  createDelivery(
+    orderNumber: string,
+    payload: {
+      dateDispatched?: string;
+      notes?: string;
+      lines: Array<{ orderItemId: number; quantityDispatched: number }>;
+    },
+  ) {
+    return apiClient.post<{ data: OrderDelivery }>(
+      API_ENDPOINTS.orders.adminDeliveries(orderNumber),
+      payload,
     );
   },
 };

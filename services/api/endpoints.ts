@@ -41,6 +41,12 @@ export const API_ENDPOINTS = {
     adminList: "/admin/orders",
     adminByOrderNumber: (orderNumber: string) => `/admin/orders/${orderNumber}`,
     adminCancel: (orderNumber: string) => `/admin/orders/${orderNumber}/cancel`,
+    adminReceipts: (orderNumber: string) =>
+      `/admin/orders/${orderNumber}/receipts`,
+    adminDeliveries: (orderNumber: string) =>
+      `/admin/orders/${orderNumber}/deliveries`,
+    adminUndispatchedItems: (orderNumber: string) =>
+      `/admin/orders/${orderNumber}/undispatched-items`,
 
     // Backward compatibility (deprecated - use adminByOrderNumber)
     byId: (id: string) => `/orders/${id}`,
@@ -107,6 +113,10 @@ export const API_ENDPOINTS = {
   },
   finance: {
     chartOfAccounts: "/admin/finance/chart-of-accounts",
+    ledgerGroups: "/admin/finance/ledger-groups",
+    ledgerGroupById: (id: number) => `/admin/finance/ledger-groups/${id}`,
+    ledgers: "/admin/finance/ledgers",
+    ledgerById: (id: number) => `/admin/finance/ledgers/${id}`,
   },
   outlets: {
     list: "/admin/outlets",
@@ -156,10 +166,15 @@ export const API_ENDPOINTS = {
     close: (id: number) => `/admin/purchase-orders/${id}/close`,
     reopen: (id: number) => `/admin/purchase-orders/${id}/reopen`,
     cancel: (id: number) => `/admin/purchase-orders/${id}/cancel`,
+    payments: (id: number) => `/admin/purchase-orders/${id}/payments`,
   },
   grns: {
     list: "/admin/grns",
     byId: (id: number) => `/admin/grns/${id}`,
+  },
+  inventoryTransfers: {
+    list: "/admin/inventory-transfers",
+    byId: (id: number) => `/admin/inventory-transfers/${id}`,
   },
   vatTransactions: {
     list: "/admin/vat-transactions",
@@ -185,6 +200,18 @@ export const API_ENDPOINTS = {
   fundTransfers: {
     list: "/admin/fund-transfers",
     byId: (id: number) => `/admin/fund-transfers/${id}`,
+  },
+  reports: {
+    salesByChannel: "/admin/reports/sales-by-channel",
+    lowStock: "/admin/reports/low-stock",
+    revenueSummary: "/admin/reports/revenue-summary",
+    balanceSheet: "/admin/reports/balance-sheet",
+    trialBalance: "/admin/reports/trial-balance",
+    inventoryValue: "/admin/reports/inventory-value",
+    debtors: "/admin/reports/debtors",
+    creditors: "/admin/reports/creditors",
+    purchaseSummary: "/admin/reports/purchase-summary",
+    storeStock: (outletId: number) => `/admin/reports/store-stock/${outletId}`,
   },
   whatsappCheckout: "/checkout/whatsapp",
   contact: "/contact",

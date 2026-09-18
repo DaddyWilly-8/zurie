@@ -4,6 +4,7 @@ import {
   Box,
   Chip,
   Collapse,
+  Divider,
   IconButton,
   Paper,
   Stack,
@@ -29,6 +30,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { ApiError } from "@/services/api/client";
 import { grnService } from "@/services/procurement/grn.service";
+import { purchaseOrderService } from "@/services/procurement/purchase-order.service";
 import type { PurchaseOrder, PurchaseOrderStatus } from "./types";
 
 type Props = {
@@ -157,6 +159,64 @@ const GrnsPanel = ({
                   <FontAwesomeIcon icon={faRotateLeft} size="xs" />
                 </IconButton>
               </Tooltip>
+            </Stack>
+          ))}
+        </Stack>
+      )}
+    </Box>
+  );
+};
+
+/**
+ * The Payments tab/panel content for one PurchaseOrder — every Payment
+ * applied against its payable balance, via the `payment_purchase_order`
+ * link. Read-only; a payment is created from the Payments admin screen,
+ * not here — same pattern as GrnsPanel above.
+ */
+const PaymentsPanel = ({
+  purchaseOrderId,
+  open,
+}: {
+  purchaseOrderId: number;
+  open: boolean;
+}) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-payments-for-po", purchaseOrderId],
+    queryFn: () => purchaseOrderService.getPayments(purchaseOrderId),
+    enabled: open,
+  });
+
+  const payments = data ?? [];
+
+  return (
+    <Box sx={{ p: 2, bgcolor: "action.hover" }}>
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+        Payments
+      </Typography>
+      {isLoading ? (
+        <Typography color="text.secondary" variant="body2">
+          Loading payments...
+        </Typography>
+      ) : payments.length === 0 ? (
+        <Typography color="text.secondary" variant="body2">
+          No payments have been applied against this purchase order yet.
+        </Typography>
+      ) : (
+        <Stack spacing={1}>
+          {payments.map((payment) => (
+            <Stack
+              key={payment.paymentId}
+              direction="row"
+              justifyContent="space-between"
+              sx={{ borderBottom: "1px solid", borderColor: "divider", pb: 1 }}
+            >
+              <Typography variant="body2">
+                {payment.paymentNumber} —{" "}
+                {new Date(payment.transactionDate).toLocaleDateString()}
+              </Typography>
+              <Typography variant="body2" fontWeight={600}>
+                {payment.amountApplied.toLocaleString()}
+              </Typography>
             </Stack>
           ))}
         </Stack>
@@ -311,6 +371,11 @@ export const PurchaseOrdersTable = ({
                         open={isExpanded}
                         onUnreceived={onGrnUnreceived}
                         onUnreceiveError={onGrnUnreceiveError}
+                      />
+                      <Divider />
+                      <PaymentsPanel
+                        purchaseOrderId={item.id}
+                        open={isExpanded}
                       />
                     </Collapse>
                   </TableCell>

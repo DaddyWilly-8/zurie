@@ -18,6 +18,8 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -27,6 +29,8 @@ import {
   orderService,
   type OrderResponse,
 } from "@/services/orders/order.service";
+import { OrderReceiptsTab } from "./order-receipts-tab";
+import { OrderDeliveryTab } from "./order-delivery-tab";
 
 export const STATUS_LABELS: Record<string, string> = {
   new: "New",
@@ -58,6 +62,10 @@ type OrderDetailDialogProps = {
 // Full order detail — GET /admin/orders/{orderNumber}, including line items,
 // which the trimmed GET /admin/orders list response never carries. Shared
 // between the orders table and the dashboard's "Recent Orders" panel.
+// Tabbed: Invoice (the original single-view content) / Receipts (payments
+// applied against this order's AR, via Phase G's receipt_order link) /
+// Delivery (dispatch history + a form to record a new one) — the "instant
+// sale vs. delivery customer" brainstorm's tab structure.
 export const OrderDetailDialog = ({
   orderNumber,
   onClose,
@@ -68,6 +76,7 @@ export const OrderDetailDialog = ({
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState(0);
 
   const getBorderColor = () =>
     isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
@@ -80,6 +89,7 @@ export const OrderDetailDialog = ({
     if (!orderNumber) {
       setOrder(null);
       setError(null);
+      setTab(0);
       return;
     }
 
@@ -141,6 +151,17 @@ export const OrderDetailDialog = ({
           />
         )}
       </DialogTitle>
+      {order ? (
+        <Tabs
+          value={tab}
+          onChange={(_, value) => setTab(value)}
+          sx={{ px: 3, borderBottom: `1px solid ${getBorderColor()}` }}
+        >
+          <Tab label="Invoice" />
+          <Tab label="Receipts" />
+          <Tab label="Delivery" />
+        </Tabs>
+      ) : null}
       <DialogContent>
         {loading ? (
           <Stack alignItems="center" py={4}>
@@ -149,165 +170,179 @@ export const OrderDetailDialog = ({
         ) : error ? (
           <Alert severity="error">{error}</Alert>
         ) : order ? (
-          <Stack spacing={2.5}>
-            <Grid container spacing={1.5}>
-              <Grid size={{ xs: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: getSecondaryTextColor() }}
-                >
-                  Customer
-                </Typography>
-                <Typography sx={{ color: getTextColor(), fontWeight: 500 }}>
-                  {order.customerName}
-                </Typography>
+          tab === 0 ? (
+            <Stack spacing={2.5} sx={{ pt: 2 }}>
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 6 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    Customer
+                  </Typography>
+                  <Typography sx={{ color: getTextColor(), fontWeight: 500 }}>
+                    {order.customerName}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    Phone
+                  </Typography>
+                  <Typography sx={{ color: getTextColor() }}>
+                    {order.customerPhone || "—"}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    WhatsApp
+                  </Typography>
+                  <Typography sx={{ color: getTextColor() }}>
+                    {order.whatsappNumber || "—"}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    Email
+                  </Typography>
+                  <Typography sx={{ color: getTextColor() }}>
+                    {order.customerEmail || "—"}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    Placed
+                  </Typography>
+                  <Typography sx={{ color: getTextColor() }}>
+                    {new Date(order.createdAt).toLocaleString()}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    Last Updated
+                  </Typography>
+                  <Typography sx={{ color: getTextColor() }}>
+                    {new Date(order.updatedAt).toLocaleString()}
+                  </Typography>
+                </Grid>
               </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: getSecondaryTextColor() }}
-                >
-                  Phone
-                </Typography>
-                <Typography sx={{ color: getTextColor() }}>
-                  {order.customerPhone || "—"}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: getSecondaryTextColor() }}
-                >
-                  WhatsApp
-                </Typography>
-                <Typography sx={{ color: getTextColor() }}>
-                  {order.whatsappNumber || "—"}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: getSecondaryTextColor() }}
-                >
-                  Email
-                </Typography>
-                <Typography sx={{ color: getTextColor() }}>
-                  {order.customerEmail || "—"}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: getSecondaryTextColor() }}
-                >
-                  Placed
-                </Typography>
-                <Typography sx={{ color: getTextColor() }}>
-                  {new Date(order.createdAt).toLocaleString()}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: getSecondaryTextColor() }}
-                >
-                  Last Updated
-                </Typography>
-                <Typography sx={{ color: getTextColor() }}>
-                  {new Date(order.updatedAt).toLocaleString()}
-                </Typography>
-              </Grid>
-            </Grid>
 
-            <Divider sx={{ borderColor: getBorderColor() }} />
+              <Divider sx={{ borderColor: getBorderColor() }} />
 
-            <Box>
-              <Typography
-                variant="overline"
-                sx={{ color: getSecondaryTextColor(), letterSpacing: "0.2em" }}
-              >
-                Items
-              </Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>Product</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">
-                      Qty
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">
-                      Unit Price
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">
-                      Line Total
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {order.items.map((item) => (
-                    <TableRow key={item.productId}>
-                      <TableCell>{item.productName}</TableCell>
-                      <TableCell align="right">{item.quantity}</TableCell>
-                      <TableCell align="right">
-                        {formatBaseCurrencyInCurrency(
-                          item.unitSellingPrice,
-                          currency,
-                          rates,
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        {formatBaseCurrencyInCurrency(
-                          item.lineTotal,
-                          currency,
-                          rates,
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Box>
-
-            <Divider sx={{ borderColor: getBorderColor() }} />
-
-            <Stack direction="row" justifyContent="space-between">
-              <Typography fontWeight={600} sx={{ color: getTextColor() }}>
-                Total
-              </Typography>
-              <Typography fontWeight={600} sx={{ color: getTextColor() }}>
-                {formatBaseCurrencyInCurrency(
-                  order.totalAmount,
-                  currency,
-                  rates,
-                )}
-              </Typography>
-            </Stack>
-
-            {order.notes && (
-              <Box
-                sx={{
-                  p: 1.5,
-                  bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "#f8f6f2",
-                  borderRadius: 1,
-                  border: `1px solid ${getBorderColor()}`,
-                }}
-              >
+              <Box>
                 <Typography
-                  variant="caption"
+                  variant="overline"
                   sx={{
                     color: getSecondaryTextColor(),
-                    display: "block",
-                    mb: 0.5,
+                    letterSpacing: "0.2em",
                   }}
                 >
-                  Notes
+                  Items
                 </Typography>
-                <Typography variant="body2" sx={{ color: getTextColor() }}>
-                  {order.notes}
-                </Typography>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Product</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }} align="right">
+                        Qty
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }} align="right">
+                        Unit Price
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }} align="right">
+                        Line Total
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {order.items.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.productName}</TableCell>
+                        <TableCell align="right">{item.quantity}</TableCell>
+                        <TableCell align="right">
+                          {formatBaseCurrencyInCurrency(
+                            item.unitSellingPrice,
+                            currency,
+                            rates,
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          {formatBaseCurrencyInCurrency(
+                            item.lineTotal,
+                            currency,
+                            rates,
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </Box>
-            )}
-          </Stack>
+
+              <Divider sx={{ borderColor: getBorderColor() }} />
+
+              <Stack direction="row" justifyContent="space-between">
+                <Typography fontWeight={600} sx={{ color: getTextColor() }}>
+                  Total
+                </Typography>
+                <Typography fontWeight={600} sx={{ color: getTextColor() }}>
+                  {formatBaseCurrencyInCurrency(
+                    order.totalAmount,
+                    currency,
+                    rates,
+                  )}
+                </Typography>
+              </Stack>
+
+              {order.notes && (
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "#f8f6f2",
+                    borderRadius: 1,
+                    border: `1px solid ${getBorderColor()}`,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: getSecondaryTextColor(),
+                      display: "block",
+                      mb: 0.5,
+                    }}
+                  >
+                    Notes
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: getTextColor() }}>
+                    {order.notes}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          ) : tab === 1 ? (
+            <OrderReceiptsTab
+              orderNumber={order.orderNumber}
+              totalAmount={order.totalAmount}
+              currency={currency}
+              rates={rates}
+            />
+          ) : (
+            <OrderDeliveryTab orderNumber={order.orderNumber} />
+          )
         ) : null}
       </DialogContent>
       <DialogActions sx={{ p: 2, pt: 0 }}>

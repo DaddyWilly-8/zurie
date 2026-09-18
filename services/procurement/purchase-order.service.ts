@@ -107,4 +107,20 @@ export const purchaseOrderService = {
       API_ENDPOINTS.purchaseOrders.cancel(id),
     );
   },
+
+  /** GET /admin/purchase-orders/{id}/payments — the Payments tab. */
+  getPayments(id: number) {
+    return apiClient
+      .get<{ data: PurchaseOrderPaymentLink[] }>(
+        API_ENDPOINTS.purchaseOrders.payments(id),
+      )
+      .then((response) => response.data);
+  },
+};
+
+export type PurchaseOrderPaymentLink = {
+  paymentId: number;
+  paymentNumber: string;
+  amountApplied: number;
+  transactionDate: string;
 };

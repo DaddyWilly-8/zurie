@@ -22,11 +22,74 @@ export type LedgerGroup = {
   ledgers?: Ledger[];
 };
 
+export type LedgerGroupNature =
+  "asset" | "liability" | "income" | "expense" | "equity";
+
+export type CreateLedgerGroupPayload = {
+  name: string;
+  code: string;
+  nature: LedgerGroupNature;
+  parentId?: number | null;
+};
+
+export type CreateLedgerPayload = {
+  ledgerGroupId: number;
+  name: string;
+  code: string;
+  openingBalance?: number;
+  isContra?: boolean;
+};
+
 export const financeService = {
   chartOfAccounts() {
     return apiClient
       .get<{ data: LedgerGroup[] }>(API_ENDPOINTS.finance.chartOfAccounts)
       .then((response) => response.data);
+  },
+
+  createLedgerGroup(payload: CreateLedgerGroupPayload) {
+    return apiClient.post<{ data: LedgerGroup }>(
+      API_ENDPOINTS.finance.ledgerGroups,
+      payload,
+    );
+  },
+
+  updateLedgerGroup(id: number, payload: Partial<CreateLedgerGroupPayload>) {
+    return apiClient.patch<{ data: LedgerGroup }>(
+      API_ENDPOINTS.finance.ledgerGroupById(id),
+      payload,
+    );
+  },
+
+  deleteLedgerGroup(id: number) {
+    return apiClient.delete<{ success: boolean }>(
+      API_ENDPOINTS.finance.ledgerGroupById(id),
+    );
+  },
+
+  createLedger(payload: CreateLedgerPayload) {
+    return apiClient.post<{ data: Ledger }>(
+      API_ENDPOINTS.finance.ledgers,
+      payload,
+    );
+  },
+
+  updateLedger(
+    id: number,
+    payload: Partial<
+      Pick<CreateLedgerPayload, "ledgerGroupId" | "name" | "code">
+    >,
+  ) {
+    return apiClient.patch<{ data: Ledger }>(
+      API_ENDPOINTS.finance.ledgerById(id),
+      payload,
+    );
+  },
+
+  deleteLedger(id: number) {
+    return apiClient.delete<{ success: boolean }>(
+      API_ENDPOINTS.finance.ledgerById(id),
+    );
   },
 };
 

@@ -25,6 +25,9 @@ import {
   faBookOpen,
   faRightLeft,
   faFolderTree,
+  faArrowRightArrowLeft,
+  faChartPie,
+  faTableList,
 } from "@fortawesome/free-solid-svg-icons";
 
 /**
@@ -164,6 +167,13 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         permissions: ["vat_view"],
       },
       {
+        type: "nav-item",
+        href: "/admin/reports",
+        label: "Reports",
+        icon: faChartPie,
+        permissions: ["report_view"],
+      },
+      {
         type: "collapsible",
         label: "Transactions",
         icon: faMoneyCheckDollar,
@@ -203,6 +213,13 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: "Masters",
         icon: faFolderTree,
         children: [
+          {
+            type: "nav-item",
+            href: "/admin/chart-of-accounts",
+            label: "Chart of Accounts",
+            icon: faTableList,
+            permissions: ["finance_view"],
+          },
           {
             type: "nav-item",
             href: "/admin/cost-centers",
@@ -250,6 +267,13 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: "Suppliers",
         icon: faTruckField,
         permissions: ["supplier_view"],
+      },
+      {
+        type: "nav-item",
+        href: "/admin/inventory-transfers",
+        label: "Inventory Transfers",
+        icon: faArrowRightArrowLeft,
+        permissions: ["inventory_transfer_view"],
       },
     ],
   },
