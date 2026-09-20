@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
+import { withIdempotency } from "@/services/api/idempotency";
 import type { OrderResponse } from "@/services/orders/order.service";
 
 export type PosSalePayload = {
@@ -17,9 +18,10 @@ export type PosSalePayload = {
 export const posService = {
   /** POST /admin/pos/sale — delegates entirely to OrderService::posSale() on the backend. */
   sell(payload: PosSalePayload) {
-    return apiClient.post<{ data: OrderResponse }>(
-      API_ENDPOINTS.pos.sale,
-      payload,
+    return withIdempotency("pos-sale", payload, (headers) =>
+      apiClient.post<{ data: OrderResponse }>(API_ENDPOINTS.pos.sale, payload, {
+        headers,
+      }),
     );
   },
 };

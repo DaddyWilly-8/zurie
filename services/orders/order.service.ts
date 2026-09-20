@@ -1,4 +1,5 @@
 // services/orders/order.service.ts
+import { withIdempotency } from "@/services/api/idempotency";
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
 
@@ -109,9 +110,10 @@ export const orderService = {
    * POST /orders
    */
   createOrder(payload: CreateOrderPayload): Promise<OrderActionResponse> {
-    return apiClient.post<OrderActionResponse>(
-      API_ENDPOINTS.orders.list,
-      payload,
+    return withIdempotency("checkout", payload, (headers) =>
+      apiClient.post<OrderActionResponse>(API_ENDPOINTS.orders.list, payload, {
+        headers,
+      }),
     );
   },
 
