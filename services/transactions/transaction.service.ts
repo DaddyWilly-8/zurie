@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
+import { withIdempotency } from "@/services/api/idempotency";
 
 type ListResponse<T> = {
   success: boolean;
@@ -127,9 +128,10 @@ export const paymentService = {
     });
   },
   create(payload: CreatePaymentPayload) {
-    return apiClient.post<{ data: Payment }>(
-      API_ENDPOINTS.payments.list,
-      payload,
+    return withIdempotency("payment-create", payload, (headers) =>
+      apiClient.post<{ data: Payment }>(API_ENDPOINTS.payments.list, payload, {
+        headers,
+      }),
     );
   },
   remove(id: number) {
@@ -146,9 +148,10 @@ export const receiptService = {
     });
   },
   create(payload: CreateReceiptPayload) {
-    return apiClient.post<{ data: Receipt }>(
-      API_ENDPOINTS.receipts.list,
-      payload,
+    return withIdempotency("receipt-create", payload, (headers) =>
+      apiClient.post<{ data: Receipt }>(API_ENDPOINTS.receipts.list, payload, {
+        headers,
+      }),
     );
   },
   remove(id: number) {
@@ -166,9 +169,14 @@ export const journalVoucherService = {
     );
   },
   create(payload: CreateJournalVoucherPayload) {
-    return apiClient.post<{ data: JournalVoucher }>(
-      API_ENDPOINTS.journalVouchers.list,
-      payload,
+    return withIdempotency("journal-voucher-create", payload, (headers) =>
+      apiClient.post<{ data: JournalVoucher }>(
+        API_ENDPOINTS.journalVouchers.list,
+        payload,
+        {
+          headers,
+        },
+      ),
     );
   },
   remove(id: number) {
@@ -186,9 +194,14 @@ export const fundTransferService = {
     );
   },
   create(payload: CreateFundTransferPayload) {
-    return apiClient.post<{ data: FundTransfer }>(
-      API_ENDPOINTS.fundTransfers.list,
-      payload,
+    return withIdempotency("fund-transfer-create", payload, (headers) =>
+      apiClient.post<{ data: FundTransfer }>(
+        API_ENDPOINTS.fundTransfers.list,
+        payload,
+        {
+          headers,
+        },
+      ),
     );
   },
   remove(id: number) {

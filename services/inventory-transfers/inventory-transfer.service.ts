@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
+import { withIdempotency } from "@/services/api/idempotency";
 
 export type InventoryTransferType =
   "internal" | "external" | "cost_center_change";
@@ -49,9 +50,12 @@ export const inventoryTransferService = {
   },
 
   create(payload: InventoryTransferPayload) {
-    return apiClient.post<{ data: InventoryTransfer }>(
-      API_ENDPOINTS.inventoryTransfers.list,
-      payload,
+    return withIdempotency("inventory-transfer-create", payload, (headers) =>
+      apiClient.post<{ data: InventoryTransfer }>(
+        API_ENDPOINTS.inventoryTransfers.list,
+        payload,
+        { headers },
+      ),
     );
   },
 

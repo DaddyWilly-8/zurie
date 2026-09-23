@@ -14,9 +14,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { customerAuthService } from "@/services/auth/customer-auth.service";
+import { authService } from "@/services/auth/auth.service";
 
-export default function ResetPasswordPage() {
+/**
+ * Staff counterpart to app/(auth)/reset-password/page.tsx (customer) —
+ * the backend's AuthModuleServiceProvider sends staff reset emails here
+ * specifically (branching on notifiable type), since the customer/staff
+ * split gave the two guards separate password brokers with different
+ * reset endpoints. See its docblock for the full reasoning.
+ */
+export default function AdminResetPasswordPage() {
   const searchParams = useSearchParams();
   const token = searchParams?.get("token") ?? "";
   const email = searchParams?.get("email") ?? "";
@@ -46,7 +53,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      await customerAuthService.resetPassword({
+      await authService.resetPassword({
         token,
         email,
         password,
@@ -103,7 +110,7 @@ export default function ResetPasswordPage() {
               >
                 {loading ? "Saving..." : "Update Password"}
               </Button>
-              <Button component={Link} href="/login" variant="text">
+              <Button component={Link} href="/admin/login" variant="text">
                 Back to login
               </Button>
               {message ? <Alert severity="success">{message}</Alert> : null}

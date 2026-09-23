@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
+import { withIdempotency } from "@/services/api/idempotency";
 
 export type GrnLine = {
   purchaseOrderItemId: number;
@@ -40,7 +41,11 @@ export const grnService = {
   },
 
   create(payload: CreateGrnPayload) {
-    return apiClient.post<{ data: Grn }>(API_ENDPOINTS.grns.list, payload);
+    return withIdempotency("grn-create", payload, (headers) =>
+      apiClient.post<{ data: Grn }>(API_ENDPOINTS.grns.list, payload, {
+        headers,
+      }),
+    );
   },
 
   get(id: number) {

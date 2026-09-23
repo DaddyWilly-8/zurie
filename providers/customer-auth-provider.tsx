@@ -8,7 +8,7 @@ import {
   type PropsWithChildren,
 } from "react";
 import type { AuthUser } from "@/types/domain";
-import { authService } from "@/services/auth/auth.service";
+import { customerAuthService } from "@/services/auth/customer-auth.service";
 
 type CustomerAuthContextValue = {
   user: AuthUser | null;
@@ -35,10 +35,15 @@ const CustomerAuthContext = createContext<CustomerAuthContextValue | null>(
  * once, share via context" shape, but deliberately has no route guard: a
  * logged-out visitor can browse every public page freely, and individual
  * features (Wishlist, Reviews, Account) are the ones that decide whether
- * to prompt for login, not this provider. Session state is shared with the
- * admin session via the same cookie/GET /auth/user mechanism — a `customer`
- * role user and an `admin` role user are just different rows this same
- * endpoint can resolve to.
+ * to prompt for login, not this provider.
+ *
+ * Uses the dedicated 'customer' guard (customerAuthService) — the
+ * customer/staff split's fix for a real bug this provider used to have:
+ * it previously called the *shared* GET /auth/user endpoint, so a
+ * logged-in admin browsing the storefront in the same browser was shown
+ * here as if they were a logged-in customer. The 'customer' guard is now
+ * independent of 'web' (staff) even though both share one session
+ * cookie, so an admin session no longer leaks into this provider at all.
  */
 export const CustomerAuthProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -47,7 +52,7 @@ export const CustomerAuthProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     let active = true;
 
-    void authService.getCurrentUser().then((currentUser) => {
+    void customerAuthService.getCurrentUser().then((currentUser) => {
       if (!active) return;
       setUser(currentUser);
       setLoading(false);
@@ -59,19 +64,19 @@ export const CustomerAuthProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   const login: CustomerAuthContextValue["login"] = async (email, password) => {
-    const loggedInUser = await authService.login(email, password);
+    const loggedInUser = await customerAuthService.login(email, password);
     setUser(loggedInUser);
     return loggedInUser;
   };
 
   const register: CustomerAuthContextValue["register"] = async (payload) => {
-    const newUser = await authService.register(payload);
+    const newUser = await customerAuthService.register(payload);
     setUser(newUser);
     return newUser;
   };
 
   const logout = async () => {
-    await authService.logout();
+    await customerAuthService.logout();
     setUser(null);
   };
 

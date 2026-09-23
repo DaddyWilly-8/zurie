@@ -18,6 +18,7 @@ import {
   faCoins,
   faClipboardList,
   faDolly,
+  faShieldHalved,
   faPercent,
   faFileInvoice,
   faMoneyCheckDollar,
@@ -328,6 +329,14 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: "Activity",
         icon: faChartLine,
         permissions: ["activity_view"],
+      },
+      {
+        // Self-service, deliberately no `permissions` — every account
+        // manages its own two-factor setup, not gated by any permission.
+        type: "nav-item",
+        href: "/admin/account/security",
+        label: "Security",
+        icon: faShieldHalved,
       },
     ],
   },

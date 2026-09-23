@@ -39,10 +39,47 @@ const TABS = [
   "Store Stock",
 ] as const;
 
+/**
+ * Shared by every period-based tab (Sales by Channel, Revenue Summary,
+ * Purchase Summary) — a report's all-time figure when both are left
+ * blank, matching the backend's own "omit both for all-time" contract.
+ */
+const DateRangeFields = ({
+  from,
+  to,
+  onChange,
+}: {
+  from: string;
+  to: string;
+  onChange: (range: { from: string; to: string }) => void;
+}) => (
+  <Stack direction="row" spacing={2}>
+    <TextField
+      type="date"
+      label="From"
+      value={from}
+      onChange={(event) => onChange({ from: event.target.value, to })}
+      slotProps={{ inputLabel: { shrink: true } }}
+      sx={{ maxWidth: 200 }}
+    />
+    <TextField
+      type="date"
+      label="To"
+      value={to}
+      onChange={(event) => onChange({ from, to: event.target.value })}
+      slotProps={{ inputLabel: { shrink: true } }}
+      sx={{ maxWidth: 200 }}
+    />
+  </Stack>
+);
+
 export const AdminReportsClient = () => {
   const [tab, setTab] = useState(0);
   const [inventoryOutletId, setInventoryOutletId] = useState<number | "">("");
   const [storeStockOutletId, setStoreStockOutletId] = useState<number | "">("");
+  const [salesRange, setSalesRange] = useState({ from: "", to: "" });
+  const [revenueRange, setRevenueRange] = useState({ from: "", to: "" });
+  const [purchaseRange, setPurchaseRange] = useState({ from: "", to: "" });
 
   const { data: outlets = [] } = useQuery({
     queryKey: ["admin-outlets-picker"],
@@ -50,8 +87,12 @@ export const AdminReportsClient = () => {
   });
 
   const salesByChannel = useQuery({
-    queryKey: ["report-sales-by-channel"],
-    queryFn: reportService.salesByChannel,
+    queryKey: ["report-sales-by-channel", salesRange],
+    queryFn: () =>
+      reportService.salesByChannel({
+        from: salesRange.from || undefined,
+        to: salesRange.to || undefined,
+      }),
     enabled: tab === 0,
   });
 
@@ -62,8 +103,12 @@ export const AdminReportsClient = () => {
   });
 
   const revenueSummary = useQuery({
-    queryKey: ["report-revenue-summary"],
-    queryFn: reportService.revenueSummary,
+    queryKey: ["report-revenue-summary", revenueRange],
+    queryFn: () =>
+      reportService.revenueSummary({
+        from: revenueRange.from || undefined,
+        to: revenueRange.to || undefined,
+      }),
     enabled: tab === 2,
   });
 
@@ -101,8 +146,12 @@ export const AdminReportsClient = () => {
   });
 
   const purchaseSummary = useQuery({
-    queryKey: ["report-purchase-summary"],
-    queryFn: reportService.purchaseSummary,
+    queryKey: ["report-purchase-summary", purchaseRange],
+    queryFn: () =>
+      reportService.purchaseSummary({
+        from: purchaseRange.from || undefined,
+        to: purchaseRange.to || undefined,
+      }),
     enabled: tab === 8,
   });
 
@@ -136,11 +185,18 @@ export const AdminReportsClient = () => {
 
       <Box>
         {tab === 0 ? (
-          salesByChannel.isLoading ? (
-            <Typography color="text.secondary">Loading...</Typography>
-          ) : (
-            <SalesByChannelTable data={salesByChannel.data ?? {}} />
-          )
+          <Stack spacing={2}>
+            <DateRangeFields
+              from={salesRange.from}
+              to={salesRange.to}
+              onChange={setSalesRange}
+            />
+            {salesByChannel.isLoading ? (
+              <Typography color="text.secondary">Loading...</Typography>
+            ) : (
+              <SalesByChannelTable data={salesByChannel.data ?? {}} />
+            )}
+          </Stack>
         ) : null}
 
         {tab === 1 ? (
@@ -152,11 +208,18 @@ export const AdminReportsClient = () => {
         ) : null}
 
         {tab === 2 ? (
-          revenueSummary.isLoading ? (
-            <Typography color="text.secondary">Loading...</Typography>
-          ) : (
-            <RevenueSummaryTable summary={revenueSummary.data} />
-          )
+          <Stack spacing={2}>
+            <DateRangeFields
+              from={revenueRange.from}
+              to={revenueRange.to}
+              onChange={setRevenueRange}
+            />
+            {revenueSummary.isLoading ? (
+              <Typography color="text.secondary">Loading...</Typography>
+            ) : (
+              <RevenueSummaryTable summary={revenueSummary.data} />
+            )}
+          </Stack>
         ) : null}
 
         {tab === 3 ? (
@@ -220,11 +283,18 @@ export const AdminReportsClient = () => {
         ) : null}
 
         {tab === 8 ? (
-          purchaseSummary.isLoading ? (
-            <Typography color="text.secondary">Loading...</Typography>
-          ) : (
-            <PurchaseSummaryTable summary={purchaseSummary.data} />
-          )
+          <Stack spacing={2}>
+            <DateRangeFields
+              from={purchaseRange.from}
+              to={purchaseRange.to}
+              onChange={setPurchaseRange}
+            />
+            {purchaseSummary.isLoading ? (
+              <Typography color="text.secondary">Loading...</Typography>
+            ) : (
+              <PurchaseSummaryTable summary={purchaseSummary.data} />
+            )}
+          </Stack>
         ) : null}
 
         {tab === 9 ? (

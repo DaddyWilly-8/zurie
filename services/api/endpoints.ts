@@ -1,15 +1,34 @@
 export const API_ENDPOINTS = {
+  // Staff-only ('web' guard) since the customer/staff split — no
+  // register, no Google login here. See `customerAuth` below for the
+  // storefront's fully independent counterpart.
   auth: {
     csrfCookie: "/sanctum/csrf-cookie",
     login: "/auth/login",
-    register: "/auth/register",
     logout: "/auth/logout",
     currentUser: "/auth/user",
     forgotPassword: "/auth/forgot-password",
     resetPassword: "/auth/reset-password",
-    // Plain browser navigations (<a href>, never apiClient) — see
-    // AuthController::redirectToGoogle()'s docblock on the backend for why.
-    googleRedirect: "/auth/google/redirect",
+    twoFactorChallenge: "/auth/two-factor/challenge",
+    twoFactorStatus: "/auth/two-factor/status",
+    twoFactorEnable: "/auth/two-factor/enable",
+    twoFactorConfirm: "/auth/two-factor/confirm",
+    twoFactorDisable: "/auth/two-factor/disable",
+  },
+  // Customer-only ('customer' guard) — a completely separate login from
+  // `auth` above despite sharing the same session cookie; see
+  // CustomerAccount's docblock on the backend for why.
+  customerAuth: {
+    login: "/customer/auth/login",
+    register: "/customer/auth/register",
+    logout: "/customer/auth/logout",
+    currentUser: "/customer/auth/user",
+    forgotPassword: "/customer/auth/forgot-password",
+    resetPassword: "/customer/auth/reset-password",
+    // Plain browser navigation (<a href>, never apiClient) — see
+    // CustomerAuthController::redirectToGoogle()'s docblock on the
+    // backend for why.
+    googleRedirect: "/customer/auth/google/redirect",
   },
   account: {
     profile: "/account/profile",

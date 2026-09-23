@@ -88,10 +88,20 @@ export type StoreStockRow = {
   stockStatus: string;
 };
 
+export type DateRange = { from?: string; to?: string };
+
+const dateRangeQuery = (range?: DateRange) =>
+  range?.from || range?.to
+    ? { query: { from: range?.from, to: range?.to } }
+    : undefined;
+
 export const reportService = {
-  salesByChannel() {
+  salesByChannel(range?: DateRange) {
     return apiClient
-      .get<{ data: SalesByChannel }>(API_ENDPOINTS.reports.salesByChannel)
+      .get<{ data: SalesByChannel }>(
+        API_ENDPOINTS.reports.salesByChannel,
+        dateRangeQuery(range),
+      )
       .then((response) => response.data);
   },
 
@@ -101,9 +111,12 @@ export const reportService = {
       .then((response) => response.data);
   },
 
-  revenueSummary() {
+  revenueSummary(range?: DateRange) {
     return apiClient
-      .get<{ data: RevenueSummary }>(API_ENDPOINTS.reports.revenueSummary)
+      .get<{ data: RevenueSummary }>(
+        API_ENDPOINTS.reports.revenueSummary,
+        dateRangeQuery(range),
+      )
       .then((response) => response.data);
   },
 
@@ -140,9 +153,12 @@ export const reportService = {
       .then((response) => response.data);
   },
 
-  purchaseSummary() {
+  purchaseSummary(range?: DateRange) {
     return apiClient
-      .get<{ data: PurchaseSummary }>(API_ENDPOINTS.reports.purchaseSummary)
+      .get<{ data: PurchaseSummary }>(
+        API_ENDPOINTS.reports.purchaseSummary,
+        dateRangeQuery(range),
+      )
       .then((response) => response.data);
   },
 

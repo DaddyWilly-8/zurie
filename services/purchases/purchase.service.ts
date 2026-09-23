@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
+import { withIdempotency } from "@/services/api/idempotency";
 
 export type PurchaseItem = {
   productId: number;
@@ -44,9 +45,14 @@ export const purchaseService = {
   },
 
   create(payload: CreatePurchasePayload) {
-    return apiClient.post<{ data: Purchase }>(
-      API_ENDPOINTS.purchases.list,
-      payload,
+    return withIdempotency("purchase-create", payload, (headers) =>
+      apiClient.post<{ data: Purchase }>(
+        API_ENDPOINTS.purchases.list,
+        payload,
+        {
+          headers,
+        },
+      ),
     );
   },
 

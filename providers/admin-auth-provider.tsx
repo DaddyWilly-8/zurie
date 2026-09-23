@@ -11,7 +11,11 @@ import { usePathname, useRouter } from "next/navigation";
 import type { AuthUser } from "@/types/domain";
 import { authService } from "@/services/auth/auth.service";
 
-const PUBLIC_ADMIN_PATHS = new Set(["/admin/login", "/admin/forgot-password"]);
+const PUBLIC_ADMIN_PATHS = new Set([
+  "/admin/login",
+  "/admin/forgot-password",
+  "/admin/reset-password",
+]);
 
 type AdminAuthContextValue = {
   user: AuthUser | null;

@@ -9,14 +9,14 @@ import { API_ENDPOINTS } from "@/services/api/endpoints";
  * has to be a real top-level browser navigation straight to the backend's
  * origin (not the /api/v1 same-origin proxy path other calls use) so the
  * whole Google -> backend callback -> frontend redirect chain stays a
- * normal browser navigation the whole way through. See
- * AuthController::redirectToGoogle() on the backend.
+ * normal browser navigation the whole way through. Customer-only — see
+ * CustomerAuthController::redirectToGoogle() on the backend.
  */
 export const GoogleButton = () => {
   return (
     <Button
       component="a"
-      href={`${API_ORIGIN}/api/v1${API_ENDPOINTS.auth.googleRedirect}`}
+      href={`${API_ORIGIN}/api/v1${API_ENDPOINTS.customerAuth.googleRedirect}`}
       variant="outlined"
       fullWidth
       startIcon={<FontAwesomeIcon icon={faGoogle} fontSize={16} />}

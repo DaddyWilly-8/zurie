@@ -206,9 +206,15 @@ export const orderService = {
       lines: Array<{ orderItemId: number; quantityDispatched: number }>;
     },
   ) {
-    return apiClient.post<{ data: OrderDelivery }>(
-      API_ENDPOINTS.orders.adminDeliveries(orderNumber),
+    return withIdempotency(
+      `delivery-create:${orderNumber}`,
       payload,
+      (headers) =>
+        apiClient.post<{ data: OrderDelivery }>(
+          API_ENDPOINTS.orders.adminDeliveries(orderNumber),
+          payload,
+          { headers },
+        ),
     );
   },
 };
