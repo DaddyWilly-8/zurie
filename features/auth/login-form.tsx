@@ -23,7 +23,14 @@ export const LoginForm = () => {
   const { login } = useCustomerAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  // CustomerAuthController::handleGoogleCallback() bounces back here with
+  // ?error=google_failed when the OAuth round trip fails — surface it
+  // instead of silently showing an empty login form.
+  const [error, setError] = useState(
+    searchParams.get("error") === "google_failed"
+      ? "Google sign-in didn't complete. Please try again, or sign in with your email and password."
+      : "",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (event: React.FormEvent) => {

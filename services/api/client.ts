@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { API_BASE_URL, API_TIMEOUT_MS } from "@/services/api/config";
 import { API_ENDPOINTS } from "@/services/api/endpoints";
+import { resolveMediaUrlsDeep } from "@/services/api/media-url";
 import type { ApiRequestOptions } from "@/services/api/types";
 
 const axiosClient = axios.create({
@@ -129,7 +130,7 @@ export const apiClient = {
         timeout: timeoutMs,
       });
 
-      return response.data;
+      return resolveMediaUrlsDeep(response.data);
     };
 
     try {

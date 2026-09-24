@@ -14,7 +14,7 @@ export const mediaActions = {
     });
 
     return {
-      data: (payload.data ?? []) as AdminMediaItem[],
+      data: payload.data satisfies AdminMediaItem[],
       count: payload.count ?? 0,
     };
   },
