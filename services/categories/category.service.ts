@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
 import { cache } from "react";
+import { prepareImageUpload } from "@/utils/prepare-image-upload";
 
 type CategoryRecord = {
   id: string | number;
@@ -86,9 +87,9 @@ export const categoryService = {
     );
   },
 
-  uploadCategoryImage(id: string, image: File) {
+  async uploadCategoryImage(id: string, image: File) {
     const formData = new FormData();
-    formData.append("image", image);
+    formData.append("image", await prepareImageUpload(image));
 
     return apiClient.request<{ success: boolean; data: CategoryRecord }>(
       API_ENDPOINTS.categories.image(id),

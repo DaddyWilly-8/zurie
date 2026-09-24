@@ -87,9 +87,11 @@ export const AdminProductsClient = () => {
       setMessage("Product created successfully.");
       await refetch();
       return true;
-    } catch {
+    } catch (error) {
       setMessageType("error");
-      setMessage("Failed to create product.");
+      setMessage(
+        error instanceof Error ? error.message : "Failed to create product.",
+      );
       return false;
     }
   };
@@ -115,9 +117,11 @@ export const AdminProductsClient = () => {
       setMessage("Product updated successfully.");
       await refetch();
       return true;
-    } catch {
+    } catch (error) {
       setMessageType("error");
-      setMessage("Failed to update product.");
+      setMessage(
+        error instanceof Error ? error.message : "Failed to update product.",
+      );
       return false;
     }
   };
@@ -179,9 +183,11 @@ export const AdminProductsClient = () => {
       setMessage("Images uploaded successfully.");
       await refetch();
       return true;
-    } catch {
+    } catch (error) {
       setMessageType("error");
-      setMessage("Failed to upload images.");
+      setMessage(
+        error instanceof Error ? error.message : "Failed to upload images.",
+      );
       return false;
     }
   };

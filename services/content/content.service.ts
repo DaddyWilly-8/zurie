@@ -9,6 +9,7 @@ import type {
   PublicSettings,
   SiteSettingsBundle,
 } from "@/types/content";
+import { prepareImageUpload } from "@/utils/prepare-image-upload";
 
 /**
  * §8 Settings service — v2.24 API contract.
@@ -95,7 +96,7 @@ export const contentService = {
   /** POST /admin/settings/brand/logo (multipart, field name: image) */
   async uploadBrandLogo(file: File): Promise<BrandSettings> {
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", await prepareImageUpload(file));
 
     const response = await apiClient.request<{
       success: boolean;
@@ -149,7 +150,7 @@ export const contentService = {
   /** POST /admin/settings/homepage/hero-image (multipart, field name: image) */
   async uploadHomepageHeroImage(file: File): Promise<HomepageSettings> {
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", await prepareImageUpload(file));
 
     const response = await apiClient.request<{
       success: boolean;

@@ -3,6 +3,7 @@ import { apiClient } from "@/services/api/client";
 import type { AdminProduct } from "@/features/admin/products";
 import type { Product } from "@/types/product";
 import { getStorefrontCategories } from "@/services/categories/category.service";
+import { prepareImageUpload } from "@/utils/prepare-image-upload";
 
 export type AdminProductPayload = {
   name: string;
@@ -185,9 +186,10 @@ export const productService = {
     );
   },
 
-  uploadProductImages(id: string, files: File[]) {
+  async uploadProductImages(id: string, files: File[]) {
     const formData = new FormData();
-    files.forEach((file) => formData.append("images[]", file));
+    const prepared = await Promise.all(files.map(prepareImageUpload));
+    prepared.forEach((file) => formData.append("images[]", file));
 
     return apiClient.request<{ success: boolean; data: unknown }>(
       API_ENDPOINTS.products.images(id),

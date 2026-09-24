@@ -98,8 +98,12 @@ export const AdminCategoriesClient = () => {
       setMessage("Category image updated successfully");
       setMessageType("success");
       await refetch();
-    } catch {
-      setMessage("Failed to update category image");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to update category image",
+      );
       setMessageType("error");
     }
   };
