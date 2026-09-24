@@ -59,11 +59,19 @@ export type PoliciesSettings = {
  * GET /settings (public) — the aggregated bundle the viewfront consumes.
  * Categories with nothing saved resolve to `{}` / empty arrays.
  */
+/** Read-only VAT setup from the backend's config/zurie.php (part of GET /settings). */
+export type TaxSettings = {
+  vatPercentage: number;
+  /** true: entered prices already include VAT; false: VAT is added on top. */
+  pricesIncludeVat: boolean;
+};
+
 export type PublicSettings = {
   brand?: Partial<BrandSettings>;
   contact?: Partial<ContactSettings>;
   homepage?: Partial<HomepageSettings>;
   policies?: Partial<PoliciesSettings>;
+  tax?: Partial<TaxSettings>;
 };
 
 export type SiteSettingsBundle = PublicSettings;

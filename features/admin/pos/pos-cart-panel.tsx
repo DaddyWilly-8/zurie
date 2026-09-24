@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { useSiteSettings } from "@/providers/settings-provider";
+import { summarizeVat } from "@/utils/vat";
 import type { PosCartLine } from "./types";
 
 type Props = {
@@ -17,7 +19,14 @@ type Props = {
 };
 
 export const PosCartPanel = ({ cart, onUpdateQuantity, onRemove }: Props) => {
-  const total = cart.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  const { tax } = useSiteSettings();
+  const { subtotal, vat, total } = summarizeVat(
+    cart.map((line) => ({
+      amount: line.price * line.quantity,
+      vatExempted: line.vatExempted,
+    })),
+    tax,
+  );
 
   return (
     <Stack spacing={1.5}>
@@ -68,6 +77,26 @@ export const PosCartPanel = ({ cart, onUpdateQuantity, onRemove }: Props) => {
         </Stack>
       )}
       <Divider />
+      {vat > 0 && (
+        <>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography color="text.secondary">Subtotal</Typography>
+            <Typography color="text.secondary">
+              {subtotal.toLocaleString()}
+            </Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography color="text.secondary">
+              {tax.pricesIncludeVat
+                ? `Includes VAT (${tax.vatPercentage}%)`
+                : `VAT (${tax.vatPercentage}%)`}
+            </Typography>
+            <Typography color="text.secondary">
+              {vat.toLocaleString()}
+            </Typography>
+          </Stack>
+        </>
+      )}
       <Stack direction="row" justifyContent="space-between">
         <Typography variant="h6">Total</Typography>
         <Typography variant="h6">{total.toLocaleString()}</Typography>

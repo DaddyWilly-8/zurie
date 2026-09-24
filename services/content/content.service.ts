@@ -8,6 +8,7 @@ import type {
   PoliciesSettings,
   PublicSettings,
   SiteSettingsBundle,
+  TaxSettings,
 } from "@/types/content";
 import { prepareImageUpload } from "@/utils/prepare-image-upload";
 
@@ -61,6 +62,18 @@ const normalizePolicies = (
   returnPolicy: data?.returnPolicy ?? "",
 });
 
+// Older backends don't send `tax`; default to the backend's own defaults
+// (18%, prices include VAT) rather than showing no VAT at all.
+export const normalizeTax = (
+  data: Partial<TaxSettings> | null | undefined,
+): TaxSettings => ({
+  vatPercentage: Number.isFinite(Number(data?.vatPercentage))
+    ? Number(data?.vatPercentage)
+    : 18,
+  pricesIncludeVat:
+    typeof data?.pricesIncludeVat === "boolean" ? data.pricesIncludeVat : true,
+});
+
 export const contentService = {
   /** GET /settings (public) — everything the viewfront needs in one call. */
   async getPublicSettings(): Promise<PublicSettings> {
@@ -73,6 +86,7 @@ export const contentService = {
       contact: normalizeContact(data?.contact),
       homepage: normalizeHomepage(data?.homepage),
       policies: normalizePolicies(data?.policies),
+      tax: normalizeTax(data?.tax),
     };
   },
 

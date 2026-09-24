@@ -270,6 +270,7 @@ type RawStorefrontProduct = Partial<Product> & {
   shortDescription?: string;
   price?: number | string;
   salePrice?: number | string | null;
+  vat_exempted?: boolean;
   category?: unknown;
   categoryId?: string | number;
   category_id?: string | number;
@@ -441,6 +442,7 @@ const normalizeStorefrontProduct = (row: RawStorefrontProduct): Product => {
     newArrival: Boolean(row.newArrival ?? row.new_arrival),
     inStock,
     stockCount,
+    vatExempted: Boolean(row.vatExempted ?? row.vat_exempted),
     specifications: Array.isArray(row.specifications) ? row.specifications : [],
     colors: Array.isArray(row.colors) ? row.colors : [],
     sizes: Array.isArray(row.sizes) ? row.sizes : [],
