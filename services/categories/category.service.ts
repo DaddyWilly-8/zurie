@@ -14,6 +14,8 @@ type CategoryRecord = {
   is_visible?: boolean;
   sortOrder?: number;
   sort_order?: number;
+  incomeLedgerId?: number | null;
+  expenseLedgerId?: number | null;
 };
 
 const normalizeCategory = (item: CategoryRecord): CategoryRecord => ({
@@ -24,6 +26,8 @@ const normalizeCategory = (item: CategoryRecord): CategoryRecord => ({
   imageUrl: item.imageUrl ?? item.image_url ?? null,
   visible: item.visible ?? item.is_visible ?? true,
   sortOrder: item.sortOrder ?? item.sort_order ?? 0,
+  incomeLedgerId: item.incomeLedgerId ?? null,
+  expenseLedgerId: item.expenseLedgerId ?? null,
 });
 
 const unwrapCategories = (
@@ -44,6 +48,8 @@ export type AdminCategoryPayload = {
   description?: string;
   visible?: boolean;
   sortOrder?: number;
+  incomeLedgerId?: number | null;
+  expenseLedgerId?: number | null;
 };
 
 export const categoryService = {
@@ -68,14 +74,14 @@ export const categoryService = {
   },
 
   createCategory(payload: AdminCategoryPayload) {
-    return apiClient.post<{ success: boolean }>(
+    return apiClient.post<{ success: boolean; data: CategoryRecord }>(
       API_ENDPOINTS.categories.list,
       payload,
     );
   },
 
   updateCategory(id: string, payload: Partial<AdminCategoryPayload>) {
-    return apiClient.patch<{ success: boolean }>(
+    return apiClient.patch<{ success: boolean; data: CategoryRecord }>(
       API_ENDPOINTS.categories.byId(id),
       payload,
     );

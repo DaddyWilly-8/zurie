@@ -1,3 +1,7 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Button,
@@ -7,12 +11,19 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  MenuItem,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { AdminField, AdminToggle } from "@/components/admin/admin-field";
+import { QuickAddLedgerDialog } from "@/components/admin/quick-add-ledger-dialog";
+import {
+  financeService,
+  flattenLedgers,
+} from "@/services/finance/finance.service";
 import type { CategoryForm } from "./types";
 
 type CategoryFormDialogProps = {
@@ -37,6 +48,22 @@ export const CategoryFormDialog = ({
   onChange,
   onSubmit,
 }: CategoryFormDialogProps) => {
+  const [quickAddNature, setQuickAddNature] = useState<
+    "income" | "expense" | null
+  >(null);
+  const queryClient = useQueryClient();
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["finance-chart-of-accounts"],
+    queryFn: financeService.chartOfAccounts,
+    enabled: open,
+  });
+
+  const ledgers = useMemo(
+    () => flattenLedgers(chartOfAccounts),
+    [chartOfAccounts],
+  );
+
   return (
     <Dialog
       open={open}
@@ -157,6 +184,76 @@ export const CategoryFormDialog = ({
                 />
               </Stack>
             </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Stack direction="row" spacing={1} alignItems="flex-start">
+                <TextField
+                  select
+                  fullWidth
+                  label="Income Ledger"
+                  value={form.incomeLedgerId}
+                  onChange={(event) =>
+                    onChange(
+                      "incomeLedgerId",
+                      event.target.value === ""
+                        ? ""
+                        : Number(event.target.value),
+                    )
+                  }
+                  helperText="Falls back to the global Sales ledger when left blank."
+                >
+                  <MenuItem value="">Default (global Sales ledger)</MenuItem>
+                  {ledgers
+                    .filter((ledger) => ledger.groupName)
+                    .map((ledger) => (
+                      <MenuItem key={ledger.id} value={ledger.id}>
+                        {ledger.groupName} — {ledger.name}
+                      </MenuItem>
+                    ))}
+                </TextField>
+                <IconButton
+                  onClick={() => setQuickAddNature("income")}
+                  aria-label="New Income Ledger"
+                  sx={{ mt: 1, border: "1px solid", borderColor: "divider" }}
+                >
+                  <FontAwesomeIcon icon={faPlus} size="xs" />
+                </IconButton>
+              </Stack>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Stack direction="row" spacing={1} alignItems="flex-start">
+                <TextField
+                  select
+                  fullWidth
+                  label="Expense Ledger"
+                  value={form.expenseLedgerId}
+                  onChange={(event) =>
+                    onChange(
+                      "expenseLedgerId",
+                      event.target.value === ""
+                        ? ""
+                        : Number(event.target.value),
+                    )
+                  }
+                  helperText="Falls back to the global COGS ledger when left blank."
+                >
+                  <MenuItem value="">Default (global COGS ledger)</MenuItem>
+                  {ledgers
+                    .filter((ledger) => ledger.groupName)
+                    .map((ledger) => (
+                      <MenuItem key={ledger.id} value={ledger.id}>
+                        {ledger.groupName} — {ledger.name}
+                      </MenuItem>
+                    ))}
+                </TextField>
+                <IconButton
+                  onClick={() => setQuickAddNature("expense")}
+                  aria-label="New Expense Ledger"
+                  sx={{ mt: 1, border: "1px solid", borderColor: "divider" }}
+                >
+                  <FontAwesomeIcon icon={faPlus} size="xs" />
+                </IconButton>
+              </Stack>
+            </Grid>
           </Grid>
         </DialogContent>
 
@@ -206,6 +303,21 @@ export const CategoryFormDialog = ({
           </Button>
         </DialogActions>
       </Box>
+
+      <QuickAddLedgerDialog
+        open={quickAddNature !== null}
+        nature={quickAddNature ?? "income"}
+        onClose={() => setQuickAddNature(null)}
+        onCreated={(ledgerId) => {
+          onChange(
+            quickAddNature === "expense" ? "expenseLedgerId" : "incomeLedgerId",
+            ledgerId,
+          );
+          queryClient.invalidateQueries({
+            queryKey: ["finance-chart-of-accounts"],
+          });
+        }}
+      />
     </Dialog>
   );
 };

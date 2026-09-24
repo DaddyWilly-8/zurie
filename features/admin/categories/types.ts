@@ -9,6 +9,8 @@ export type Category = {
   is_visible?: boolean;
   sortOrder?: number;
   sort_order?: number;
+  incomeLedgerId?: number | null;
+  expenseLedgerId?: number | null;
 };
 
 export type CategoryForm = {
@@ -17,4 +19,6 @@ export type CategoryForm = {
   description: string;
   sortOrder: number;
   visible: boolean;
+  incomeLedgerId: number | "";
+  expenseLedgerId: number | "";
 };

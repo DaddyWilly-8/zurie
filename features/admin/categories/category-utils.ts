@@ -6,6 +6,8 @@ export const emptyCategoryForm: CategoryForm = {
   description: "",
   sortOrder: 1,
   visible: true,
+  incomeLedgerId: "",
+  expenseLedgerId: "",
 };
 
 export const toCategoryForm = (item: Category): CategoryForm => ({
@@ -14,6 +16,8 @@ export const toCategoryForm = (item: Category): CategoryForm => ({
   description: item.description ?? "",
   sortOrder: item.sortOrder ?? item.sort_order ?? 1,
   visible: item.visible ?? item.is_visible ?? true,
+  incomeLedgerId: item.incomeLedgerId ?? "",
+  expenseLedgerId: item.expenseLedgerId ?? "",
 });
 
 export const toCategoryPayload = (form: CategoryForm) => ({
@@ -22,4 +26,6 @@ export const toCategoryPayload = (form: CategoryForm) => ({
   description: form.description,
   visible: form.visible,
   sortOrder: form.sortOrder,
+  incomeLedgerId: form.incomeLedgerId === "" ? null : form.incomeLedgerId,
+  expenseLedgerId: form.expenseLedgerId === "" ? null : form.expenseLedgerId,
 });

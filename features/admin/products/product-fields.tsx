@@ -1,14 +1,19 @@
 "use client";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Grid,
+  IconButton,
   MenuItem,
   Stack,
   TextField,
   Alert,
   Typography,
 } from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { AdminField, AdminToggle } from "@/components/admin";
+import { QuickAddCategoryDialog } from "@/components/admin/quick-add-category-dialog";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import {
   convertFromBaseCurrency,
@@ -35,6 +40,8 @@ export const ProductFields = ({
     null,
   );
   const [rawValue, setRawValue] = useState("");
+  const [quickAddCategoryOpen, setQuickAddCategoryOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const getError = <K extends keyof ProductFieldsProps["state"]>(key: K) =>
     errors?.[key] ?? "";
@@ -251,28 +258,47 @@ export const ProductFields = ({
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <TextField
-          label="Category"
-          select
-          value={state.categoryId}
-          onChange={(event) => onChange("categoryId", event.target.value)}
-          fullWidth
-          variant="outlined"
-          error={Boolean(getError("categoryId"))}
-          helperText={getError("categoryId")}
-          sx={{
-            bgcolor: "background.paper",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 0,
-            },
+        <Stack direction="row" spacing={1} alignItems="flex-start">
+          <TextField
+            label="Category"
+            select
+            value={state.categoryId}
+            onChange={(event) => onChange("categoryId", event.target.value)}
+            fullWidth
+            variant="outlined"
+            error={Boolean(getError("categoryId"))}
+            helperText={getError("categoryId")}
+            sx={{
+              bgcolor: "background.paper",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 0,
+              },
+            }}
+          >
+            {categoryOptions.map((category) => (
+              <MenuItem key={category.value} value={category.value}>
+                {category.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <IconButton
+            onClick={() => setQuickAddCategoryOpen(true)}
+            aria-label="New Category"
+            sx={{ mt: 1, border: "1px solid", borderColor: "divider" }}
+          >
+            <FontAwesomeIcon icon={faPlus} size="xs" />
+          </IconButton>
+        </Stack>
+        <QuickAddCategoryDialog
+          open={quickAddCategoryOpen}
+          onClose={() => setQuickAddCategoryOpen(false)}
+          onCreated={(category) => {
+            onChange("categoryId", String(category.id));
+            queryClient.invalidateQueries({
+              queryKey: ["admin-product-categories"],
+            });
           }}
-        >
-          {categoryOptions.map((category) => (
-            <MenuItem key={category.value} value={category.value}>
-              {category.label}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
         <TextField
