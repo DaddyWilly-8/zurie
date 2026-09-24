@@ -20,6 +20,8 @@ import { useShopStore } from "@/hooks/use-shop-store";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { orderService } from "@/services/orders/order.service";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
+import { summarizeVat } from "@/utils/vat";
+import { useSiteSettings } from "@/providers/settings-provider";
 
 const firstImageUrl = (
   item: ReturnType<typeof useShopStore.getState>["cart"][number],
@@ -40,10 +42,17 @@ export const CartClient = () => {
   const [error, setError] = useState<string | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
-  const subtotal = useMemo(
+  const { tax } = useSiteSettings();
+  const { subtotal, vat, total } = useMemo(
     () =>
-      cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
-    [cart],
+      summarizeVat(
+        cart.map((item) => ({
+          amount: item.product.price * item.quantity,
+          vatExempted: item.product.vatExempted,
+        })),
+        tax,
+      ),
+    [cart, tax],
   );
 
   const handleCheckout = async () => {
@@ -190,11 +199,31 @@ export const CartClient = () => {
 
       <Divider />
 
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="h6">Subtotal</Typography>
-        <Typography variant="h6">
-          {formatBaseCurrencyInCurrency(subtotal, currency, rates)}
-        </Typography>
+      <Stack spacing={0.5}>
+        <Stack direction="row" justifyContent="space-between">
+          <Typography color="text.secondary">Subtotal</Typography>
+          <Typography color="text.secondary">
+            {formatBaseCurrencyInCurrency(subtotal, currency, rates)}
+          </Typography>
+        </Stack>
+        {vat > 0 && (
+          <Stack direction="row" justifyContent="space-between">
+            <Typography color="text.secondary">
+              {tax.pricesIncludeVat
+                ? `Includes VAT (${tax.vatPercentage}%)`
+                : `VAT (${tax.vatPercentage}%)`}
+            </Typography>
+            <Typography color="text.secondary">
+              {formatBaseCurrencyInCurrency(vat, currency, rates)}
+            </Typography>
+          </Stack>
+        )}
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="h6">Total</Typography>
+          <Typography variant="h6">
+            {formatBaseCurrencyInCurrency(total, currency, rates)}
+          </Typography>
+        </Stack>
       </Stack>
 
       <Divider />

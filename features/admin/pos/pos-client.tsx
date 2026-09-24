@@ -65,6 +65,7 @@ export const AdminPosClient = () => {
           name: product.name,
           price: product.salePrice ?? product.sale_price ?? product.price,
           quantity: 1,
+          vatExempted: Boolean(product.vatExempted),
         },
       ];
     });

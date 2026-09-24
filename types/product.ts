@@ -42,6 +42,8 @@ export type Product = {
   newArrival: boolean;
   inStock: boolean;
   stockCount: number;
+  /** No VAT is charged on this product (see utils/vat.ts). */
+  vatExempted?: boolean;
   specifications: string[];
   colors: ProductColor[];
   sizes: string[];

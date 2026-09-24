@@ -16,8 +16,12 @@ import type {
   SettingsEmailEntry,
   SettingsPhoneEntry,
   SettingsSocialLink,
+  TaxSettings,
 } from "@/types/content";
-import { contentService } from "@/services/content/content.service";
+import {
+  contentService,
+  normalizeTax,
+} from "@/services/content/content.service";
 import { SITE } from "@/constants/site";
 
 const emptyContact: ContactSettings = {
@@ -45,11 +49,14 @@ const emptyPolicies: PoliciesSettings = {
   returnPolicy: "",
 };
 
+const defaultTax: TaxSettings = normalizeTax(undefined);
+
 type SettingsContextValue = {
   brand: BrandSettings;
   contact: ContactSettings;
   homepage: HomepageSettings;
   policies: PoliciesSettings;
+  tax: TaxSettings;
   isLoading: boolean;
   refreshSettings: () => Promise<void>;
   // convenience getters for the most common lookups
@@ -66,6 +73,7 @@ export const SettingsProvider = ({ children }: PropsWithChildren) => {
   const [contact, setContact] = useState<ContactSettings>(emptyContact);
   const [homepage, setHomepage] = useState<HomepageSettings>(emptyHomepage);
   const [policies, setPolicies] = useState<PoliciesSettings>(emptyPolicies);
+  const [tax, setTax] = useState<TaxSettings>(defaultTax);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshSettings = useCallback(async () => {
@@ -76,6 +84,7 @@ export const SettingsProvider = ({ children }: PropsWithChildren) => {
       if (bundle.contact) setContact((p) => ({ ...p, ...bundle.contact }));
       if (bundle.homepage) setHomepage((p) => ({ ...p, ...bundle.homepage }));
       if (bundle.policies) setPolicies((p) => ({ ...p, ...bundle.policies }));
+      if (bundle.tax) setTax(normalizeTax(bundle.tax));
     } catch {
       // Keep defaults on failure
     } finally {
@@ -100,6 +109,7 @@ export const SettingsProvider = ({ children }: PropsWithChildren) => {
         contact,
         homepage,
         policies,
+        tax,
         isLoading,
         refreshSettings,
         whatsappNumber: whatsappPhone?.value ?? "",

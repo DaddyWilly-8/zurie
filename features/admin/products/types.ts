@@ -10,6 +10,7 @@ export type AdminProduct = {
   buying_price?: number;
   salePrice?: number | null;
   sale_price?: number | null;
+  vatExempted?: boolean;
   compareAtPrice?: number | null;
   compare_at_price?: number | null;
   sku?: string | null;
