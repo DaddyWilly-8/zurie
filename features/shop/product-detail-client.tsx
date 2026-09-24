@@ -35,6 +35,8 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { useShopStore } from "@/hooks/use-shop-store";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { ProductReviews } from "@/features/shop/product-reviews";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import type { Product } from "@/types/product";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
@@ -85,7 +87,7 @@ export const ProductDetailClient = ({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const addToCart = useShopStore((state) => state.addToCart);
-  const toggleWishlist = useShopStore((state) => state.toggleWishlist);
+  const { toggle: toggleWishlist } = useWishlist();
   const addRecentlyViewed = useShopStore((state) => state.addRecentlyViewed);
   const wishlist = useShopStore((state) => state.wishlist);
   const currency = useCurrencyStore((state) => state.currency);
@@ -1106,6 +1108,8 @@ export const ProductDetailClient = ({
             </Stack>
           </Grid>
         </Grid>
+
+        <ProductReviews productId={product.id} productSlug={product.slug} />
       </Stack>
 
       {/* ── Contact Dialog ─────────────────────────────────────────────────── */}

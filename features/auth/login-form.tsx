@@ -80,6 +80,9 @@ export const LoginForm = () => {
           required
           fullWidth
         />
+        <Typography variant="body2" textAlign="right" sx={{ mt: -1 }}>
+          <Link href="/forgot-password">Forgot password?</Link>
+        </Typography>
         {error ? <Alert severity="error">{error}</Alert> : null}
         <Button
           type="submit"

@@ -18,6 +18,7 @@ import { useCustomerAuth } from "@/providers/customer-auth-provider";
 import { accountService } from "@/services/account/account.service";
 import type { OrderResponse } from "@/services/orders/order.service";
 import { formatCurrency } from "@/utils/currency";
+import { AccountNotifications, AccountWishlist } from "@/features/account";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -87,6 +88,8 @@ export default function AccountPage() {
           </Button>
         </Stack>
 
+        <AccountNotifications />
+
         <Paper variant="outlined" sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Order History
@@ -129,6 +132,8 @@ export default function AccountPage() {
             </Stack>
           )}
         </Paper>
+
+        <AccountWishlist />
       </Stack>
     </Container>
   );

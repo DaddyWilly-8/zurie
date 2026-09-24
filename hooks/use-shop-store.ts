@@ -13,6 +13,7 @@ type ShopState = {
   updateCartQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   toggleWishlist: (productId: string) => void;
+  setWishlist: (productIds: string[]) => void;
   addRecentlyViewed: (productId: string) => void;
 };
 
@@ -62,6 +63,7 @@ export const useShopStore = create<ShopState>()(
               : [...state.wishlist, productId],
           };
         }),
+      setWishlist: (productIds) => set({ wishlist: [...new Set(productIds)] }),
       addRecentlyViewed: (productId) =>
         set((state) => {
           const unique = [

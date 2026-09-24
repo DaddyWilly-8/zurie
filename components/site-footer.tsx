@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { NewsletterForm } from "@/components/newsletter-form";
 import { getStorefrontCategories } from "@/services/categories/category.service";
 import { contentService } from "@/services/content/content.service";
 
@@ -60,6 +61,20 @@ export const SiteFooter = async () => {
             <Typography color="rgba(242,239,233,0.72)" maxWidth={360}>
               {tagline}
             </Typography>
+            <Typography
+              sx={{
+                textTransform: "uppercase",
+                letterSpacing: "0.16em",
+                fontSize: "0.72rem",
+                mt: 3,
+                mb: 1.2,
+              }}
+            >
+              Newsletter
+            </Typography>
+            <Box sx={{ maxWidth: 420 }}>
+              <NewsletterForm compact onDark />
+            </Box>
           </Grid>
           <Grid size={{ xs: 12, md: 2.5 }}>
             <Typography

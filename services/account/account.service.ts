@@ -40,4 +40,21 @@ export const accountService = {
       query: params,
     });
   },
+
+  /** GET /account/wishlist — product ids the signed-in customer saved. */
+  getWishlist() {
+    return apiClient
+      .get<{ data?: Array<{ id: number; productId: number }> }>(
+        API_ENDPOINTS.account.wishlist,
+      )
+      .then((response) => (response.data ?? []).map((item) => item.productId));
+  },
+
+  addToWishlist(productId: number) {
+    return apiClient.post(API_ENDPOINTS.account.wishlist, { productId });
+  },
+
+  removeFromWishlist(productId: number) {
+    return apiClient.delete(API_ENDPOINTS.account.wishlistItem(productId));
+  },
 };
