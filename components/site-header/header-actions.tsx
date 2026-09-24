@@ -50,6 +50,7 @@ export const SiteHeaderActions = ({
         }
         variant="standard"
         disableUnderline
+        inputProps={{ "aria-label": "Currency" }}
         sx={{
           minWidth: { xs: 72, md: 90 },
           fontSize: "0.72rem",

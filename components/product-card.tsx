@@ -2,27 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Box,
-  Button,
-  Card,
-  Chip,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Card, Chip, Stack, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowRight,
-  faBagShopping,
-  faHeart as faHeartRegular,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faBagShopping } from "@fortawesome/free-solid-svg-icons";
 import { useCurrencyStore } from "@/hooks/use-currency-store";
 import type { Product } from "@/types/product";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import { useShopStore } from "@/hooks/use-shop-store";
-import { useWishlist } from "@/hooks/use-wishlist";
 
 const MotionCard = motion(Card);
 
@@ -32,10 +19,8 @@ type ProductCardProps = {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const addToCart = useShopStore((state) => state.addToCart);
-  const { wishlist, toggle: toggleWishlist } = useWishlist();
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
-  const inWishlist = wishlist.includes(product.id);
   const categoryLabel =
     (typeof product.category === "object" &&
     product.category &&
@@ -81,30 +66,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <Chip size="small" label="Best Seller" />
           ) : null}
         </Stack>
-
-        {/* <IconButton
-          aria-label="Add to wishlist"
-          onClick={() => toggleWishlist(product.id)}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            backgroundColor: (theme) =>
-              theme.palette.mode === "dark"
-                ? "rgba(34, 31, 27, 0.92)"
-                : "rgba(255,255,255,0.92)",
-            "&:hover": {
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "rgba(45, 41, 36, 0.95)" : "#fff",
-            },
-          }}
-        >
-          <FontAwesomeIcon
-            icon={faHeartRegular}
-            color={inWishlist ? "#b58a57" : "currentColor"}
-            fontSize={13}
-          />
-        </IconButton> */}
 
         <Stack
           direction="row"

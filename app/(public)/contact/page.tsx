@@ -4,7 +4,6 @@ import { Box, Button, Grid, Stack, Typography, Divider } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEnvelope,
-  faLocationDot,
   faPhone,
   faArrowRight,
   faClock,
@@ -446,7 +445,7 @@ export default async function ContactPage() {
 
           <Grid size={{ xs: 12, md: 4.8 }}>
             <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ height: "100%" }}>
-              {supportingPhotos.map((photo, index) => (
+              {supportingPhotos.map((photo) => (
                 <Box
                   key={photo.src}
                   sx={{

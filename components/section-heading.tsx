@@ -36,6 +36,15 @@ export const SectionHeading = ({
       >
         {title}
       </Typography>
+      {subtitle ? (
+        <Typography
+          textAlign="center"
+          color="text.secondary"
+          sx={{ maxWidth: 560, mx: "auto" }}
+        >
+          {subtitle}
+        </Typography>
+      ) : null}
     </Stack>
   );
 };
