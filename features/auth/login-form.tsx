@@ -16,6 +16,7 @@ import {
 import { useCustomerAuth } from "@/providers/customer-auth-provider";
 import { ApiError } from "@/services/api/client";
 import { GoogleButton } from "@/features/auth/google-button";
+import { safeRedirectPath } from "@/utils/safe-redirect";
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -42,7 +43,7 @@ export const LoginForm = () => {
 
     try {
       await login(email, password);
-      router.push(searchParams.get("next") ?? "/account");
+      router.push(safeRedirectPath(searchParams.get("next"), "/account"));
       router.refresh();
     } catch (submitError) {
       setError(

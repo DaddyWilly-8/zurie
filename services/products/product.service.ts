@@ -97,12 +97,24 @@ export const productService = {
     return productService.listStorefrontProducts({ category });
   },
 
-  listAdminProducts() {
-    return apiClient
-      .get<{ products?: unknown[]; data?: unknown[] }>(
-        API_ENDPOINTS.products.adminList,
-      )
-      .then((res) => res.products ?? res.data ?? []);
+  /**
+   * Every product, for pickers (POS, purchase orders, price lists...).
+   * The backend serves at most 100 per page, so this walks the pages
+   * rather than silently stopping at the first one.
+   */
+  async listAdminProducts() {
+    const pageSize = 100;
+    const all: unknown[] = [];
+    for (let page = 1; ; page += 1) {
+      const res = await apiClient.get<{
+        data?: unknown[];
+        meta?: { count?: number };
+      }>(API_ENDPOINTS.products.adminList, { query: { page, pageSize } });
+      const rows = res.data ?? [];
+      all.push(...rows);
+      const total = res.meta?.count ?? all.length;
+      if (rows.length < pageSize || all.length >= total) return all;
+    }
   },
 
   async getAdminProductById(id: string) {
