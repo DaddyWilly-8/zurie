@@ -40,6 +40,7 @@ import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { CURRENCY_OPTIONS, type CurrencyCode } from "@/utils/currency";
 import { useThemeMode } from "@/providers/theme-provider";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
+import { AdminNotificationsBell } from "@/components/admin/admin-notifications-bell";
 import {
   ADMIN_DASHBOARD_ITEM,
   ADMIN_NAV_SECTIONS,
@@ -520,6 +521,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
             alignItems="center"
             sx={{ ml: 0, flexShrink: 0 }}
           >
+            <AdminNotificationsBell />
             <IconButton
               aria-label={
                 mode === "dark" ? "Switch to light mode" : "Switch to dark mode"

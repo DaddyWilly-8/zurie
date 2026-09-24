@@ -29,6 +29,14 @@ import {
   faArrowRightArrowLeft,
   faChartPie,
   faTableList,
+  faTicket,
+  faBullseye,
+  faWallet,
+  faStar,
+  faImages,
+  faEnvelopeOpenText,
+  faCircleQuestion,
+  faNewspaper,
 } from "@fortawesome/free-solid-svg-icons";
 
 /**
@@ -120,6 +128,20 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         permissions: ["cashier_session_view"],
       },
       {
+        type: "nav-item",
+        href: "/admin/coupons",
+        label: "Coupons",
+        icon: faTicket,
+        permissions: ["coupon_view"],
+      },
+      {
+        type: "nav-item",
+        href: "/admin/targets",
+        label: "Sales Targets",
+        icon: faBullseye,
+        permissions: ["target_view"],
+      },
+      {
         type: "collapsible",
         label: "Masters",
         icon: faFolderTree,
@@ -173,6 +195,13 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: "Reports",
         icon: faChartPie,
         permissions: ["report_view"],
+      },
+      {
+        type: "nav-item",
+        href: "/admin/expenses",
+        label: "Expenses",
+        icon: faWallet,
+        permissions: ["expense_view"],
       },
       {
         type: "collapsible",
@@ -302,6 +331,47 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: "Measurement Units",
         icon: faRuler,
         permissions: ["measurement_unit_view"],
+      },
+      {
+        type: "nav-item",
+        href: "/admin/reviews",
+        label: "Reviews",
+        icon: faStar,
+        permissions: ["review_view"],
+      },
+      {
+        type: "nav-item",
+        href: "/admin/media",
+        label: "Media Library",
+        icon: faImages,
+        permissions: ["media_view"],
+      },
+    ],
+  },
+  {
+    type: "section",
+    label: "Customer Care",
+    children: [
+      {
+        type: "nav-item",
+        href: "/admin/enquiries",
+        label: "Enquiries",
+        icon: faEnvelopeOpenText,
+        permissions: ["enquiry_view"],
+      },
+      {
+        type: "nav-item",
+        href: "/admin/faq",
+        label: "FAQ",
+        icon: faCircleQuestion,
+        permissions: ["faq_view"],
+      },
+      {
+        type: "nav-item",
+        href: "/admin/newsletter",
+        label: "Newsletter",
+        icon: faNewspaper,
+        permissions: ["customer_view"],
       },
     ],
   },

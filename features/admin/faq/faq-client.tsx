@@ -66,7 +66,7 @@ export const AdminFaqClient = () => {
     refetch,
   } = useQuery({
     queryKey: ["admin-faq"],
-    queryFn: faqService.listFaqs,
+    queryFn: faqService.listAdminFaqs,
   });
 
   useEffect(() => {

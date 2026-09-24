@@ -1,12 +1,6 @@
-export type AdminEnquiryRow = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  message: string;
-  status: string;
-  created_at: string;
-};
+import type { Enquiry } from "@/services/enquiries/enquiry.service";
+
+export type AdminEnquiryRow = Enquiry;
 
 export type EnquiryListResult = {
   data: AdminEnquiryRow[];

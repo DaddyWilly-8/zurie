@@ -33,7 +33,37 @@ export const API_ENDPOINTS = {
   account: {
     profile: "/account/profile",
     orders: "/account/orders",
+    notifications: "/account/notifications",
+    notificationsReadAll: "/account/notifications/read-all",
+    notificationRead: (id: number) => `/account/notifications/${id}/read`,
+    wishlist: "/account/wishlist",
+    wishlistItem: (productId: number) => `/account/wishlist/${productId}`,
+    reviews: "/account/reviews",
   },
+  adminNotifications: {
+    list: "/admin/notifications",
+    readAll: "/admin/notifications/read-all",
+    read: (id: number) => `/admin/notifications/${id}/read`,
+  },
+  reviews: {
+    forProduct: (productId: number | string) =>
+      `/products/${productId}/reviews`,
+    adminList: "/admin/reviews",
+    adminById: (id: number) => `/admin/reviews/${id}`,
+  },
+  coupons: {
+    preview: "/coupons/preview",
+    adminList: "/admin/coupons",
+    adminById: (id: number) => `/admin/coupons/${id}`,
+  },
+  expenses: {
+    adminList: "/admin/expenses",
+  },
+  targets: {
+    adminList: "/admin/targets",
+    achievement: "/admin/targets/achievement",
+  },
+  newsletterSubscribers: "/admin/newsletter-subscribers",
   products: {
     list: "/products",
     adminList: "/admin/products",
@@ -73,15 +103,12 @@ export const API_ENDPOINTS = {
     cancel: (orderNumber: string) => `/orders/${orderNumber}/cancel`,
   },
   enquiries: {
-    list: "/enquiries",
     adminList: "/admin/enquiries",
-    byId: (id: string) => `/enquiries/${id}`,
     adminById: (id: string) => `/admin/enquiries/${id}`,
   },
   faq: {
     list: "/faq",
     adminList: "/admin/faq",
-    byId: (id: string) => `/faq/${id}`,
     adminById: (id: string) => `/admin/faq/${id}`,
   },
   settings: {

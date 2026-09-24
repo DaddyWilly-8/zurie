@@ -709,8 +709,10 @@ PATCH /admin/enquiries/{id}            (admin)
 
 ```json
 // POST /contact
-{ "name": "Customer", "email": "customer@email.com", "message": "..." }
+{ "name": "Customer", "email": "customer@email.com", "phone": "+255...", "subject": "...", "message": "..." }
 // -> { "success": true }
+// email and phone are each optional, but at least one is required (422 otherwise);
+// subject is optional.
 
 // PATCH /admin/enquiries/{id}
 { "status": "responded" }
