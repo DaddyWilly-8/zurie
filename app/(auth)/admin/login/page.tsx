@@ -16,6 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { authService } from "@/services/auth/auth.service";
+import { safeRedirectPath } from "@/utils/safe-redirect";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -27,8 +28,10 @@ export default function AdminLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const goToNext = () => {
-    const target =
-      new URLSearchParams(window.location.search).get("next") ?? "/admin";
+    const target = safeRedirectPath(
+      new URLSearchParams(window.location.search).get("next"),
+      "/admin",
+    );
     router.push(target);
     router.refresh();
   };
