@@ -22,6 +22,7 @@ import { useCurrencyStore } from "@/hooks/use-currency-store";
 import type { Product } from "@/types/product";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import { useShopStore } from "@/hooks/use-shop-store";
+import { useWishlist } from "@/hooks/use-wishlist";
 
 const MotionCard = motion(Card);
 
@@ -31,8 +32,7 @@ type ProductCardProps = {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const addToCart = useShopStore((state) => state.addToCart);
-  const wishlist = useShopStore((state) => state.wishlist);
-  const toggleWishlist = useShopStore((state) => state.toggleWishlist);
+  const { wishlist, toggle: toggleWishlist } = useWishlist();
   const currency = useCurrencyStore((state) => state.currency);
   const rates = useCurrencyStore((state) => state.rates);
   const inWishlist = wishlist.includes(product.id);

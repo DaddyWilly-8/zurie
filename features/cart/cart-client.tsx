@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -21,7 +21,11 @@ import { useCurrencyStore } from "@/hooks/use-currency-store";
 import { orderService } from "@/services/orders/order.service";
 import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import { summarizeVat } from "@/utils/vat";
+import { couponService } from "@/services/coupons/coupon.service";
+import { ApiError } from "@/services/api/client";
 import { useSiteSettings } from "@/providers/settings-provider";
+import { useOptionalCustomerAuth } from "@/providers/customer-auth-provider";
+import { accountService } from "@/services/account/account.service";
 
 const firstImageUrl = (
   item: ReturnType<typeof useShopStore.getState>["cart"][number],
@@ -43,17 +47,79 @@ export const CartClient = () => {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   const { tax } = useSiteSettings();
-  const { subtotal, vat, total } = useMemo(
+
+  // Signed-in customers get their saved details filled in; the order is
+  // filed under their account server-side either way.
+  const isSignedIn = Boolean(useOptionalCustomerAuth()?.isAuthenticated);
+  useEffect(() => {
+    if (!isSignedIn) return;
+    let cancelled = false;
+    accountService
+      .getProfile()
+      .then((profile) => {
+        if (cancelled || !profile) return;
+        setName((value) => value || profile.name);
+        setPhone((value) => value || profile.phone);
+        setWhatsapp((value) => value || profile.whatsappNumber || "");
+        setEmail((value) => value || profile.email || "");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn]);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{
+    code: string;
+    discount: number;
+  } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
+  const lines = useMemo(
     () =>
-      summarizeVat(
-        cart.map((item) => ({
-          amount: item.product.price * item.quantity,
-          vatExempted: item.product.vatExempted,
-        })),
-        tax,
-      ),
-    [cart, tax],
+      cart.map((item) => ({
+        amount: item.product.price * item.quantity,
+        vatExempted: item.product.vatExempted,
+      })),
+    [cart],
   );
+  const cartSubtotal = useMemo(
+    () => lines.reduce((sum, line) => sum + line.amount, 0),
+    [lines],
+  );
+  const { subtotal, discount, vat, total } = useMemo(
+    () => summarizeVat(lines, tax, coupon?.discount ?? 0),
+    [lines, tax, coupon],
+  );
+
+  // Prices are TZS; the backend works out the discount (and whether the
+  // code is valid for this subtotal), so re-check it whenever the cart
+  // changes rather than trusting a stale amount.
+  const applyCoupon = async (code: string) => {
+    const trimmed = code.trim();
+    if (!trimmed) return;
+    setApplyingCoupon(true);
+    setCouponError(null);
+    try {
+      const result = await couponService.preview(trimmed, cartSubtotal);
+      setCoupon({ code: trimmed, discount: result.discountAmount });
+    } catch (err) {
+      setCoupon(null);
+      setCouponError(
+        err instanceof ApiError ? err.message : "This code can't be applied.",
+      );
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  useEffect(() => {
+    if (coupon && cartSubtotal > 0) void applyCoupon(coupon.code);
+    if (cartSubtotal === 0) setCoupon(null);
+    // Re-validate only when the cart total changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartSubtotal]);
 
   const handleCheckout = async () => {
     setError(null);
@@ -74,8 +140,11 @@ export const CartClient = () => {
           productId: item.productId,
           quantity: item.quantity,
         })),
+        couponCode: coupon?.code,
       });
       setOrderNumber(response.data.orderNumber);
+      setCoupon(null);
+      setCouponInput("");
       clearCart();
     } catch (err) {
       setError(
@@ -199,6 +268,39 @@ export const CartClient = () => {
 
       <Divider />
 
+      <Stack spacing={1}>
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="Coupon code"
+            value={couponInput}
+            onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+            disabled={Boolean(coupon)}
+            sx={{ flex: 1 }}
+          />
+          {coupon ? (
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setCoupon(null);
+                setCouponInput("");
+              }}
+            >
+              Remove
+            </Button>
+          ) : (
+            <Button
+              variant="outlined"
+              disabled={!couponInput.trim() || applyingCoupon}
+              onClick={() => applyCoupon(couponInput)}
+            >
+              {applyingCoupon ? "Checking..." : "Apply"}
+            </Button>
+          )}
+        </Stack>
+        {couponError ? <Alert severity="warning">{couponError}</Alert> : null}
+      </Stack>
+
       <Stack spacing={0.5}>
         <Stack direction="row" justifyContent="space-between">
           <Typography color="text.secondary">Subtotal</Typography>
@@ -206,6 +308,16 @@ export const CartClient = () => {
             {formatBaseCurrencyInCurrency(subtotal, currency, rates)}
           </Typography>
         </Stack>
+        {discount > 0 && coupon && (
+          <Stack direction="row" justifyContent="space-between">
+            <Typography color="success.main">
+              Discount ({coupon.code})
+            </Typography>
+            <Typography color="success.main">
+              −{formatBaseCurrencyInCurrency(discount, currency, rates)}
+            </Typography>
+          </Stack>
+        )}
         {vat > 0 && (
           <Stack direction="row" justifyContent="space-between">
             <Typography color="text.secondary">

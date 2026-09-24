@@ -9,6 +9,8 @@ export type VatLine = {
 export type VatSummary = {
   /** Sum of the line values, as the prices were entered. */
   subtotal: number;
+  /** Coupon discount applied (TZS), 0 if none. */
+  discount: number;
   vat: number;
   /** What the customer pays. */
   total: number;
@@ -17,34 +19,51 @@ export type VatSummary = {
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
 /**
- * Mirrors the backend's OrderService::vatPerLine() for a cart without a
- * coupon, so the cart/POS shows the same VAT checkout will charge:
- * VAT-inclusive prices contain their VAT (amount x rate / (100 + rate));
- * otherwise it's added on top (amount x rate / 100). Exempt lines carry
- * none. Rounded per line, like the backend.
+ * Mirrors the backend's OrderService::vatPerLine(), so the cart/POS shows
+ * the same VAT and total checkout will charge. An optional coupon
+ * `discount` (TZS) is shared across lines in proportion to their value
+ * (the last line takes the rounding remainder) and VAT is computed on the
+ * discounted value: VAT-inclusive prices contain their VAT
+ * (value x rate / (100 + rate)); otherwise it's added on top
+ * (value x rate / 100). Exempt lines carry none. Rounded per line, like
+ * the backend.
  */
 export const summarizeVat = (
   lines: VatLine[],
   { vatPercentage, pricesIncludeVat }: TaxSettings,
+  discount = 0,
 ): VatSummary => {
   const subtotal = round2(lines.reduce((sum, line) => sum + line.amount, 0));
+  let discountLeft = discount;
+
   const vat = round2(
-    lines.reduce((sum, line) => {
+    lines.reduce((sum, line, index) => {
+      const isLast = index === lines.length - 1;
+      const lineDiscount =
+        isLast || subtotal <= 0
+          ? discountLeft
+          : round2((discount * line.amount) / subtotal);
+      discountLeft -= lineDiscount;
+
       if (line.vatExempted || vatPercentage <= 0) return sum;
+      const taxable = Math.max(0, line.amount - lineDiscount);
       return (
         sum +
         round2(
           pricesIncludeVat
-            ? (line.amount * vatPercentage) / (100 + vatPercentage)
-            : (line.amount * vatPercentage) / 100,
+            ? (taxable * vatPercentage) / (100 + vatPercentage)
+            : (taxable * vatPercentage) / 100,
         )
       );
     }, 0),
   );
 
+  const afterDiscount = round2(subtotal - discount);
+
   return {
     subtotal,
+    discount: round2(discount),
     vat,
-    total: pricesIncludeVat ? subtotal : round2(subtotal + vat),
+    total: pricesIncludeVat ? afterDiscount : round2(afterDiscount + vat),
   };
 };

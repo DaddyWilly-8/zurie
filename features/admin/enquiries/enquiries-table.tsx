@@ -48,9 +48,16 @@ export const EnquiriesTable = ({
               <TableCell>
                 <Typography fontWeight={500}>{row.name}</Typography>
               </TableCell>
-              <TableCell>{row.email}</TableCell>
+              <TableCell>{row.email || "-"}</TableCell>
               <TableCell>{row.phone ?? "-"}</TableCell>
-              <TableCell sx={{ maxWidth: 320 }}>{row.message}</TableCell>
+              <TableCell sx={{ maxWidth: 320 }}>
+                {row.subject ? (
+                  <Typography fontWeight={600} fontSize="0.9rem">
+                    {row.subject}
+                  </Typography>
+                ) : null}
+                {row.message}
+              </TableCell>
               <TableCell>
                 <TextField
                   select
@@ -67,7 +74,9 @@ export const EnquiriesTable = ({
                   <MenuItem value="archived">Archived</MenuItem>
                 </TextField>
               </TableCell>
-              <TableCell>{new Date(row.created_at).toLocaleString()}</TableCell>
+              <TableCell>
+                {row.createdAt ? new Date(row.createdAt).toLocaleString() : "-"}
+              </TableCell>
             </TableRow>
           ))}
           {rows.length === 0 ? (

@@ -19,7 +19,7 @@ export const enquiryActions = {
     });
 
     return {
-      data: (payload.data ?? []) as AdminEnquiryRow[],
+      data: payload.data satisfies AdminEnquiryRow[],
       count: payload.count ?? 0,
     };
   },

@@ -47,6 +47,7 @@ export const PosProductGrid = ({ products, onAdd }: Props) => {
         {filtered.map((product) => {
           const stock = stockOf(product);
           const outOfStock = stock <= 0;
+          const salePrice = product.salePrice ?? product.sale_price ?? null;
           return (
             <Grid size={{ xs: 6, sm: 4, md: 3 }} key={product.id}>
               <Card variant="outlined" sx={{ borderRadius: 0 }}>
@@ -59,7 +60,15 @@ export const PosProductGrid = ({ products, onAdd }: Props) => {
                     {product.name}
                   </Typography>
                   <Typography color="text.secondary" fontSize="0.85rem">
-                    {product.price.toLocaleString()}
+                    {(salePrice ?? product.price).toLocaleString()}
+                    {salePrice != null ? (
+                      <Box
+                        component="s"
+                        sx={{ ml: 0.75, color: "text.disabled" }}
+                      >
+                        {product.price.toLocaleString()}
+                      </Box>
+                    ) : null}
                   </Typography>
                   <Chip
                     size="small"

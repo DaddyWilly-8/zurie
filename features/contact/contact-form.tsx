@@ -31,10 +31,7 @@ import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { enquiryService } from "@/services/enquiries/enquiry.service";
 
 import { useSiteSettings } from "@/providers/settings-provider";
-import {
-  buildWhatsAppCheckoutLink,
-  buildWhatsAppOrderMessage,
-} from "@/utils/whatsapp";
+import { buildWhatsAppCheckoutLink } from "@/utils/whatsapp";
 
 type ContactMethod = "whatsapp" | "email" | "phone";
 
@@ -133,10 +130,8 @@ export const ContactForm = () => {
     return true;
   };
 
-  const handleWhatsAppSubmit = () => {
-    if (!validateForm()) return;
-
-    const enquiryMessage = [
+  const buildEnquiryText = () =>
+    [
       `Name: ${customerName.trim()}`,
       customerPhone ? `Phone: ${customerPhone.trim()}` : null,
       customerEmail ? `Email: ${customerEmail.trim()}` : null,
@@ -147,115 +142,70 @@ export const ContactForm = () => {
       "---",
       "This enquiry was sent from the Zuriè website.",
     ]
-      .filter(Boolean)
+      .filter((line) => line !== null)
       .join("\n");
 
-    const checkoutLink = buildWhatsAppCheckoutLink(
-      whatsappNumber,
-      enquiryMessage,
-    );
+  // Opens the customer's chosen channel. Runs synchronously inside the
+  // submit handler so browsers don't treat it as an unrequested popup.
+  const openChannel = () => {
+    const text = buildEnquiryText();
 
-    window.open(checkoutLink, "_blank", "noopener,noreferrer");
-    setStatus("success");
-  };
-
-  const handleEmailSubmit = async () => {
-    if (!validateForm()) return;
-
-    // Send via email
-    const subjectLine = subject
-      ? `Zuriè Enquiry: ${subject.trim()}`
-      : "Zuriè Website Enquiry";
-    const body = [
-      `Name: ${customerName.trim()}`,
-      customerPhone ? `Phone: ${customerPhone.trim()}` : null,
-      customerEmail ? `Email: ${customerEmail.trim()}` : null,
-      "",
-      `Message: ${message.trim()}`,
-      "",
-      "---",
-      "This enquiry was sent from the Zuriè website.",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoLink, "_blank");
-
-    // Also save to backend
-    try {
-      await enquiryService.createEnquiry({
-        name: customerName.trim(),
-        email: customerEmail.trim() || "no-email@provided.com",
-        message: body,
-      });
-      setStatus("success");
-    } catch {
-      // Email was already opened, but backend save failed
-      showSnackbarMessage(
-        "Email opened, but failed to save to our system. Please follow up if needed.",
-        "info",
+    if (contactMethod === "whatsapp") {
+      window.open(
+        buildWhatsAppCheckoutLink(whatsappNumber, text),
+        "_blank",
+        "noopener,noreferrer",
+      );
+    } else if (contactMethod === "email") {
+      const subjectLine = subject
+        ? `Zuriè Enquiry: ${subject.trim()}`
+        : "Zuriè Website Enquiry";
+      window.open(
+        `mailto:${emailAddress}?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(text)}`,
+        "_blank",
+      );
+    } else {
+      const storePhone = phoneNumber.replace(/\D/g, "");
+      window.open(
+        `sms:${storePhone}?body=${encodeURIComponent(text)}`,
+        "_blank",
       );
     }
-  };
-
-  const handlePhoneSubmit = () => {
-    if (!validateForm()) return;
-
-    const enquiryMessage = [
-      `Name: ${customerName.trim()}`,
-      customerPhone ? `Phone: ${customerPhone.trim()}` : null,
-      customerEmail ? `Email: ${customerEmail.trim()}` : null,
-      subject ? `Subject: ${subject.trim()}` : null,
-      "",
-      `Message: ${message.trim()}`,
-      "",
-      "---",
-      "This enquiry was sent from the Zuriè website.",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const storePhone = phoneNumber.replace(/\D/g, "");
-    const smsLink = `sms:${storePhone}?body=${encodeURIComponent(enquiryMessage)}`;
-    window.open(smsLink, "_blank");
-    setStatus("success");
   };
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatus("idle");
+
+    if (!validateForm()) return;
+
+    openChannel();
     setIsSubmitting(true);
 
-    // Validate form
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Handle based on contact method
-    switch (contactMethod) {
-      case "whatsapp":
-        handleWhatsAppSubmit();
-        break;
-      case "email":
-        await handleEmailSubmit();
-        break;
-      case "phone":
-        handlePhoneSubmit();
-        break;
-    }
-
-    // Reset form after successful submission
-    if (status === "success") {
+    // Every enquiry is also recorded, whichever channel was chosen, so it
+    // shows up in Admin > Enquiries and notifies the team.
+    try {
+      await enquiryService.createEnquiry({
+        name: customerName.trim(),
+        email: customerEmail.trim() || undefined,
+        phone: customerPhone.trim() || undefined,
+        subject: subject.trim() || undefined,
+        message: message.trim(),
+      });
+      setStatus("success");
       setCustomerName("");
       setCustomerEmail("");
       setCustomerPhone("");
       setSubject("");
       setMessage("");
+    } catch {
+      showSnackbarMessage(
+        "Your message was opened in the app you chose, but we couldn't save a copy on our side. Please make sure it was sent.",
+        "info",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   // Dynamic styles based on dark mode

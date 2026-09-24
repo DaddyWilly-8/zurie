@@ -9,6 +9,8 @@ import {
 } from "react";
 import type { AuthUser } from "@/types/domain";
 import { customerAuthService } from "@/services/auth/customer-auth.service";
+import { accountService } from "@/services/account/account.service";
+import { useShopStore } from "@/hooks/use-shop-store";
 
 type CustomerAuthContextValue = {
   user: AuthUser | null;
@@ -63,6 +65,41 @@ export const CustomerAuthProvider = ({ children }: PropsWithChildren) => {
     };
   }, []);
 
+  // Once a customer is signed in, their wishlist lives on the server too:
+  // merge what this browser saved while signed out with what their
+  // account already has, push the browser-only items up, and keep the
+  // union locally. Best-effort — the local wishlist keeps working if the
+  // sync fails.
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+
+    const sync = async () => {
+      try {
+        const serverIds = (await accountService.getWishlist()).map(String);
+        const localIds = useShopStore.getState().wishlist;
+        const missingOnServer = localIds.filter(
+          (id) => !serverIds.includes(id),
+        );
+        await Promise.all(
+          missingOnServer.map((id) => accountService.addToWishlist(Number(id))),
+        );
+        if (active) {
+          useShopStore
+            .getState()
+            .setWishlist([...serverIds, ...missingOnServer]);
+        }
+      } catch {
+        // Keep the local wishlist as-is.
+      }
+    };
+    void sync();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
   const login: CustomerAuthContextValue["login"] = async (email, password) => {
     const loggedInUser = await customerAuthService.login(email, password);
     setUser(loggedInUser);
@@ -95,6 +132,9 @@ export const CustomerAuthProvider = ({ children }: PropsWithChildren) => {
     </CustomerAuthContext.Provider>
   );
 };
+
+/** Like useCustomerAuth(), but null outside the storefront's provider. */
+export const useOptionalCustomerAuth = () => useContext(CustomerAuthContext);
 
 export const useCustomerAuth = () => {
   const context = useContext(CustomerAuthContext);

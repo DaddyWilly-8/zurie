@@ -14,6 +14,7 @@ export type CreateOrderPayload = {
   whatsappNumber?: string;
   customerEmail?: string | null;
   items: OrderItem[];
+  couponCode?: string;
 };
 
 export type OrderResponse = {

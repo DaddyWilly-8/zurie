@@ -36,9 +36,20 @@ const normalizeFaq = (faq: ApiFaq): FAQ => ({
 });
 
 export const faqService = {
+  /** GET /faq — public, visible entries only. */
   listFaqs() {
     return apiClient
       .get<{ data?: ApiFaq[] } | ApiFaq[]>(API_ENDPOINTS.faq.list)
+      .then((response) => {
+        const rows = Array.isArray(response) ? response : (response.data ?? []);
+        return rows.map(normalizeFaq);
+      });
+  },
+
+  /** GET /admin/faq — includes hidden entries. */
+  listAdminFaqs() {
+    return apiClient
+      .get<{ data?: ApiFaq[] } | ApiFaq[]>(API_ENDPOINTS.faq.adminList)
       .then((response) => {
         const rows = Array.isArray(response) ? response : (response.data ?? []);
         return rows.map(normalizeFaq);
@@ -52,7 +63,7 @@ export const faqService = {
     visible: boolean;
   }) {
     return apiClient.post<{ success: boolean; id: string }>(
-      API_ENDPOINTS.faq.list,
+      API_ENDPOINTS.faq.adminList,
       {
         question: payload.question,
         answer: payload.answer,
@@ -71,15 +82,20 @@ export const faqService = {
       visible?: boolean;
     },
   ) {
-    return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.faq.byId(id), {
-      question: payload.question,
-      answer: payload.answer,
-      sortOrder: payload.sortOrder,
-      visible: payload.visible,
-    });
+    return apiClient.patch<{ success: boolean }>(
+      API_ENDPOINTS.faq.adminById(id),
+      {
+        question: payload.question,
+        answer: payload.answer,
+        sortOrder: payload.sortOrder,
+        visible: payload.visible,
+      },
+    );
   },
 
   deleteFaq(id: string) {
-    return apiClient.delete<{ success: boolean }>(API_ENDPOINTS.faq.byId(id));
+    return apiClient.delete<{ success: boolean }>(
+      API_ENDPOINTS.faq.adminById(id),
+    );
   },
 };
