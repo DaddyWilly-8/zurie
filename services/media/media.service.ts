@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import { apiClient } from "@/services/api/client";
+import { prepareImageUpload } from "@/utils/prepare-image-upload";
 
 // Shape of Media\Resources\MediaResource on the backend.
 type RawMedia = {
@@ -43,7 +44,7 @@ export const mediaService = {
 
   async upload(file: File, folder: string) {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", await prepareImageUpload(file));
     formData.append("folder", folder);
 
     return apiClient
