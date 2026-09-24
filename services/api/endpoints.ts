@@ -92,6 +92,7 @@ export const API_ENDPOINTS = {
     homepage: "/admin/settings/homepage",
     homepageHeroImage: "/admin/settings/homepage/hero-image",
     policies: "/admin/settings/policies",
+    tax: "/admin/settings/tax",
     dashboardOverview: "/admin/dashboard-overview",
   },
   media: {
