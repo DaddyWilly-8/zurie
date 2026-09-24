@@ -194,6 +194,21 @@ export const contentService = {
     return normalizePolicies(data);
   },
 
+  // ── Tax ────────────────────────────────────────────────────────────────
+  async getTaxSettings(): Promise<TaxSettings> {
+    const data = await apiClient
+      .get<{ data: TaxSettings }>(API_ENDPOINTS.settings.tax)
+      .then((res) => (res as unknown as { data: TaxSettings }).data);
+    return normalizeTax(data);
+  },
+
+  async updateTaxSettings(payload: TaxSettings): Promise<TaxSettings> {
+    const data = await apiClient
+      .put<{ data: TaxSettings }>(API_ENDPOINTS.settings.tax, payload)
+      .then((res) => (res as unknown as { data: TaxSettings }).data);
+    return normalizeTax(data);
+  },
+
   /**
    * Fetch all settings in parallel for the viewfront.
    * Returns the public aggregate with graceful fallback on failure.

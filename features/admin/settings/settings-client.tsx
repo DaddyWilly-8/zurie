@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import {
+  Alert,
   Button,
   Card,
   CardContent,
+  FormControlLabel,
   Grid,
   IconButton,
+  Radio,
+  RadioGroup,
   Stack,
   Tab,
   Tabs,
@@ -19,16 +23,24 @@ import {
   AdminFeedbackSnackbar,
   AdminImageUploader,
 } from "@/components/admin";
-import { contentService } from "@/services/content/content.service";
+import {
+  contentService,
+  normalizeTax,
+} from "@/services/content/content.service";
+import { summarizeVat } from "@/utils/vat";
 import { useSiteSettings } from "@/providers/settings-provider";
 import type {
   BrandSettings,
   ContactSettings,
   HomepageSettings,
   PoliciesSettings,
+  TaxSettings,
 } from "@/types/content";
 
-type ActiveTab = "brand" | "contact" | "homepage" | "policies";
+type ActiveTab = "brand" | "contact" | "homepage" | "policies" | "tax";
+
+// Example price used to explain the two VAT modes on the Tax tab.
+const EXAMPLE_PRICE = 45000;
 
 const emptyContact: ContactSettings = {
   phones: [],
@@ -55,6 +67,9 @@ export const AdminSettingsClient = () => {
   const [contact, setContact] = useState<ContactSettings>(emptyContact);
   const [homepage, setHomepage] = useState<HomepageSettings>(emptyHomepage);
   const [policies, setPolicies] = useState<PoliciesSettings>(emptyPolicies);
+  const [tax, setTax] = useState<TaxSettings>(normalizeTax(undefined));
+  // Kept as text so the rate field can be cleared and retyped.
+  const [vatRateInput, setVatRateInput] = useState("18");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,17 +82,20 @@ export const AdminSettingsClient = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [brandData, contactData, homepageData, policiesData] =
+        const [brandData, contactData, homepageData, policiesData, taxData] =
           await Promise.all([
             contentService.getBrandSettings(),
             contentService.getContactSettings(),
             contentService.getHomepageSettings(),
             contentService.getPoliciesSettings(),
+            contentService.getTaxSettings(),
           ]);
         setBrand(brandData);
         setContact(contactData);
         setHomepage(homepageData);
         setPolicies(policiesData);
+        setTax(taxData);
+        setVatRateInput(String(taxData.vatPercentage));
       } catch {
         setMessage("Failed to load settings.");
         setMessageType("error");
@@ -169,12 +187,49 @@ export const AdminSettingsClient = () => {
     }
   };
 
+  const saveTax = async () => {
+    const rate = Number(vatRateInput);
+    if (
+      vatRateInput.trim() === "" ||
+      !Number.isFinite(rate) ||
+      rate < 0 ||
+      rate > 100
+    ) {
+      setMessage("VAT rate must be a number between 0 and 100.");
+      setMessageType("error");
+      return;
+    }
+    setSaving(true);
+    try {
+      const updated = await contentService.updateTaxSettings({
+        vatPercentage: rate,
+        pricesIncludeVat: tax.pricesIncludeVat,
+      });
+      setTax(updated);
+      setVatRateInput(String(updated.vatPercentage));
+      await afterSave("Tax settings");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Failed to save tax settings.",
+      );
+      setMessageType("error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = () => {
     if (activeTab === "brand") void saveBrand();
     else if (activeTab === "contact") void saveContact();
     else if (activeTab === "homepage") void saveHomepage();
+    else if (activeTab === "tax") void saveTax();
     else void savePolicies();
   };
+
+  const taxExample = summarizeVat([{ amount: EXAMPLE_PRICE }], {
+    vatPercentage: Number(vatRateInput) || 0,
+    pricesIncludeVat: tax.pricesIncludeVat,
+  });
 
   const uploadLogo = async (file: File) => {
     const updated = await contentService.uploadBrandLogo(file);
@@ -253,7 +308,9 @@ export const AdminSettingsClient = () => {
         ? "Contact Info"
         : activeTab === "homepage"
           ? "Homepage"
-          : "Policies";
+          : activeTab === "tax"
+            ? "Tax"
+            : "Policies";
 
   return (
     <Card
@@ -289,6 +346,7 @@ export const AdminSettingsClient = () => {
             <Tab value="contact" label="Contact" />
             <Tab value="homepage" label="Homepage" />
             <Tab value="policies" label="Policies" />
+            <Tab value="tax" label="Tax" />
           </Tabs>
 
           {loading ? (
@@ -541,6 +599,50 @@ export const AdminSettingsClient = () => {
                     />
                   </Grid>
                 </Grid>
+              )}
+
+              {activeTab === "tax" && (
+                <Stack spacing={2.5}>
+                  <RadioGroup
+                    value={tax.pricesIncludeVat ? "inclusive" : "exclusive"}
+                    onChange={(_, value) =>
+                      setTax((prev) => ({
+                        ...prev,
+                        pricesIncludeVat: value === "inclusive",
+                      }))
+                    }
+                  >
+                    <FormControlLabel
+                      value="inclusive"
+                      control={<Radio />}
+                      label="Product prices already include VAT"
+                    />
+                    <FormControlLabel
+                      value="exclusive"
+                      control={<Radio />}
+                      label="Add VAT on top of product prices at checkout"
+                    />
+                  </RadioGroup>
+                  <Grid container spacing={2.5}>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <AdminField
+                        label="VAT Rate (%)"
+                        type="number"
+                        value={vatRateInput}
+                        onChange={setVatRateInput}
+                      />
+                    </Grid>
+                  </Grid>
+                  <Alert severity="info">
+                    {`Example: a product priced ${EXAMPLE_PRICE.toLocaleString()} TZS costs the customer ${taxExample.total.toLocaleString()} TZS`}
+                    {taxExample.vat > 0
+                      ? `, of which ${taxExample.vat.toLocaleString()} TZS is VAT.`
+                      : "."}{" "}
+                    Products marked &quot;VAT exempted&quot; never carry VAT.
+                    Changes apply to new sales only; existing orders keep the
+                    VAT they were sold with.
+                  </Alert>
+                </Stack>
               )}
 
               <Stack direction="row" spacing={1.5} sx={{ pt: 1 }}>
