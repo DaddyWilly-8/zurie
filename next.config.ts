@@ -11,6 +11,16 @@ const apiOriginUrl = new URL(API_ORIGIN);
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   outputFileTracingRoot: process.cwd(),
+  // Shared/managed hosting (CloudLinux LVE) caps how many processes and
+  // threads the account may spawn. Next's default build fans out one
+  // page-rendering worker per CPU, which trips that cap on the live box
+  // ("pthread_create: Resource temporarily unavailable" during "Collecting
+  // page data"). One worker, no extra threads, keeps the build inside the
+  // limit; it's a little slower but doesn't affect the running site.
+  experimental: {
+    cpus: 1,
+    workerThreads: false,
+  },
   async rewrites() {
     return [
       {
