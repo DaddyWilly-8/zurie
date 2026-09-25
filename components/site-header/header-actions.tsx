@@ -18,6 +18,7 @@ import {
 import { CURRENCY_OPTIONS, type CurrencyCode } from "@/utils/currency";
 import { useCustomerAuth } from "@/providers/customer-auth-provider";
 import { AccountMenu } from "@/components/site-header/account-menu";
+import { SiteHeaderNotificationsBell } from "@/components/site-header/notifications-bell";
 import type { PaletteMode } from "@mui/material";
 
 type Props = {
@@ -107,11 +108,14 @@ export const SiteHeaderActions = ({
       ) : null}
 
       {isAuthenticated ? (
-        <AccountMenu>
-          <IconButton component="span" aria-label="My Account">
-            <FontAwesomeIcon icon={faUser} fontSize={15} />
-          </IconButton>
-        </AccountMenu>
+        <>
+          <SiteHeaderNotificationsBell />
+          <AccountMenu>
+            <IconButton component="span" aria-label="My Account">
+              <FontAwesomeIcon icon={faUser} fontSize={15} />
+            </IconButton>
+          </AccountMenu>
+        </>
       ) : (
         <>
           {/* Full "Sign in" + "Create account" only where there's room —
