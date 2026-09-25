@@ -51,6 +51,46 @@ Because the failed-build case above never restarts the app, the only time
 you need a rollback is when a _build that succeeded_ still shipped a bug at
 runtime — in that case just deploy the previous commit the normal way.
 
+### Automatic deploy (push to main → live)
+
+`.github/workflows/deploy.yml` deploys the storefront automatically: after
+CI passes on `main`, it SSHes into the server and runs `./deploy.sh`. It
+only ever runs for a **green** CI run, and `deploy.sh` still refuses to
+restart on a failed build, so nothing broken reaches the live app. You can
+also trigger it by hand from the repo's **Actions → Deploy (storefront) →
+Run workflow**.
+
+One-time setup (nothing deploys automatically until this is done — before
+it, the job just logs a note and passes):
+
+1. **Enable SSH** for the account in cPanel → _SSH Access_ if it isn't on.
+2. **Make a dedicated deploy key** (on your own machine or the server):
+   ```bash
+   ssh-keygen -t ed25519 -f deploy_key -N "" -C "github-deploy-zurie"
+   ```
+3. **Authorize it on the server** — append `deploy_key.pub` to
+   `~/.ssh/authorized_keys` (cPanel → _SSH Access → Manage SSH Keys →
+   Import_, then **Authorize**).
+4. **Add four repo secrets** in GitHub → _Settings → Secrets and variables →
+   Actions_:
+   - `DEPLOY_SSH_HOST` — the server hostname or IP (from cPanel SSH Access).
+   - `DEPLOY_SSH_PORT` — the SSH port (often 22; some hosts use a custom one).
+   - `DEPLOY_SSH_USER` — the cPanel username (e.g. `zuricom`).
+   - `DEPLOY_SSH_KEY` — the **private** key file's contents (`deploy_key`).
+     Optionally set a repo _variable_ `DEPLOY_APP_DIR` if the checkout isn't at
+     `~/zurie.co.tz_frontend`.
+5. Delete the local private key once it's in the secret. Test with **Run
+   workflow**, then watch the run's log for `Deploy complete`.
+
+If your host firewalls SSH by IP, GitHub's runners won't be able to connect;
+either allow GitHub Actions IP ranges or keep deploying with `./deploy.sh`
+by hand — the manual path always works.
+
+> The **backend** is intentionally **not** auto-deployed: a push there can
+> include a database migration, and auto-applying `migrate --force` to the
+> live DB on every merge is risky. Deploy it deliberately (`git pull` →
+> `ea-php84 artisan migrate --force` → clear caches).
+
 ## Health check
 
 ```
