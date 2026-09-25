@@ -90,6 +90,10 @@ export const API_ENDPOINTS = {
     adminList: "/admin/orders",
     adminByOrderNumber: (orderNumber: string) => `/admin/orders/${orderNumber}`,
     adminCancel: (orderNumber: string) => `/admin/orders/${orderNumber}/cancel`,
+    adminComplete: (orderNumber: string) =>
+      `/admin/orders/${orderNumber}/complete`,
+    adminPriceAdjustment: (orderNumber: string) =>
+      `/admin/orders/${orderNumber}/price-adjustment`,
     adminReceipts: (orderNumber: string) =>
       `/admin/orders/${orderNumber}/receipts`,
     adminDeliveries: (orderNumber: string) =>

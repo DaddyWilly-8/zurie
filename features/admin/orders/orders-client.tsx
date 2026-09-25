@@ -57,6 +57,11 @@ export const AdminOrdersClient = () => {
     await refetch();
   };
 
+  const completeOrder = async (orderNumber: string) => {
+    await orderActions.complete(orderNumber);
+    await refetch();
+  };
+
   useEffect(() => {
     setPage(1);
   }, [search, status]);
@@ -108,6 +113,7 @@ export const AdminOrdersClient = () => {
               rows={rows}
               onStatusChange={updateStatus}
               onCancelOrder={cancelOrder}
+              onCompleteOrder={completeOrder}
             />
           )}
 

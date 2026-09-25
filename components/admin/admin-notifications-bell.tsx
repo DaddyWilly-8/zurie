@@ -27,6 +27,7 @@ const TARGET_PAGE: Record<string, string> = {
   out_of_stock: "/admin/products",
   new_enquiry: "/admin/enquiries",
   review_pending: "/admin/reviews",
+  new_newsletter_subscriber: "/admin/newsletter",
 };
 
 const QUERY_KEY = ["admin-notifications"];

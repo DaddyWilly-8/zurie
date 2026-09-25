@@ -36,6 +36,7 @@ type Props = {
   rows: AdminOrderRow[];
   onStatusChange: (id: string, nextStatus: string) => Promise<void>;
   onCancelOrder?: (id: string) => Promise<void>;
+  onCompleteOrder?: (id: string) => Promise<void>;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -89,7 +90,12 @@ const CANCELLABLE_STATUSES = [
   "ready_for_delivery",
 ];
 
-export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
+export const OrdersTable = ({
+  rows,
+  onStatusChange,
+  onCancelOrder,
+  onCompleteOrder,
+}: Props) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -98,7 +104,9 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<"status" | "cancel">("status");
+  const [dialogType, setDialogType] = useState<
+    "status" | "cancel" | "complete"
+  >("status");
   const [pendingOrderId, setPendingOrderId] = useState<string>("");
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingCurrentStatus, setPendingCurrentStatus] = useState<string>("");
@@ -183,6 +191,23 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
     setDialogOpen(true);
   };
 
+  const handleCompleteOrder = (orderId: string, currentStatus: string) => {
+    if (isTerminalStatus(currentStatus)) {
+      setSnackbarMessage(
+        `Order cannot be completed from '${currentStatus}' status.`,
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setDialogType("complete");
+    setPendingOrderId(orderId);
+    setPendingStatus("delivered");
+    setPendingCurrentStatus(currentStatus);
+    setDialogOpen(true);
+  };
+
   const handleConfirmAction = async () => {
     if (!pendingOrderId) return;
 
@@ -195,6 +220,17 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
           setSnackbarOpen(true);
         } else {
           setSnackbarMessage("Cancel order functionality is not available.");
+          setSnackbarSeverity("error");
+          setSnackbarOpen(true);
+        }
+      } else if (dialogType === "complete") {
+        if (onCompleteOrder) {
+          await onCompleteOrder(pendingOrderId);
+          setSnackbarMessage("Order marked as delivered.");
+          setSnackbarSeverity("success");
+          setSnackbarOpen(true);
+        } else {
+          setSnackbarMessage("Complete order functionality is not available.");
           setSnackbarSeverity("error");
           setSnackbarOpen(true);
         }
@@ -417,6 +453,25 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
                         Move to {STATUS_LABELS[nextStatus]}
                       </Button>
                     )}
+                    {!isTerminal && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="success"
+                        onClick={() =>
+                          handleCompleteOrder(row.order_number, row.status)
+                        }
+                        sx={{
+                          textTransform: "none",
+                          borderRadius: 1,
+                          fontSize: "0.7rem",
+                          flex: 1,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Complete
+                      </Button>
+                    )}
                     {cancellable && (
                       <Button
                         variant="outlined"
@@ -625,6 +680,24 @@ export const OrdersTable = ({ rows, onStatusChange, onCancelOrder }: Props) => {
                           → {STATUS_LABELS[nextStatus]}
                         </Button>
                       )}
+                      {!isTerminal && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          color="success"
+                          onClick={() =>
+                            handleCompleteOrder(row.order_number, row.status)
+                          }
+                          sx={{
+                            textTransform: "none",
+                            borderRadius: 1,
+                            fontSize: "0.65rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Complete
+                        </Button>
+                      )}
                       {cancellable && (
                         <Button
                           variant="outlined"
@@ -737,7 +810,7 @@ const ActionConfirmationDialog = ({
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  type: "status" | "cancel";
+  type: "status" | "cancel" | "complete";
   status: string;
   currentStatus: string;
   isDarkMode: boolean;
@@ -750,14 +823,21 @@ const ActionConfirmationDialog = ({
     isDarkMode ? "rgba(255,255,255,0.6)" : "text.secondary";
 
   const isCancel = type === "cancel";
+  const isComplete = type === "complete";
   const isTerminal = status === "delivered" || status === "cancelled";
   const statusLabel = STATUS_LABELS[status] || status;
   const currentStatusLabel = STATUS_LABELS[currentStatus] || currentStatus;
   const statusColor = STATUS_COLORS[status] || "primary";
   const description = isCancel
     ? "This will cancel the order and restock the items. This action is final and cannot be undone."
-    : STATUS_DESCRIPTIONS[status] || "Update the order status.";
-  const title = isCancel ? "Cancel Order" : "Update Order Status";
+    : isComplete
+      ? "This will fast-forward the order through every remaining stage straight to Delivered. This action is final and cannot be undone."
+      : STATUS_DESCRIPTIONS[status] || "Update the order status.";
+  const title = isCancel
+    ? "Cancel Order"
+    : isComplete
+      ? "Complete Order"
+      : "Update Order Status";
 
   return (
     <Dialog

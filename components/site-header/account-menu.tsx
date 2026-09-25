@@ -72,7 +72,7 @@ export const AccountMenu = ({ children }: { children: React.ReactNode }) => {
               <MenuItem component={Link} href="/account" onClick={close}>
                 My Account
               </MenuItem>
-              <MenuItem component={Link} href="/account" onClick={close}>
+              <MenuItem component={Link} href="/account/orders" onClick={close}>
                 Orders
               </MenuItem>
               <Divider sx={{ my: 0.5 }} />

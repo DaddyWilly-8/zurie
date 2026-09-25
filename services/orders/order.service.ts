@@ -32,6 +32,7 @@ export type OrderResponse = {
   whatsappNumber: string;
   customerEmail: string | null;
   totalAmount: number;
+  discountAmount: number;
   notes: string | null;
   items: Array<{
     id: number;
@@ -168,6 +169,35 @@ export const orderService = {
   cancelOrder(orderNumber: string): Promise<OrderActionResponse> {
     return apiClient.post<OrderActionResponse>(
       API_ENDPOINTS.orders.adminCancel(orderNumber),
+    );
+  },
+
+  /**
+   * Fast-forward straight to `delivered` (admin only)
+   * POST /admin/orders/{orderNumber}/complete
+   * One click instead of four separate status updates; each intermediate
+   * status is still logged server-side (see OrderService::advanceToDelivered()).
+   */
+  completeOrder(orderNumber: string): Promise<OrderActionResponse> {
+    return apiClient.post<OrderActionResponse>(
+      API_ENDPOINTS.orders.adminComplete(orderNumber),
+    );
+  },
+
+  /**
+   * Record a negotiated (phone/WhatsApp) discount after checkout (admin only)
+   * POST /admin/orders/{orderNumber}/price-adjustment
+   * newTotalAmount must be lower than the order's current total; reason is
+   * required and shows up in the order's activity log.
+   */
+  adjustOrderPrice(
+    orderNumber: string,
+    newTotalAmount: number,
+    reason: string,
+  ): Promise<OrderActionResponse> {
+    return apiClient.post<OrderActionResponse>(
+      API_ENDPOINTS.orders.adminPriceAdjustment(orderNumber),
+      { newTotalAmount, reason },
     );
   },
 

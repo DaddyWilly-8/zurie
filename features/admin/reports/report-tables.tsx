@@ -9,6 +9,8 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { useCurrencyStore } from "@/hooks/use-currency-store";
+import { formatBaseCurrencyInCurrency } from "@/utils/currency";
 import type {
   BalanceSheet,
   BalanceSheetSection,
@@ -28,6 +30,19 @@ const Empty = ({ label }: { label: string }) => (
     {label}
   </Typography>
 );
+
+// Every report figure is computed in TZS (base currency) server-side —
+// these tables used to just print the raw number with .toLocaleString(),
+// ignoring the currency switcher in the header entirely. Reports are the
+// one place in the admin panel that stayed silently TZS-only regardless
+// of what currency was selected, which is exactly what made this
+// confusing: the switcher visibly says "USD" while every report keeps
+// showing raw TZS figures with no symbol and no conversion.
+const Money = ({ value }: { value: number }) => {
+  const currency = useCurrencyStore((state) => state.currency);
+  const rates = useCurrencyStore((state) => state.rates);
+  return <>{formatBaseCurrencyInCurrency(value, currency, rates)}</>;
+};
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 0 }}>
@@ -54,7 +69,9 @@ export const SalesByChannelTable = ({ data }: { data: SalesByChannel }) => {
           <TableRow key={channel} hover>
             <TableCell>{channel}</TableCell>
             <TableCell>{summary.count}</TableCell>
-            <TableCell>{summary.total.toLocaleString()}</TableCell>
+            <TableCell>
+              <Money value={summary.total} />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -113,7 +130,9 @@ export const RevenueSummaryTable = ({
         ).map(([label, value]) => (
           <TableRow key={label} hover>
             <TableCell>{label}</TableCell>
-            <TableCell>{value.toLocaleString()}</TableCell>
+            <TableCell>
+              <Money value={value} />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -138,7 +157,7 @@ const BalanceSheetSectionTable = ({
             <TableRow key={line.ledgerId} hover>
               <TableCell>{line.name}</TableCell>
               <TableCell align="right">
-                {line.balance.toLocaleString()}
+                <Money value={line.balance} />
               </TableCell>
             </TableRow>
           ))}
@@ -166,26 +185,26 @@ export const BalanceSheetTable = ({
 
       <Stack spacing={1}>
         <Typography variant="subtitle1">
-          Assets — Total: {balanceSheet.assets.total.toLocaleString()}
+          Assets — Total: <Money value={balanceSheet.assets.total} />
         </Typography>
         <BalanceSheetSectionTable section={balanceSheet.assets} />
       </Stack>
 
       <Stack spacing={1}>
         <Typography variant="subtitle1">
-          Liabilities — Total: {balanceSheet.liabilities.total.toLocaleString()}
+          Liabilities — Total: <Money value={balanceSheet.liabilities.total} />
         </Typography>
         <BalanceSheetSectionTable section={balanceSheet.liabilities} />
       </Stack>
 
       <Stack spacing={1}>
         <Typography variant="subtitle1">
-          Equity — Total: {balanceSheet.equity.total.toLocaleString()}
+          Equity — Total: <Money value={balanceSheet.equity.total} />
         </Typography>
         <BalanceSheetSectionTable section={balanceSheet.equity} />
         <Typography color="text.secondary">
           Includes Retained Earnings (current period):{" "}
-          {balanceSheet.equity.retainedEarnings.toLocaleString()}
+          <Money value={balanceSheet.equity.retainedEarnings} />
         </Typography>
       </Stack>
     </Stack>
@@ -211,8 +230,12 @@ export const TrialBalanceTable = ({ rows }: { rows: TrialBalanceRow[] }) =>
             <TableCell>{row.code}</TableCell>
             <TableCell>{row.name}</TableCell>
             <TableCell>{row.groupName}</TableCell>
-            <TableCell>{row.debit.toLocaleString()}</TableCell>
-            <TableCell>{row.credit.toLocaleString()}</TableCell>
+            <TableCell>
+              <Money value={row.debit} />
+            </TableCell>
+            <TableCell>
+              <Money value={row.credit} />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -229,7 +252,7 @@ export const InventoryValueTable = ({
   ) : (
     <>
       <Typography sx={{ mb: 1.5 }}>
-        Total Value: {report.totalValue.toLocaleString()}
+        Total Value: <Money value={report.totalValue} />
       </Typography>
       <Wrap>
         <TableHead>
@@ -247,8 +270,12 @@ export const InventoryValueTable = ({
               <TableCell>{line.productName}</TableCell>
               <TableCell>#{line.outletId}</TableCell>
               <TableCell>{line.quantity}</TableCell>
-              <TableCell>{line.buyingPrice.toLocaleString()}</TableCell>
-              <TableCell>{line.value.toLocaleString()}</TableCell>
+              <TableCell>
+                <Money value={line.buyingPrice} />
+              </TableCell>
+              <TableCell>
+                <Money value={line.value} />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -273,9 +300,15 @@ export const DebtorsTable = ({ rows }: { rows: DebtorRow[] }) =>
         {rows.map((row) => (
           <TableRow key={row.stakeholderId} hover>
             <TableCell>{row.name}</TableCell>
-            <TableCell>{row.billed.toLocaleString()}</TableCell>
-            <TableCell>{row.received.toLocaleString()}</TableCell>
-            <TableCell>{row.outstanding.toLocaleString()}</TableCell>
+            <TableCell>
+              <Money value={row.billed} />
+            </TableCell>
+            <TableCell>
+              <Money value={row.received} />
+            </TableCell>
+            <TableCell>
+              <Money value={row.outstanding} />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -297,7 +330,9 @@ export const CreditorsTable = ({ rows }: { rows: CreditorRow[] }) =>
         {rows.map((row) => (
           <TableRow key={row.stakeholderId} hover>
             <TableCell>{row.name}</TableCell>
-            <TableCell>{row.outstanding.toLocaleString()}</TableCell>
+            <TableCell>
+              <Money value={row.outstanding} />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -326,7 +361,9 @@ export const PurchaseSummaryTable = ({
             <TableRow key={status} hover>
               <TableCell>{status}</TableCell>
               <TableCell>{stats.count}</TableCell>
-              <TableCell>{stats.total.toLocaleString()}</TableCell>
+              <TableCell>
+                <Money value={stats.total} />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -1,54 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Alert,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Container,
-  Divider,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
 import { useCustomerAuth } from "@/providers/customer-auth-provider";
-import { accountService } from "@/services/account/account.service";
-import type { OrderResponse } from "@/services/orders/order.service";
-import { formatCurrency } from "@/utils/currency";
 import { AccountNotifications, AccountWishlist } from "@/features/account";
 
+/**
+ * Profile overview — was previously the single page both "My Account" and
+ * "Orders" in the header's AccountMenu linked to (the same href, so they
+ * opened identically and order history was just one long section buried
+ * in the middle of this page's scroll). Order history now lives at its
+ * own route, /account/orders (see that page) — this one keeps the
+ * profile summary, notifications, and wishlist, with a card linking to
+ * order history instead of inlining it.
+ */
 export default function AccountPage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useCustomerAuth();
-  const [orders, setOrders] = useState<OrderResponse[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/login?next=/account");
     }
   }, [authLoading, user, router]);
-
-  useEffect(() => {
-    if (!user) return;
-    let active = true;
-
-    void accountService
-      .getOrders({ page: 1, pageSize: 20 })
-      .then((response) => {
-        if (active) setOrders(response.data);
-      })
-      .finally(() => {
-        if (active) setOrdersLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [user]);
 
   if (authLoading || !user) {
     return (
@@ -90,47 +74,26 @@ export default function AccountPage() {
 
         <AccountNotifications />
 
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Order History
-          </Typography>
-          {ordersLoading ? (
-            <CircularProgress size={24} />
-          ) : orders.length === 0 ? (
-            <Alert severity="info">
-              You haven&apos;t placed any orders yet.
-            </Alert>
-          ) : (
-            <Stack divider={<Divider />} spacing={2}>
-              {orders.map((order) => (
-                <Stack
-                  key={order.id}
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  gap={1}
-                >
-                  <Box>
-                    <Typography fontWeight={600}>
-                      {order.orderNumber}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={order.status.replace(/_/g, " ")}
-                    size="small"
-                    sx={{ textTransform: "capitalize" }}
-                  />
-                  <Typography fontWeight={600}>
-                    {formatCurrency(order.totalAmount, "TZS")}
-                  </Typography>
-                </Stack>
-              ))}
-            </Stack>
-          )}
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="h6">Order History</Typography>
+            <Typography color="text.secondary">
+              Track every order you&apos;ve placed with us.
+            </Typography>
+          </Box>
+          <Button component={Link} href="/account/orders" variant="contained">
+            View Orders
+          </Button>
         </Paper>
 
         <AccountWishlist />

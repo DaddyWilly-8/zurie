@@ -121,11 +121,15 @@ export default async function HomePage() {
     })
     .filter(Boolean) as Array<{ label: string; href: string; image: string }>;
 
-  const heroImage = pickImage(
-    heroImageFromCms,
-    featured[0]?.images?.[0]?.url,
-    "/images/hero/zurie-hero.png",
-  );
+  // Deliberately NOT falling back to featured[0]'s own product photo —
+  // that used to be here, and it meant the site's main hero banner
+  // silently became whatever product happened to be marked "featured"
+  // any time no CMS hero image was configured (which it never was,
+  // by default). A random product photo standing in for brand hero
+  // imagery is surprising, not a reasonable fallback — the static
+  // branded default is the only sensible one when Settings has no
+  // hero image set.
+  const heroImage = pickImage(heroImageFromCms, "/images/hero/zurie-hero.png");
 
   // No backend-documented fields exist yet for a promotional banner; keep it
   // disabled until Settings/Homepage grows a banner category.

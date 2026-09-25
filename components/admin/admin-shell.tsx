@@ -543,6 +543,7 @@ export const AdminShell = ({ children }: { children: React.ReactNode }) => {
               }
               variant="standard"
               disableUnderline
+              inputProps={{ "aria-label": "Currency" }}
               sx={{
                 minWidth: { xs: 62, md: 88 },
                 fontSize: "0.72rem",

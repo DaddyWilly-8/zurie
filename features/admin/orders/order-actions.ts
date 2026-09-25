@@ -46,4 +46,8 @@ export const orderActions = {
   cancel(orderNumber: string) {
     return orderService.cancelOrder(orderNumber);
   },
+
+  complete(orderNumber: string) {
+    return orderService.completeOrder(orderNumber);
+  },
 };

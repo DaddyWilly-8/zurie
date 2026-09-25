@@ -20,6 +20,7 @@ import {
   TableRow,
   Tab,
   Tabs,
+  TextField,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -78,6 +79,15 @@ export const OrderDetailDialog = ({
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState(0);
 
+  // Negotiated-price adjustment form — see OrderService::adjustPrice()'s
+  // docblock on the backend for why this only ever lowers the total and
+  // requires a reason.
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjustAmount, setAdjustAmount] = useState("");
+  const [adjustReason, setAdjustReason] = useState("");
+  const [adjustSubmitting, setAdjustSubmitting] = useState(false);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
+
   const getBorderColor = () =>
     isDarkMode ? "rgba(255,255,255,0.12)" : "#e9e2d8";
   const getDialogBackground = () => (isDarkMode ? "#1e1e1e" : "#ffffff");
@@ -117,6 +127,51 @@ export const OrderDetailDialog = ({
       active = false;
     };
   }, [orderNumber]);
+
+  const isTerminal =
+    order?.status === "delivered" || order?.status === "cancelled";
+
+  const handleAdjustSubmit = async () => {
+    if (!order) return;
+
+    const amount = Number(adjustAmount);
+    setAdjustError(null);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setAdjustError("Enter a valid amount.");
+      return;
+    }
+    if (amount >= order.totalAmount) {
+      setAdjustError(
+        `The new amount must be lower than the current total (${order.totalAmount}).`,
+      );
+      return;
+    }
+    if (!adjustReason.trim()) {
+      setAdjustError("A reason is required.");
+      return;
+    }
+
+    setAdjustSubmitting(true);
+    try {
+      await orderService.adjustOrderPrice(
+        order.orderNumber,
+        amount,
+        adjustReason.trim(),
+      );
+      const refreshed = await orderService.getOrder(order.orderNumber);
+      setOrder(refreshed.data);
+      setAdjustOpen(false);
+      setAdjustAmount("");
+      setAdjustReason("");
+    } catch (err) {
+      setAdjustError(
+        err instanceof Error ? err.message : "Failed to adjust price.",
+      );
+    } finally {
+      setAdjustSubmitting(false);
+    }
+  };
 
   return (
     <Dialog
@@ -295,6 +350,28 @@ export const OrderDetailDialog = ({
 
               <Divider sx={{ borderColor: getBorderColor() }} />
 
+              {order.discountAmount > 0 && (
+                <Stack direction="row" justifyContent="space-between">
+                  <Typography
+                    variant="body2"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    Discount
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: getSecondaryTextColor() }}
+                  >
+                    -
+                    {formatBaseCurrencyInCurrency(
+                      order.discountAmount,
+                      currency,
+                      rates,
+                    )}
+                  </Typography>
+                </Stack>
+              )}
+
               <Stack direction="row" justifyContent="space-between">
                 <Typography fontWeight={600} sx={{ color: getTextColor() }}>
                   Total
@@ -307,6 +384,80 @@ export const OrderDetailDialog = ({
                   )}
                 </Typography>
               </Stack>
+
+              {!isTerminal && (
+                <Box>
+                  {adjustOpen ? (
+                    <Stack
+                      spacing={1.5}
+                      sx={{
+                        p: 1.5,
+                        border: `1px solid ${getBorderColor()}`,
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ color: getTextColor() }}
+                      >
+                        Adjust price (negotiated discount)
+                      </Typography>
+                      <TextField
+                        label="New total amount"
+                        type="number"
+                        size="small"
+                        value={adjustAmount}
+                        onChange={(e) => setAdjustAmount(e.target.value)}
+                        fullWidth
+                      />
+                      <TextField
+                        label="Reason"
+                        size="small"
+                        value={adjustReason}
+                        onChange={(e) => setAdjustReason(e.target.value)}
+                        placeholder="e.g. Phone negotiation - 500 off"
+                        fullWidth
+                      />
+                      {adjustError && (
+                        <Alert severity="error" sx={{ py: 0 }}>
+                          {adjustError}
+                        </Alert>
+                      )}
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={adjustSubmitting}
+                          onClick={handleAdjustSubmit}
+                          sx={{ textTransform: "none" }}
+                        >
+                          {adjustSubmitting ? "Saving..." : "Save"}
+                        </Button>
+                        <Button
+                          size="small"
+                          disabled={adjustSubmitting}
+                          onClick={() => {
+                            setAdjustOpen(false);
+                            setAdjustError(null);
+                          }}
+                          sx={{ textTransform: "none" }}
+                        >
+                          Cancel
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  ) : (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setAdjustOpen(true)}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Adjust Price
+                    </Button>
+                  )}
+                </Box>
+              )}
 
               {order.notes && (
                 <Box
