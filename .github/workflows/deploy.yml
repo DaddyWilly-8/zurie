@@ -1,0 +1,71 @@
+name: Deploy (storefront)
+
+# Auto-deploy the live storefront after CI passes on main. The Action never
+# builds here — it SSHes into the cPanel host and runs ./deploy.sh, which
+# pulls main, installs, builds, and only restarts Passenger if the build
+# succeeds (so a red build can't take the site down). It fires only for a
+# *successful* CI run on main, so a commit that fails typecheck/lint/tests
+# is never deployed. You can also run it by hand from the Actions tab.
+#
+# One-time setup (see docs/RUNBOOK.md → "Automatic deploy"): add four repo
+# secrets — DEPLOY_SSH_HOST, DEPLOY_SSH_PORT, DEPLOY_SSH_USER,
+# DEPLOY_SSH_KEY — and put the matching public key in the server's
+# ~/.ssh/authorized_keys. Until DEPLOY_SSH_HOST is set the job no-ops with a
+# note instead of failing.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Never let two deploys overlap; a newer one supersedes an in-flight one.
+concurrency:
+  group: deploy-storefront
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: SSH deploy
+    runs-on: ubuntu-latest
+    # Only for a green CI run (or a manual dispatch) — never deploy red.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    env:
+      HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+      PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      USER: ${{ secrets.DEPLOY_SSH_USER }}
+      # Absolute path to the storefront checkout on the server.
+      APP_DIR: ${{ vars.DEPLOY_APP_DIR || '~/zurie.co.tz_frontend' }}
+    steps:
+      - name: Check deploy is configured
+        id: cfg
+        run: |
+          if [ -z "$HOST" ]; then
+            echo "::notice::Deploy secrets not set yet — skipping. See docs/RUNBOOK.md → Automatic deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy over SSH
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          PORT="${PORT:-22}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          # -lc: a login shell, so the account's PATH (and deploy.sh's own
+          # cPanel-nodevenv activation) is in effect.
+          ssh -i ~/.ssh/id_deploy -p "$PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            "$USER@$HOST" \
+            "bash -lc 'cd $APP_DIR && chmod +x deploy.sh && ./deploy.sh'"
+
+      - name: Clean up key
+        if: always()
+        run: rm -f ~/.ssh/id_deploy
