@@ -3,20 +3,10 @@ export const fetchCache = "force-no-store";
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Box,
-  Button,
-  Container,
-  Grid,
-  Stack,
-  Typography,
-  Fade,
-  useTheme,
-} from "@mui/material";
+import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowRight,
-  faStar,
   faHands,
   faGem,
   faClock,

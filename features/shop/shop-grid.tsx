@@ -192,6 +192,13 @@ export const ShopGrid = ({
                 size="small"
                 value={category}
                 onChange={(event) => updateCategory(event.target.value)}
+                // The "Silhouette" heading above is a plain sibling
+                // Typography, not a <label>, so it's never programmatically
+                // associated with this control — an explicit aria-label is
+                // the only reliable accessible name here (axe caught this
+                // as a flaky violation because MUI's implicit labeling
+                // depends on timing this doesn't have).
+                inputProps={{ "aria-label": "Filter by category" }}
                 sx={{
                   borderRadius: 0,
                   backgroundColor: "background.paper",
@@ -207,14 +214,33 @@ export const ShopGrid = ({
               </Select>
             </Box>
 
-            <Stack spacing={1.05} sx={{ display: { xs: "none", md: "flex" } }}>
+            <Stack
+              component="nav"
+              aria-label="Filter by category"
+              spacing={1.05}
+              sx={{ display: { xs: "none", md: "flex" } }}
+            >
+              {/* A plain Typography with only onClick isn't focusable or
+                  announced as interactive to a screen reader or keyboard
+                  user — real gap, not just an axe finding (axe's automated
+                  rules don't reliably catch this pattern). component="button"
+                  keeps the same visual styling while making it a real,
+                  keyboard-operable control. */}
               <Typography
+                component="button"
+                type="button"
+                aria-pressed={category === "all"}
                 onClick={() => updateCategory("all")}
                 sx={{
                   fontSize: "0.86rem",
                   color: category === "all" ? "text.primary" : "text.secondary",
                   cursor: "pointer",
                   transition: "color 160ms ease",
+                  background: "none",
+                  border: 0,
+                  p: 0,
+                  textAlign: "left",
+                  font: "inherit",
                 }}
               >
                 All Pieces
@@ -222,6 +248,9 @@ export const ShopGrid = ({
               {categories.map((item) => (
                 <Typography
                   key={item.value}
+                  component="button"
+                  type="button"
+                  aria-pressed={category === item.value}
                   onClick={() => updateCategory(item.value)}
                   sx={{
                     fontSize: "0.86rem",
@@ -231,6 +260,11 @@ export const ShopGrid = ({
                         : "text.secondary",
                     cursor: "pointer",
                     transition: "color 160ms ease",
+                    background: "none",
+                    border: 0,
+                    p: 0,
+                    textAlign: "left",
+                    font: "inherit",
                   }}
                 >
                   {item.label}
@@ -272,6 +306,7 @@ export const ShopGrid = ({
                 />
                 <TextField
                   select
+                  label="Sort by"
                   value={sortBy}
                   onChange={(event) => setSortBy(event.target.value as SortKey)}
                   size="small"

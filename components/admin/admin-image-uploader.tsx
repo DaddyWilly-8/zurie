@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
+import Image from "next/image";
 import {
   Box,
   Button,
@@ -114,11 +115,17 @@ export const AdminImageUploader = ({
               position: "relative",
             }}
           >
-            <img
+            <Image
               src={preview}
               alt={`${label} ${index + 1}`}
               width={108}
               height={108}
+              // Previews include freshly-selected local files as base64
+              // data URLs (see the FileReader usage above) alongside real
+              // uploaded image URLs — next/image's optimizer can't process
+              // data URLs, so this thumbnail (already a fixed 108x108)
+              // opts out rather than crashing on a local preview.
+              unoptimized
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
             {onRemoveImage && images.length > 0 ? (

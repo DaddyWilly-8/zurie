@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSiteSettings } from "@/providers/settings-provider";
 
 import {
   Box,
@@ -49,7 +48,6 @@ export const SiteHeaderCartDrawer = ({
   onUpdateQuantity,
   onRemove,
 }: Props) => {
-  const { whatsappNumber } = useSiteSettings();
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <Stack sx={{ width: { xs: "100vw", sm: 420 }, height: "100%" }}>

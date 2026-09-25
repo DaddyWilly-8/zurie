@@ -1,4 +1,9 @@
-import { Checkbox, Stack, TextField, Typography } from "@mui/material";
+import {
+  Checkbox,
+  FormControlLabel,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 type AdminFieldProps = {
   label: string;
@@ -88,14 +93,25 @@ type AdminToggleProps = {
 
 export const AdminToggle = ({ label, checked, onChange }: AdminToggleProps) => {
   return (
-    <Stack direction="row" alignItems="center" spacing={0.5}>
-      <Checkbox
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-      <Typography sx={{ fontSize: "0.85rem", color: "text.primary" }}>
-        {label}
-      </Typography>
-    </Stack>
+    <FormControlLabel
+      // FormControlLabel is what actually links the label text to the
+      // control (via a generated id), unlike a plain sibling Typography —
+      // without it the label is only ever visually next to the checkbox,
+      // never announced by a screen reader or clickable via label the way
+      // a real form label is expected to behave, and getByLabel()-style
+      // lookups can't find the control at all.
+      control={
+        <Checkbox
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+      }
+      label={
+        <Typography sx={{ fontSize: "0.85rem", color: "text.primary" }}>
+          {label}
+        </Typography>
+      }
+      sx={{ ml: 0 }}
+    />
   );
 };
