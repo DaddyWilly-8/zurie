@@ -1,0 +1,34 @@
+name: Dependency Security Audit
+
+# Kept as its own workflow file rather than folded into the fuller CI
+# pipeline (typecheck/lint/build/E2E, added in the area-3 PR) so the two
+# can land independently. Once both are merged, consider moving this job
+# into ci.yml's "checks" job instead of keeping two workflow files.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Dependencies gain new advisories over time even with no code
+    # change — a weekly check catches that without waiting for the next PR.
+    - cron: "0 6 * * 1"
+
+jobs:
+  npm-audit:
+    name: npm audit (frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Hardcoded, not node-version-file: ".nvmrc" (added in the
+          # separate area-1 ops PR) isn't on this branch. Switch to
+          # node-version-file once both PRs have merged.
+          node-version: "22"
+      - run: npm ci --include=dev
+      # Fails the job on any high/critical advisory; moderate/low are
+      # reported but don't block — matches the "fails on new high-severity
+      # issues" bar without blocking every PR on a low-severity dev-only
+      # transitive dependency.
+      - run: npm audit --audit-level=high

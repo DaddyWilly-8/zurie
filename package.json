@@ -56,5 +56,8 @@
     "lint-staged": "^16.4.0",
     "prettier": "^3.9.6",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "^8.5.28"
   }
 }
