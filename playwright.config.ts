@@ -21,7 +21,23 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
+    {
+      name: "admin-journey",
+      testMatch: /admin-journey\.spec\.ts/,
+      dependencies: ["setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "e2e/.auth/admin.json",
+      },
+    },
+    {
+      name: "chromium",
+      testIgnore: /admin-journey\.spec\.ts|auth\.setup\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
   webServer: {
     command: "npm run start -- -p 3000",
     // Not /api/health — that route ships in the separate ops/deploy PR

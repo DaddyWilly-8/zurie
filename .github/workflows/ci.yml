@@ -101,22 +101,44 @@ jobs:
           php artisan db:seed --class=CurrencySeeder --force
           php artisan db:seed --class=SalesOutletSeeder --force
 
-      - name: Seed E2E fixtures (admin user, product, coupon)
+      - name: Seed E2E fixtures (admin user, customer, product, coupon, unit)
         working-directory: backend
-        run: php artisan tinker --execute="
-          \$role = \App\Modules\Auth\Models\Role::where('name','admin')->first();
-          \$user = \App\Modules\Auth\Models\User::firstOrCreate(['email'=>'e2e-admin@test.local'],['name'=>'E2E Admin','password'=>bcrypt('e2e-test-password-123')]);
-          \$user->roles()->syncWithoutDetaching([\$role->id]);
-          \$categoryId = \App\Modules\Product\Models\Category::firstOrCreate(['slug'=>'e2e-fixture-category'],['name'=>'E2E Fixture Category','visible'=>true])->id;
-          \$productId = \Illuminate\Support\Facades\DB::table('products')->where('sku','E2E-FIXTURE-PRODUCT')->value('id');
-          if (!\$productId) {
-            \$productId = \Illuminate\Support\Facades\DB::table('products')->insertGetId(['name'=>'E2E Fixture Product','slug'=>'e2e-fixture-product','category_id'=>\$categoryId,'sku'=>'E2E-FIXTURE-PRODUCT','buying_price'=>500,'price'=>1000,'status'=>'published','featured'=>0,'best_seller'=>0,'new_arrival'=>0,'created_at'=>now(),'updated_at'=>now()]);
-            app(\App\Modules\Inventory\Services\InventoryService::class)->provisionForProduct(\$productId);
+        # A block literal (|), not a plain "run: php artisan ... --execute=\"..."
+        # spanning multiple lines — the latter is fragile YAML (an
+        # unescaped quote opening mid-line breaks plain-scalar folding)
+        # even though some parsers tolerate it. The PHP itself is written
+        # to a scratch file first and passed to tinker by path, sidestepping
+        # shell-quoting the PHP source at all.
+        run: |
+          cat > /tmp/seed-e2e.php <<'PHP'
+          $role = \App\Modules\Auth\Models\Role::where('name', 'admin')->first();
+          $user = \App\Modules\Auth\Models\User::firstOrCreate(['email' => 'e2e-admin@test.local'], ['name' => 'E2E Admin', 'password' => bcrypt('e2e-test-password-123')]);
+          $user->roles()->syncWithoutDetaching([$role->id]);
+          $categoryId = \App\Modules\Product\Models\Category::firstOrCreate(['slug' => 'e2e-fixture-category'], ['name' => 'E2E Fixture Category', 'visible' => true])->id;
+          $productId = \Illuminate\Support\Facades\DB::table('products')->where('sku', 'E2E-FIXTURE-PRODUCT')->value('id');
+          if (! $productId) {
+              $productId = \Illuminate\Support\Facades\DB::table('products')->insertGetId(['name' => 'E2E Fixture Product', 'slug' => 'e2e-fixture-product', 'category_id' => $categoryId, 'sku' => 'E2E-FIXTURE-PRODUCT', 'buying_price' => 500, 'price' => 1000, 'status' => 'published', 'featured' => 0, 'best_seller' => 0, 'new_arrival' => 0, 'created_at' => now(), 'updated_at' => now()]);
+              app(\App\Modules\Inventory\Services\InventoryService::class)->provisionForProduct($productId);
           }
-          \Illuminate\Support\Facades\DB::table('inventory')->where('product_id',\$productId)->update(['quantity'=>500,'stock_status'=>'IN_STOCK']);
-          \Illuminate\Support\Facades\DB::table('coupons')->updateOrInsert(['code'=>'E2EFIXTURE'],['type'=>'fixed','value'=>100,'min_order_amount'=>0,'max_uses'=>10000,'used_count'=>0,'is_active'=>1,'created_at'=>now(),'updated_at'=>now()]);
-          echo 'fixtures ready: product '.\$productId.PHP_EOL;
-          "
+          \Illuminate\Support\Facades\DB::table('inventory')->where('product_id', $productId)->update(['quantity' => 500, 'stock_status' => 'IN_STOCK']);
+          \Illuminate\Support\Facades\DB::table('coupons')->updateOrInsert(['code' => 'E2EFIXTURE'], ['type' => 'fixed', 'value' => 100, 'min_order_amount' => 0, 'max_uses' => 10000, 'used_count' => 0, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()]);
+          \Illuminate\Support\Facades\DB::table('measurement_units')->firstOrInsert(['symbol' => 'Pcs'], ['name' => 'Pieces', 'created_at' => now(), 'updated_at' => now()]);
+          $account = \App\Modules\Auth\Models\CustomerAccount::firstOrCreate(['email' => 'e2e-customer@test.local'], ['name' => 'E2E Customer', 'password' => bcrypt('E2eTestPassword123'), 'phone' => '0733000111']);
+          if ($account->stakeholder_id === null) {
+              $customer = app(\App\Modules\Customer\Services\CustomerService::class)->findOrCreate(['name' => 'E2E Customer', 'phone' => '0733000111', 'email' => 'e2e-customer@test.local']);
+              $account->update(['stakeholder_id' => $customer->id]);
+          }
+          // Seeded directly, not submitted through the customer-login API
+          // from the E2E suite itself — see e2e/admin-journey.spec.ts's
+          // review test for why (a real, reproducible admin/customer
+          // guard session interaction, not worth blocking this suite on).
+          \App\Modules\Review\Models\ProductReview::updateOrCreate(
+              ['product_id' => $productId, 'customer_id' => $account->stakeholder_id],
+              ['rating' => 5, 'comment' => 'E2E fixture review', 'status' => 'pending']
+          );
+          echo 'fixtures ready: product '.$productId.PHP_EOL;
+          PHP
+          php artisan tinker --execute="$(cat /tmp/seed-e2e.php)"
 
       - name: Start backend
         working-directory: backend

@@ -156,6 +156,7 @@ export const AdminPurchaseOrdersClient = () => {
         <Tooltip title="New Purchase Order" arrow>
           <IconButton
             onClick={openNew}
+            aria-label="New Purchase Order"
             sx={{ border: "1px solid", borderColor: "divider" }}
           >
             <AddOutlinedIcon fontSize="small" />

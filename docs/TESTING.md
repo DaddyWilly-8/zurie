@@ -39,34 +39,80 @@ session — found by running against `:3100` first). See
 - An admin user `e2e-admin@test.local` / `e2e-test-password-123` with the
   `admin` role and **no 2FA** — the real demo admin has 2FA enabled,
   which would block a straightforward login flow.
+- A customer account `e2e-customer@test.local` / `E2eTestPassword123`,
+  linked to a stakeholder (review submission requires one — see
+  `ReviewController::store()`).
 - A product with SKU `E2E-FIXTURE-PRODUCT`, slug `e2e-fixture-product`,
   topped up with real stock — used instead of catalog demo data so tests
   aren't coupled to whatever stock level a real product happens to have.
 - A coupon `E2EFIXTURE` (fixed TZS 100 off, effectively unlimited uses).
+- A measurement unit (symbol `Pcs`) — required by purchase order line
+  items.
+- A pending review (product × the E2E customer, comment "E2E fixture
+  review") — see the admin-journey review test below for why this is
+  seeded directly rather than submitted live through the suite.
+  **Local re-runs**: once the admin-journey review test approves it,
+  re-running that test again locally needs it reset back to `status =
+'pending'` (CI always starts from a fresh database, so this only
+  matters for repeated local runs) — see the seed command in
+  `.github/workflows/ci.yml`'s fixture step for the exact
+  `updateOrCreate` to re-run.
 
-`.github/workflows/ci.yml`'s `build-and-e2e` job seeds all three
-automatically against a fresh CI database; locally, seed them once via
+`.github/workflows/ci.yml`'s `build-and-e2e` job seeds all of this
+automatically against a fresh CI database; locally, seed it once via
 `php artisan tinker` (see the job's "Seed E2E fixtures" step for the exact
 commands, or `docs/RUNBOOK.md`).
 
-### Coverage — and where it's intentionally scoped down
+### Coverage
 
 - **Customer journey** (`e2e/customer-journey.spec.ts`): register → browse
   → add to cart → apply a coupon → checkout → land on the account page.
   Full journey, one test.
-- **Admin journey** (`e2e/admin-journey.spec.ts`): split into two tests —
-  (1) login → create a product, using the product form's own quick-add
-  category (exercises this session's quick-add feature); (2) login →
-  advance an order to its next status, seeding the order via the real
-  checkout endpoint first so the test doesn't depend on run order against
-  other specs. **Not covered**: receive stock (GRN), POS sale, approve a
-  review. The brief named these as part of the admin journey; they were
-  cut for scope/time in this pass, not forgotten — each would follow the
-  same pattern (seed fixtures via the API, drive the real UI, assert the
-  result) and is a natural next addition.
+- **Admin journey** (`e2e/admin-journey.spec.ts`): five tests sharing one
+  authenticated session (see "Shared admin session" below) — create a
+  product via its own quick-add category, advance an order's status,
+  create a purchase order with Instant Receive (PO + GRN in one
+  transaction — CLAUDE.md §6.4), complete a POS sale, and approve a
+  pending review.
 - **Accessibility** (`e2e/accessibility.spec.ts`): axe-core WCAG 2 A/AA
   scan of every public page (`/`, `/shop`, `/about`, `/contact`, `/login`,
   `/register`). `color-contrast` is deliberately excluded — see below.
+
+### Shared admin session (`e2e/auth.setup.ts`)
+
+The backend's login rate limiter is 5/min per email+IP
+(`AppServiceProvider`'s `login` `RateLimiter`). The admin-journey file has
+5 tests; each logging in fresh used to intermittently 429 on its own
+login attempt. `e2e/auth.setup.ts` logs in once (a Playwright "setup"
+project — see `playwright.config.ts`) and saves the session to
+`e2e/.auth/admin.json` (gitignored — it's session cookies, regenerated
+every run), which every test in `admin-journey.spec.ts` reuses via
+`storageState`. One login for the whole file instead of five, and it's
+faster.
+
+**Gotcha this surfaced**: a fresh page load via `storageState` still
+needs a `waitForLoadState("networkidle")` before interacting with a
+dialog-opening button, same as the original login-hydration bug (see
+finding #3 below) — without a live login flow's own network activity
+providing incidental delay, the same race shows up on plain page
+navigations too.
+
+**A genuine unsolved mystery, worked around rather than chased**: the
+review test originally submitted its review live, through the suite,
+by logging in as the E2E customer via a completely separate, isolated
+Playwright request context (its own cookie jar, verified never shared
+with the admin `page`). That customer login — every single time,
+reproducibly — knocked the _admin_ session on `page` back to logged out,
+with no error anywhere in the Laravel log (a clean 401, not a crash). A
+brief delay between the two didn't help, ruling out a request-ordering
+race. Given the two guards share one session cookie _name_ (not the same
+session, and not the same cookie _value_ — genuinely separate cookie
+jars), this points at something in how Sanctum/the session guard resolves
+identity that's worth its own investigation, but wasn't worth blocking
+this test on. Worked around by seeding the pending review directly as a
+fixture instead — the test's actual job (proving the admin can approve a
+review) doesn't need the customer submission to happen live inside the
+same suite.
 
 ### Real bugs found while writing these tests
 
@@ -112,6 +158,13 @@ migrate` fixed it. Worth knowing: a stale local DB can make a
    empty grid indistinguishable from a genuinely empty catalog. A down or
    slow backend looked identical to "we don't sell anything." Fixed with
    an explicit error state + retry button.
+8. **`AdminToggle` (the shared checkbox-with-label component used across
+   every admin form) only associated its label visually**, via a sibling
+   `Typography`, never programmatically — not focusable by label,
+   invisible to `getByLabel()`-style lookups, and never announced
+   correctly to a screen reader. Every "Visible"/"Featured"/"Instant
+   Receive"-style toggle in the admin panel had this gap. Fixed by
+   switching to MUI's `FormControlLabel`, which actually links the two.
 
 ### Flagged, not fixed: brand color contrast
 
