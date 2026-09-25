@@ -26,6 +26,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# cPanel Passenger restart signal (touched by deploy.sh, server-local only)
+tmp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
