@@ -17,16 +17,42 @@ cd "$(dirname "$0")"
 log() { echo "[deploy] $*"; }
 fail() { echo "[deploy] ERROR: $*" >&2; exit 1; }
 
+# On cPanel/CloudLinux, Node lives in a per-app virtualenv that must be
+# sourced before `node`/`npm` are on PATH — the same
+# `source ~/nodevenv/<app>/<ver>/bin/activate` line cPanel prints in
+# "Setup Node.js App". Find and source it so this script can be run (or
+# triggered by a Git post-pull hook) without activating the env by hand
+# first. Picks the activate script under this app's own folder when there
+# is one, else the only one present; a highest-version tiebreak keeps it
+# deterministic if several exist.
+activate_cpanel_nodevenv() {
+  local appdir; appdir="$(basename "$PWD")"
+  local candidate
+  candidate="$(ls -1 "$HOME/nodevenv/$appdir"/*/bin/activate 2>/dev/null | sort -V | tail -n1)"
+  if [ -z "$candidate" ]; then
+    candidate="$(ls -1 "$HOME/nodevenv"/*/*/bin/activate 2>/dev/null | sort -V | tail -n1)"
+  fi
+  [ -n "$candidate" ] && [ -s "$candidate" ] || return 1
+  log "Activating cPanel Node virtualenv: $candidate"
+  # shellcheck disable=SC1090
+  source "$candidate"
+}
+
 # --- Activate the right Node version -------------------------------------
-if [ -s "$HOME/.nvm/nvm.sh" ]; then
+# Production host (cPanel nodevenv) first, then nvm for local/dev, then
+# whatever `node` already happens to be on PATH.
+if activate_cpanel_nodevenv; then
+  :
+elif [ -s "$HOME/.nvm/nvm.sh" ]; then
   # shellcheck disable=SC1091
   source "$HOME/.nvm/nvm.sh"
   nvm use --silent "$(cat .nvmrc)" || nvm install --silent "$(cat .nvmrc)"
 elif command -v node >/dev/null 2>&1; then
-  log "nvm not found — using whatever \`node\` is already on PATH: $(node -v)"
+  log "No cPanel nodevenv or nvm — using whatever \`node\` is already on PATH."
 else
-  fail "no Node.js found (no nvm, no node on PATH)."
+  fail "no Node.js found (no cPanel nodevenv, no nvm, no node on PATH)."
 fi
+command -v node >/dev/null 2>&1 || fail "node is still not on PATH after activation."
 log "Using Node: $(node -v), npm: $(npm -v)"
 
 # --- Pull latest -----------------------------------------------------------

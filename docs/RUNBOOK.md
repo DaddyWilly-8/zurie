@@ -10,11 +10,13 @@ this document is only about running it.
 ./deploy.sh
 ```
 
-One command, safe to re-run. It activates the pinned Node version (via nvm
-and `.nvmrc`), pulls `origin/main`, installs dependencies (including dev —
-the build needs TypeScript/Tailwind/etc even in production), does a clean
-build, and only then signals cPanel's Passenger app manager to restart by
-touching `tmp/restart.txt`.
+One command, safe to re-run, and it activates Node itself — no need to
+`source ~/nodevenv/.../bin/activate` first. It finds and sources this app's
+cPanel Node virtualenv (falling back to nvm/`.nvmrc` for local/dev), pulls
+`origin/main`, installs dependencies (including dev — the build needs
+TypeScript/Tailwind/etc even in production), does a clean build, and only
+then signals cPanel's Passenger app manager to restart by touching
+`tmp/restart.txt`.
 
 **If the build fails, the script exits non-zero and `tmp/restart.txt` is
 never touched** — Passenger keeps serving the last successful build
